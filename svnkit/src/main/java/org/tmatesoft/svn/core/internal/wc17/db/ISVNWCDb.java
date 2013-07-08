@@ -1504,13 +1504,14 @@ public interface ISVNWCDb {
     class WCDbDeletionInfo {
 
         public enum DeletionInfoField {
-            baseDelAbsPath, baseReplaced, movedToAbsPath, workDelAbsPath
+            baseDelAbsPath, baseReplaced, movedToAbsPath, workDelAbsPath, movedToOpRootAbsPath
         }
 
         public File baseDelAbsPath;
         public boolean baseReplaced;
         public File movedToAbsPath;
         public File workDelAbsPath;
+        public File movedToOpRootAbsPath;
     }
 
     /**

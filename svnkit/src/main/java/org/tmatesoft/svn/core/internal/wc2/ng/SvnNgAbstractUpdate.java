@@ -70,11 +70,9 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             long updateRevision = updateInternal(wcContext, localAbspath, anchor, revision, depth, depthIsSticky, ignoreExternals, allowUnversionedObstructions, addsAsMoodifications, sleepForTimestamp, true, recordConflictsResolver);
             ISVNConflictHandler conflictResolver = getWcContext().getOptions().getConflictResolver();
             if (conflictResolver != null && recordConflictsResolver.hasConflicts()) {
-                SvnResolve resolve = getOperation().getOperationFactory().createResolve();
                 for (SVNConflictDescription conflictDescription : recordConflictsResolver.getConflicts()) {
-                    resolve.addTarget(SvnTarget.fromFile(conflictDescription.getPath()));
+                    getWcContext().resolvedConflict(conflictDescription.getPath(), SVNDepth.UNKNOWN, true, null, true, null);
                 }
-                resolve.run();
             }
             return updateRevision;
             

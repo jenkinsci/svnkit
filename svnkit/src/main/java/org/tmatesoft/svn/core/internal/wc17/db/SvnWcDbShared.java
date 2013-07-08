@@ -338,89 +338,98 @@ public class SvnWcDbShared {
 
         return scanDeletion(pdh.getWCRoot(), localRelpath);
     }
-    
+
     protected static Structure<DeletionInfo> scanDeletion(SVNWCDbRoot root, File localRelpath) throws SVNException {
-        Structure<DeletionInfo> info = Structure.obtain(DeletionInfo.class);
-        
-        SVNWCDbStatus childPresence = SVNWCDbStatus.BaseDeleted;
-        boolean childHasBase = false;
-        boolean foundMovedTo = false;
-        long opDepth = 0, localOpDepth = 0;
-        File currentRelPath = localRelpath;
-        File childRelpath = null;
-        
-        begingReadTransaction(root);
-        SVNSqlJetStatement stmt = null;
-        try {
-            while (true) {
-                stmt = root.getSDb().getStatement(SVNWCDbStatements.SELECT_DELETION_INFO);
-                stmt.bindf("is", root.getWcId(), SVNFileUtil.getFilePath(currentRelPath));
-                if (!stmt.next()) {
-                    try {
-                        if (currentRelPath == localRelpath) {
-                            nodeNotFound(root, localRelpath);
-                        }
-                        if (childHasBase) {
-                            info.set(DeletionInfo.baseDelRelPath, childRelpath);
-                        }
-                        break;
-                    } finally {
-                        reset(stmt);
-                    }
-                }
-                
-                SVNSqlJetStatement baseStmt = null;
-                try {
-                    SVNWCDbStatus workPresence = getColumnPresence(stmt);
-                    if (currentRelPath.equals(localRelpath) && workPresence != SVNWCDbStatus.NotPresent && workPresence != SVNWCDbStatus.BaseDeleted) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be deleted.", root.getAbsPath(localRelpath));
-                        SVNErrorManager.error(err, SVNLogType.WC);
-                    }
-                    assert (workPresence == SVNWCDbStatus.Normal || workPresence == SVNWCDbStatus.NotPresent || workPresence == SVNWCDbStatus.BaseDeleted || workPresence == SVNWCDbStatus.Incomplete);
-                    
-                    baseStmt = stmt.getJoinedStatement(SVNWCDbSelectDeletionInfo.NODES_BASE);
-                    boolean haveBase = false;
-                    haveBase = baseStmt != null && baseStmt.next() && !isColumnNull(baseStmt, SVNWCDbSchema.NODES__Fields.presence);
-                    if (haveBase) {
-                        SVNWCDbStatus basePresence = getColumnPresence(baseStmt);
-                        assert (basePresence == SVNWCDbStatus.Normal || basePresence == SVNWCDbStatus.NotPresent || basePresence == SVNWCDbStatus.Incomplete);
-                        if (basePresence == SVNWCDbStatus.Incomplete) {
-                            basePresence = SVNWCDbStatus.Normal;
-                        }
-                    }
-                    
-                    
-                    if (!foundMovedTo && !isColumnNull(stmt, SVNWCDbSchema.NODES__Fields.moved_to)) {
-                        foundMovedTo = true;
-                        info.set(DeletionInfo.baseDelRelPath, currentRelPath);
-                        info.set(DeletionInfo.movedToRelPath, getColumnPath(stmt, SVNWCDbSchema.NODES__Fields.moved_to));
-                    }
-                    
-                    opDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
-                    if (currentRelPath.equals(localRelpath)) {
-                        localOpDepth = opDepth;
-                    }
-                    if (!info.hasValue(DeletionInfo.workDelRelPath) && 
-                            ((opDepth < localOpDepth && opDepth > 0) || childPresence == SVNWCDbStatus.NotPresent)) {
-                        info.set(DeletionInfo.workDelRelPath, childRelpath);
-                        info.set(DeletionInfo.workDelAbsPath, root.getAbsPath(childRelpath));
-                    }
-                    
-                    childRelpath = currentRelPath;
-                    childPresence = workPresence;
-                    childHasBase = haveBase;
-                    
-                    currentRelPath = SVNFileUtil.getFileDir(currentRelPath);                
-                } finally {
-                    reset(stmt);
-                    reset(baseStmt);
-                }
-            }
-        } finally {
-            commitTransaction(root);
-            reset(stmt);
-        }
-        return info;
+        Structure<DeletionInfo> deletionInfoStructure = Structure.obtain(DeletionInfo.class);
+        ISVNWCDb.WCDbDeletionInfo deletionInfo = root.getDb().scanDeletion(SVNFileUtil.createFilePath(root.getAbsPath(), localRelpath), ISVNWCDb.WCDbDeletionInfo.DeletionInfoField.values());
+        deletionInfoStructure.set(DeletionInfo.baseDelRelPath, SVNFileUtil.skipAncestor(root.getAbsPath(), deletionInfo.baseDelAbsPath));
+        deletionInfoStructure.set(DeletionInfo.movedToRelPath, SVNFileUtil.skipAncestor(root.getAbsPath(), deletionInfo.movedToAbsPath));
+        deletionInfoStructure.set(DeletionInfo.movedToOpRootRelPath, SVNFileUtil.skipAncestor(root.getAbsPath(), deletionInfo.movedToOpRootAbsPath));
+        deletionInfoStructure.set(DeletionInfo.workDelAbsPath, deletionInfo.workDelAbsPath);
+        deletionInfoStructure.set(DeletionInfo.workDelRelPath, SVNFileUtil.skipAncestor(root.getAbsPath(), deletionInfo.baseDelAbsPath));
+        return deletionInfoStructure;
+
+//        Structure<DeletionInfo> info = Structure.obtain(DeletionInfo.class);
+//
+//        SVNWCDbStatus childPresence = SVNWCDbStatus.BaseDeleted;
+//        boolean childHasBase = false;
+//        boolean foundMovedTo = false;
+//        long opDepth = 0, localOpDepth = 0;
+//        File currentRelPath = localRelpath;
+//        File childRelpath = null;
+//
+//        begingReadTransaction(root);
+//        SVNSqlJetStatement stmt = null;
+//        try {
+//            while (true) {
+//                stmt = root.getSDb().getStatement(SVNWCDbStatements.SELECT_DELETION_INFO);
+//                stmt.bindf("is", root.getWcId(), SVNFileUtil.getFilePath(currentRelPath));
+//                if (!stmt.next()) {
+//                    try {
+//                        if (currentRelPath == localRelpath) {
+//                            nodeNotFound(root, localRelpath);
+//                        }
+//                        if (childHasBase) {
+//                            info.set(DeletionInfo.baseDelRelPath, childRelpath);
+//                        }
+//                        break;
+//                    } finally {
+//                        reset(stmt);
+//                    }
+//                }
+//
+//                SVNSqlJetStatement baseStmt = null;
+//                try {
+//                    SVNWCDbStatus workPresence = getColumnPresence(stmt);
+//                    if (currentRelPath.equals(localRelpath) && workPresence != SVNWCDbStatus.NotPresent && workPresence != SVNWCDbStatus.BaseDeleted) {
+//                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be deleted.", root.getAbsPath(localRelpath));
+//                        SVNErrorManager.error(err, SVNLogType.WC);
+//                    }
+//                    assert (workPresence == SVNWCDbStatus.Normal || workPresence == SVNWCDbStatus.NotPresent || workPresence == SVNWCDbStatus.BaseDeleted || workPresence == SVNWCDbStatus.Incomplete);
+//
+//                    baseStmt = stmt.getJoinedStatement(SVN);
+//                    boolean haveBase = false;
+//                    haveBase = baseStmt != null && baseStmt.next() && !isColumnNull(baseStmt, SVNWCDbSchema.NODES__Fields.presence);
+//                    if (haveBase) {
+//                        SVNWCDbStatus basePresence = getColumnPresence(baseStmt);
+//                        assert (basePresence == SVNWCDbStatus.Normal || basePresence == SVNWCDbStatus.NotPresent || basePresence == SVNWCDbStatus.Incomplete);
+//                        if (basePresence == SVNWCDbStatus.Incomplete) {
+//                            basePresence = SVNWCDbStatus.Normal;
+//                        }
+//                    }
+//
+//
+//                    if (!foundMovedTo && !isColumnNull(stmt, SVNWCDbSchema.NODES__Fields.moved_to)) {
+//                        foundMovedTo = true;
+//                        info.set(DeletionInfo.baseDelRelPath, currentRelPath);
+//                        info.set(DeletionInfo.movedToRelPath, getColumnPath(stmt, SVNWCDbSchema.NODES__Fields.moved_to));
+//                    }
+//
+//                    opDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
+//                    if (currentRelPath.equals(localRelpath)) {
+//                        localOpDepth = opDepth;
+//                    }
+//                    if (!info.hasValue(DeletionInfo.workDelRelPath) &&
+//                            ((opDepth < localOpDepth && opDepth > 0) || childPresence == SVNWCDbStatus.NotPresent)) {
+//                        info.set(DeletionInfo.workDelRelPath, childRelpath);
+//                        info.set(DeletionInfo.workDelAbsPath, root.getAbsPath(childRelpath));
+//                    }
+//
+//                    childRelpath = currentRelPath;
+//                    childPresence = workPresence;
+//                    childHasBase = haveBase;
+//
+//                    currentRelPath = SVNFileUtil.getFileDir(currentRelPath);
+//                } finally {
+//                    reset(stmt);
+//                    reset(baseStmt);
+//                }
+//            }
+//        } finally {
+//            commitTransaction(root);
+//            reset(stmt);
+//        }
+//        return info;
     }
 
     public static Structure<NodeInfo> getBaseInfo(SVNWCDbRoot wcroot, File localRelPath, NodeInfo... fields) throws SVNException {
