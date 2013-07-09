@@ -7080,4 +7080,39 @@ public class SVNWCDb implements ISVNWCDb {
             }
         }
     }
+
+    public Map<SVNURL, String> getNodeLockTokensRecursive(File localAbsPath) throws SVNException {
+        assert isAbsolute(localAbsPath);
+
+        DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+
+        long lastReposId = -1;
+        ReposInfo reposInfo = null;
+        Map<SVNURL, String> lockTokens = new HashMap<SVNURL, String>();
+
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_BASE_NODE_LOCK_TOKENS_RECURSIVE);
+        try {
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), parsed.localRelPath);
+            boolean haveRow = stmt.next();
+            while (haveRow) {
+                long childReposId = stmt.getColumnLong(NODES__Fields.repos_id);
+                File childRelPath = SvnWcDbStatementUtil.getColumnPath(stmt, NODES__Fields.repos_path);
+                String lockToken = stmt.getJoinedStatement(SVNWCDbSchema.LOCK).getColumnString(SVNWCDbSchema.LOCK__Fields.lock_token);
+                if (childReposId != lastReposId) {
+                    reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), childReposId);
+                    lastReposId = childReposId;
+                }
+                assert reposInfo.reposRootUrl != null;
+                lockTokens.put(SVNURL.parseURIEncoded(reposInfo.reposRootUrl).appendPath(SVNFileUtil.getFilePath(childRelPath), false),
+                        lockToken);
+                haveRow = stmt.next();
+            }
+        } finally {
+            stmt.reset();
+        }
+
+        return lockTokens;
+    }
 }

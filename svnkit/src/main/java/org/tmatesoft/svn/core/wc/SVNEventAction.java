@@ -484,4 +484,19 @@ public class SVNEventAction {
      * @since 1.8, SVN 1.8
      */
     public static final SVNEventAction MOVE_BROKEN = createEventAction(72, "move_broken");
+
+    /**
+     * @since 1.8, SVN 1.8
+     */
+    public static final SVNEventAction FAILED_OBSTRUCTION = createEventAction(73, "failed_obstruction");
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNEventAction FAILED_CONFLICT = createEventAction(74, "failed_conflict");
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNEventAction FAILED_MISSING = createEventAction(75, "failed_conflict");
 }

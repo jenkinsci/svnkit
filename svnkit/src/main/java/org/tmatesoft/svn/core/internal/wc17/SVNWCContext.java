@@ -5862,4 +5862,26 @@ public class SVNWCContext {
 
         return obtainedAbsPath;
     }
+
+    public NodePresence getNodePresence(File localAbsPath, boolean baseOnly) throws SVNException {
+        SVNWCDbStatus status;
+        if (baseOnly) {
+            WCDbBaseInfo baseInfo = getDb().getBaseInfo(localAbsPath, BaseInfoField.status);
+            status = baseInfo.status;
+        } else {
+            Structure<NodeInfo> nodeInfoStructure = getDb().readInfo(localAbsPath, NodeInfo.status);
+            status = nodeInfoStructure.get(NodeInfo.status);
+        }
+        NodePresence nodePresence = new NodePresence();
+        nodePresence.isNotPresent = status == SVNWCDbStatus.NotPresent;
+        nodePresence.isExcluded = status == SVNWCDbStatus.Excluded;
+        nodePresence.isServerExcluded = status == SVNWCDbStatus.ServerExcluded;
+        return nodePresence;
+    }
+
+    public static class NodePresence {
+        public boolean isNotPresent;
+        public boolean isExcluded;
+        public boolean isServerExcluded;
+    }
 }

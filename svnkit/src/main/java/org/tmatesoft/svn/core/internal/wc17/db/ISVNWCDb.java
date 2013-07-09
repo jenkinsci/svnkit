@@ -1682,4 +1682,6 @@ public interface ISVNWCDb {
     public boolean opHandleMoveBack(File localAbsPath, File movedFromAbsPath, SVNSkel workItems) throws SVNException;
 
     File requiredLockForResolve(File localAbsPath) throws SVNException;
+
+    Map<SVNURL, String> getNodeLockTokensRecursive(File localAbsPath) throws SVNException;
 }

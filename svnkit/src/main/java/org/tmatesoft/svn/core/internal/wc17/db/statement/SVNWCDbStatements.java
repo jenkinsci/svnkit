@@ -199,7 +199,8 @@ public enum SVNWCDbStatements {
     CLEAR_MOVED_TO_DESCENDANTS(SVNWCDbClearMovedToDescendants.class),
     DELETE_NODES_ABOVE_DEPTH_RECURSIVE(SVNWCDbDeleteNodesAboveDepthRecursive.class),
     SELECT_MOVED_HERE_CHILDREN(SVNWCDbSelectMovedHereChildren.class),
-    SELECT_DELETION_INFO_SCAN(SVNWCDbSelectDeletionInfoScan.class)
+    SELECT_DELETION_INFO_SCAN(SVNWCDbSelectDeletionInfoScan.class),
+    SELECT_BASE_NODE_LOCK_TOKENS_RECURSIVE(SVNWCDbSelectBaseNodeLockTokensRecursive.class)
     ;
     
 

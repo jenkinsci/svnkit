@@ -1834,7 +1834,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             myWCContext.getDb().installPristine(myCurrentFile.newTextBaseTmpAbsPath, myCurrentFile.newTextBaseSHA1Checksum, 
                     new SvnChecksum(SvnChecksum.Kind.md5, myCurrentFile.newTextBaseMD5Digest));
         }
-
+        if (myCurrentFile.originalChecksum != null && myCurrentFile.newTextBaseSHA1Checksum != null && myCurrentFile.originalChecksum.equals(myCurrentFile.newTextBaseSHA1Checksum)) {
+            myCurrentFile.newTextBaseSHA1Checksum = null;
+        }
     }
     
     private static class BumpDirectoryInfo {
