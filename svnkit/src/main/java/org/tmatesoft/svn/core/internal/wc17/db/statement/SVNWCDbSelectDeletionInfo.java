@@ -33,9 +33,11 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 public class SVNWCDbSelectDeletionInfo extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.NODES__Fields> {
 
     private InternalSelect internalStatement;
+    private SVNWCDbNodesMaxOpDepth maxOpDepth;
 
     public SVNWCDbSelectDeletionInfo(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.NODES);
+        maxOpDepth = new SVNWCDbNodesMaxOpDepth(sDb, 0);
     }
 
     @Override
@@ -81,7 +83,7 @@ public class SVNWCDbSelectDeletionInfo extends SVNSqlJetSelectFieldsStatement<SV
 
     @Override
     protected Object[] getWhere() throws SVNException {
-        return new Object[] {getBind(1), getBind(2)};
+        return new Object[] {getBind(1), getBind(2), maxOpDepth.getMaxOpDepth((Long)getBind(1), (String)getBind(2))};
     }
 
     public static class InternalSelect extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.NODES__Fields> {
