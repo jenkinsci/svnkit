@@ -267,7 +267,7 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
         }
     }
 
-    private void addFromDisk(File path, SVNProperties props, boolean fireEvent) throws SVNException {
+    protected void addFromDisk(File path, SVNProperties props, boolean fireEvent) throws SVNException {
         SVNNodeKind kind = checkCanAddNode(path);
         checkCanAddtoParent(path);
         if (kind == SVNNodeKind.FILE) {
