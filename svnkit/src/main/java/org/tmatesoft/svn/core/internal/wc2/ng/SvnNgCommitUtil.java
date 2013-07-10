@@ -196,8 +196,8 @@ public class SvnNgCommitUtil {
         commitStatusWalker.context = context;
         commitStatusWalker.eventHandler = eventHandler;
 
-        SVNStatusEditor17 editor = new SVNStatusEditor17(localAbsPath, context, context.getOptions(), false, copyModeRoot, depth, commitStatusWalker);
-        editor.walkStatus(localAbsPath, depth, false, false, false, null);
+        SVNStatusEditor17 editor = new SVNStatusEditor17(localAbsPath, context, context.getOptions(), false, copyModeRelPath != null, depth, commitStatusWalker);
+        editor.walkStatus(localAbsPath, depth, copyModeRelPath != null, false, false, null);
 
 /*
         if (committables.hasItem(localAbsPath)) {
@@ -554,7 +554,7 @@ public class SvnNgCommitUtil {
                         movedFromAbsPath = status.getMovedFromPath();
                     }
                 }
-            } else if (copyMode && (stateFlags & SvnCommitItem.DELETE) == 0) {
+            } else if (copyMode && ((stateFlags & SvnCommitItem.DELETE) == 0)) {
                 long dirRev = -1;
                 if (!copyModeRoot && !status.isSwitched() && !isAdded) {
                     WCDbBaseInfo nodeBase = context.getNodeBase(localAbsPath, false, false);
