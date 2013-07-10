@@ -557,7 +557,7 @@ public class SvnNgCommitUtil {
             } else if (copyMode && ((stateFlags & SvnCommitItem.DELETE) == 0)) {
                 long dirRev = -1;
                 if (!copyModeRoot && !status.isSwitched() && !isAdded) {
-                    WCDbBaseInfo nodeBase = context.getNodeBase(localAbsPath, false, false);
+                    WCDbBaseInfo nodeBase = context.getNodeBase(SVNFileUtil.getFileDir(localAbsPath), false, false);
                     dirRev = nodeBase.revision;
                 }
                 if (copyModeRoot || status.isSwitched() || nodeRev != dirRev) {

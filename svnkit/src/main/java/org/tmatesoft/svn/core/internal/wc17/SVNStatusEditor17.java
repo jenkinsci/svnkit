@@ -544,7 +544,7 @@ public class SVNStatusEditor17 {
         
         WCDbInfo readInfo = context.getDb().readInfo(localAbsPath, InfoField.status, InfoField.kind, InfoField.revision, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.reposUuid,
                 InfoField.changedRev, InfoField.changedDate, InfoField.changedAuthor, InfoField.depth, InfoField.checksum, InfoField.lock, InfoField.translatedSize,
-                InfoField.lastModTime, InfoField.changelist, InfoField.conflicted, InfoField.opRoot, InfoField.hadProps, InfoField.propsMod, InfoField.haveBase, InfoField.haveMoreWork,
+                InfoField.lastModTime, InfoField.changelist, InfoField.originalReposRelpath, InfoField.conflicted, InfoField.opRoot, InfoField.hadProps, InfoField.propsMod, InfoField.haveBase, InfoField.haveMoreWork,
                 InfoField.movedHere, InfoField.movedTo);
         result.load(readInfo);
         
@@ -553,6 +553,7 @@ public class SVNStatusEditor17 {
             result.lock = context.getDb().getBaseInfo(localAbsPath, BaseInfoField.lock).lock;
         }
         result.hasChecksum = readInfo.checksum != null;
+        result.copied = readInfo.originalReposRelpath != null;
         if (result.kind == SVNWCDbKind.File && (result.hadProps || result.propsMod)) {
             SVNProperties properties;
             if (result.propsMod) {
