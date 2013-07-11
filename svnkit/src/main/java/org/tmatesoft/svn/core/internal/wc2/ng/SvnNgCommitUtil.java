@@ -467,9 +467,9 @@ public class SvnNgCommitUtil {
                 this.skipBelowAbsPath = null;
             }
 
-            if (SVNStatusType.STATUS_UNVERSIONED.equals(status.getNodeStatus()) &&
-                    SVNStatusType.STATUS_IGNORED.equals(status.getNodeStatus()) &&
-                    SVNStatusType.STATUS_EXTERNAL.equals(status.getNodeStatus()) &&
+            if (SVNStatusType.STATUS_UNVERSIONED.equals(status.getNodeStatus()) ||
+                    SVNStatusType.STATUS_IGNORED.equals(status.getNodeStatus()) ||
+                    SVNStatusType.STATUS_EXTERNAL.equals(status.getNodeStatus()) ||
                     SVNStatusType.STATUS_NONE.equals(status.getNodeStatus())) {
                 if (isHarvestRoot) {
                     SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "''{0}'' is not under version control", localAbsPath);
