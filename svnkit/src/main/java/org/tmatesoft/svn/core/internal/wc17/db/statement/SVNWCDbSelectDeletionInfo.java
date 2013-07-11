@@ -49,7 +49,7 @@ public class SVNWCDbSelectDeletionInfo extends SVNSqlJetSelectFieldsStatement<SV
     public InternalSelect getInternalStatement() throws SVNException {
         if (internalStatement == null) {
             internalStatement = new InternalSelect(sDb);
-            internalStatement.bindf("is", getBind(1), getBind(2));
+            internalStatement.bindf("isi", getBind(1), getBind(2), 0);
             internalStatement.next();
         }
         return internalStatement;

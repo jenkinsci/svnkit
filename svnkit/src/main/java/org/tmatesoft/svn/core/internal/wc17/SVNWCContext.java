@@ -1028,7 +1028,7 @@ public class SVNWCContext {
                     baseInfo.release();
                     
                     reposRelPath = SVNFileUtil.createFilePath(reposRelPath, SVNWCUtils.skipAncestor(baseDelRelpath, localRelPath));
-                } else {
+                } else if (workDelRelpath != null) {
                     File workRelpath = SVNFileUtil.getFileDir(workDelRelpath); 
                     Structure<AdditionInfo> additionInfo = SvnWcDbShared.scanAddition((SVNWCDb) db, db.fromRelPath(db.getWCRoot(path), workRelpath));
                     reposRelPath = additionInfo.get(AdditionInfo.reposRelPath);

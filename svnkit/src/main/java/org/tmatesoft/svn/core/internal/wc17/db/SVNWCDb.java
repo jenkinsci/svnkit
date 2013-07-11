@@ -4154,8 +4154,8 @@ public class SVNWCDb implements ISVNWCDb {
                     if (scan) {
                         MovedTo movedTo = getMovedTo(scan, stmt, currentRelPath, pdh.getWCRoot(), parsed.localRelPath);
                         scan = movedTo.scan;
-                        deletionInfo.movedToAbsPath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), movedTo.movedToRelPath);
-                        deletionInfo.movedToOpRootAbsPath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), movedTo.movedToOpRootRelPath);
+                        deletionInfo.movedToAbsPath = movedTo.movedToRelPath == null ? null : SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), movedTo.movedToRelPath);
+                        deletionInfo.movedToOpRootAbsPath = movedTo.movedToOpRootRelPath == null ? null : SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), movedTo.movedToOpRootRelPath);
 
                         if (!scan && !f.contains(DeletionInfoField.baseDelAbsPath) && !f.contains(DeletionInfoField.workDelAbsPath)) {
                             return deletionInfo;
@@ -4191,7 +4191,7 @@ public class SVNWCDb implements ISVNWCDb {
                 }
 
                 if (f.contains(DeletionInfoField.workDelAbsPath) && deletionInfo.workDelAbsPath == null) {
-                    deletionInfo.workDelAbsPath = currentRelPath;
+                    deletionInfo.workDelAbsPath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), currentRelPath);
                     if (!scan && !f.contains(DeletionInfoField.baseDelAbsPath)) {
                         break;
                     }
