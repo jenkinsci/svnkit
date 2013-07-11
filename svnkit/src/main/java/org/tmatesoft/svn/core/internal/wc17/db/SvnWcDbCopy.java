@@ -547,6 +547,7 @@ public class SvnWcDbCopy extends SvnWcDbShared {
     private static Structure<CopyInfo> getCopyInfo(SVNWCDbRoot wcRoot, File localRelPath) throws SVNException {
         Structure<CopyInfo> result = Structure.obtain(CopyInfo.class);
         result.set(CopyInfo.haveWork, false);
+        result.set(CopyInfo.copyFromRev, -1);
         
         Structure<NodeInfo> nodeInfo = SvnWcDbReader.readInfo(wcRoot, localRelPath, NodeInfo.status, NodeInfo.kind, NodeInfo.revision, NodeInfo.reposRelPath,
                 NodeInfo.reposId, NodeInfo.opRoot, NodeInfo.haveWork);

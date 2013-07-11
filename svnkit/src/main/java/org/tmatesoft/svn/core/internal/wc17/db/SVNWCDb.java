@@ -490,13 +490,6 @@ public class SVNWCDb implements ISVNWCDb {
                     movedNode.movedToRelPath = movedToRelPath;
                     movedNodes.add(movedNode);
 
-                    stmt = root.getSDb().getStatement(SVNWCDbStatements.UPDATE_MOVED_TO_DESCENDANTS);
-                    try {
-                        stmt.bindf("iss", root.getWcId(), localRelPath, movedToRelPath);
-                        stmt.done();
-                    } finally {
-                        stmt.reset();
-                    }
                 } else if (!info.opRoot && (status == SVNWCDbStatus.Normal || status == SVNWCDbStatus.Copied || status == SVNWCDbStatus.MovedHere)) {
                     MovedNode movedNode = new MovedNode();
                     movedNode.localRelPath = localRelPath;
