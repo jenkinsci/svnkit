@@ -7108,4 +7108,79 @@ public class SVNWCDb implements ISVNWCDb {
 
         return lockTokens;
     }
+
+    public List<SVNWCContext.CommittableExternalInfo> committableExternalsBelow(File localAbsPath, boolean immediatesOnly) throws SVNException {
+        List<SVNWCContext.CommittableExternalInfo> result = null;
+        SVNWCContext.CommittableExternalInfo info;
+
+        assert isAbsolute(localAbsPath);
+
+        DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+
+        File localRelPath = parsed.localRelPath;
+
+        SVNWCDbSelectCommittableExternalsImmediatelyBelow stmt = (SVNWCDbSelectCommittableExternalsImmediatelyBelow) pdh.getWCRoot().getSDb().getStatement(immediatesOnly ? SVNWCDbStatements.SELECT_COMMITTABLE_EXTERNALS_IMMEDIATELY_BELOW : SVNWCDbStatements.SELECT_COMMITTABLE_EXTERNALS_BELOW);
+        try {
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelPath);
+            boolean haveRow = stmt.next();
+            if (haveRow) {
+                result = new ArrayList<SVNWCContext.CommittableExternalInfo>();
+            }
+            while (haveRow) {
+                info = new SVNWCContext.CommittableExternalInfo();
+                localRelPath = SvnWcDbStatementUtil.getColumnPath(stmt, SVNWCDbSchema.EXTERNALS__Fields.local_relpath);
+                info.localAbsPath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), localRelPath);
+                SVNWCDbKind dbKind = SvnWcDbStatementUtil.getColumnKind(stmt, SVNWCDbSchema.EXTERNALS__Fields.kind);
+                info.kind = dbKind == SVNWCDbKind.Dir ? SVNNodeKind.DIR : SVNNodeKind.FILE;
+                info.reposRelPath = SvnWcDbStatementUtil.getColumnPath(stmt, SVNWCDbSchema.EXTERNALS__Fields.def_repos_relpath);
+                info.reposRootUrl = SVNURL.parseURIEncoded(SvnWcDbStatementUtil.getColumnText(stmt.getInternalStatement1(), REPOSITORY__Fields.root));
+                result.add(info);
+                haveRow = stmt.next();
+            }
+        } finally {
+            stmt.reset();
+        }
+        return result;
+    }
+
+    public Moved scanMoved(File localAbsPath) throws SVNException {
+        assert isAbsolute(localAbsPath);
+
+        DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+        File localRelPath = parsed.localRelPath;
+
+        Structure<StructureFields.AdditionInfo> additionInfoStructure = SvnWcDbShared.scanAddition(pdh.getWCRoot(), localRelPath, StructureFields.AdditionInfo.status,
+                StructureFields.AdditionInfo.opRootRelPath, StructureFields.AdditionInfo.movedFromRelPath,
+                StructureFields.AdditionInfo.movedFromOpRootRelPath, StructureFields.AdditionInfo.movedFromOpDepth);
+        SVNWCDbStatus status = additionInfoStructure.get(StructureFields.AdditionInfo.status);
+        File opRootRelPath = additionInfoStructure.get(StructureFields.AdditionInfo.opRootRelPath);
+        File movedFromRelPath = additionInfoStructure.get(StructureFields.AdditionInfo.movedFromRelPath);
+        File movedFromOpRootRelPath = additionInfoStructure.get(StructureFields.AdditionInfo.movedFromOpRootRelPath);
+        long movedFromOpDepth = additionInfoStructure.lng(StructureFields.AdditionInfo.movedFromOpDepth);
+
+        if (status != SVNWCDbStatus.MovedHere) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Path ''{0}'' was not moved here", SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), localRelPath));
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
+        }
+
+        Moved moved = new Moved();
+        moved.opRootAbsPath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), opRootRelPath);
+        moved.movedFromAbsPath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), movedFromRelPath);
+        moved.opRootMovedFromAbsPath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), movedFromOpRootRelPath);
+
+        File tmp = movedFromOpRootRelPath;
+
+        assert movedFromOpDepth >= 0;
+
+        while (SVNWCUtils.relpathDepth(tmp) > movedFromOpDepth) {
+            tmp = SVNFileUtil.getFileDir(tmp);
+        }
+
+        moved.movedFromDeleteAbsPath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), tmp);
+        return moved;
+    }
 }

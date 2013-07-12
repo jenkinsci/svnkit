@@ -30,7 +30,6 @@ import java.util.logging.Level;
 
 import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
@@ -5883,5 +5882,100 @@ public class SVNWCContext {
         public boolean isNotPresent;
         public boolean isExcluded;
         public boolean isServerExcluded;
+    }
+
+    public static class CommittableExternalInfo {
+        public File localAbsPath;
+        public File reposRelPath;
+        public SVNURL reposRootUrl;
+        public SVNNodeKind kind;
+    }
+
+    public List<CommittableExternalInfo> committableExternalsBelow(List<CommittableExternalInfo> externals, File localAbsPath, SVNDepth depth) throws SVNException {
+        List<CommittableExternalInfo> origExternals = getDb().committableExternalsBelow(localAbsPath, depth != SVNDepth.INFINITY);
+        if (origExternals == null) {
+            return null;
+        }
+        for (CommittableExternalInfo xInfo : origExternals) {
+            if (depth == SVNDepth.FILES && xInfo.kind == SVNNodeKind.DIR) {
+                continue;
+            }
+            boolean isRolledOut = isExternalRolledOut(xInfo);
+            if (!isRolledOut) {
+                continue;
+            }
+            if (externals == null) {
+                externals = new ArrayList<CommittableExternalInfo>();
+            }
+            externals.add(xInfo);
+            if (depth != SVNDepth.INFINITY) {
+                continue;
+            }
+            committableExternalsBelow(externals, xInfo.localAbsPath, SVNDepth.INFINITY);
+        }
+        return externals;
+    }
+
+    private boolean isExternalRolledOut(CommittableExternalInfo xInfo) {
+        SVNURL reposRootUrl = null;
+        File reposRelPath = null;
+        try {
+            WCDbBaseInfo baseInfo = getDb().getBaseInfo(xInfo.localAbsPath, BaseInfoField.reposRelPath, BaseInfoField.reposRootUrl);
+            reposRootUrl = baseInfo.reposRootUrl;
+            reposRelPath = baseInfo.reposRelPath;
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                return false;
+            }
+        }
+        return xInfo.reposRootUrl.equals(reposRootUrl) && xInfo.reposRelPath.equals(reposRelPath);
+    }
+
+    public static class NodeMovedHere {
+        public File movedFromAbsPath;
+        public File deleteOpRootAbsPath;
+    }
+
+    public NodeMovedHere nodeWasMovedHere(File localAbsPath) throws SVNException {
+        NodeMovedHere nodeMovedHere = new NodeMovedHere();
+
+        try {
+            ISVNWCDb.Moved moved = getDb().scanMoved(localAbsPath);
+            nodeMovedHere.deleteOpRootAbsPath = moved.movedFromDeleteAbsPath;
+            nodeMovedHere.movedFromAbsPath = moved.movedFromAbsPath;
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_UNEXPECTED_STATUS) {
+                throw e;
+            }
+        }
+
+        return nodeMovedHere;
+    }
+
+    public static class NodeMovedAway {
+        public File movedToAbsPath;
+        public File opRootAbsPath;
+    }
+
+    public NodeMovedAway nodeWasMovedAway(File localAbsPath) throws SVNException {
+        NodeMovedAway nodeMovedAway = new NodeMovedAway();
+        boolean isDeleted = isNodeStatusDeleted(localAbsPath);
+        if (isDeleted) {
+            WCDbDeletionInfo deletionInfo = getDb().scanDeletion(localAbsPath, DeletionInfoField.movedToAbsPath, DeletionInfoField.movedToOpRootAbsPath);
+            nodeMovedAway.movedToAbsPath = deletionInfo.movedToAbsPath;
+            nodeMovedAway.opRootAbsPath = deletionInfo.movedToOpRootAbsPath;
+        }
+        return nodeMovedAway;
+    }
+
+    public File getNodeDeletedAncestor(File localAbsPath) throws SVNException {
+        Structure<NodeInfo> nodeInfoStructure = getDb().readInfo(localAbsPath, NodeInfo.status);
+        SVNWCDbStatus status = nodeInfoStructure.get(NodeInfo.status);
+
+        if (status == SVNWCDbStatus.Deleted) {
+            WCDbDeletionInfo deletionInfo = getDb().scanDeletion(localAbsPath, DeletionInfoField.baseDelAbsPath);
+            return deletionInfo.baseDelAbsPath;
+        }
+        return null;
     }
 }

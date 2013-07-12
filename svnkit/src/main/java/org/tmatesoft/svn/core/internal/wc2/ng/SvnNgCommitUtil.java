@@ -78,36 +78,38 @@ public class SvnNgCommitUtil {
     
     public static SvnCommitPacket harvestCommittables(SVNWCContext context, SvnCommitPacket packet, Map<SVNURL, String> lockTokens,
             File baseDirPath,
-            Collection<String> targets,
+            Collection<String> targets, int depthEmptyStart,
             SVNDepth depth, boolean justLocked, Collection<String> changelists, ISvnUrlKindCallback urlKindCallback, ISvnCommitParameters commitParameters, Map<File, String> externalsStorage) throws SVNException {
         
         Map<File, File> danglers = new HashMap<File, File>();
-        
-        
+
+        int i = -1;
+
         for (String target : targets) {
+            i++;
             File targetPath = SVNFileUtil.createFilePath(baseDirPath, target);
             SVNNodeKind kind = context.readKind(targetPath, false);
             if (kind == SVNNodeKind.NONE) {
                 SVNTreeConflictDescription tc = context.getTreeConflict(targetPath);
                 if (tc != null) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, 
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT,
                             "Aborting commit: ''{0}'' remains in conflict", targetPath);
                     SVNErrorManager.error(err, SVNLogType.WC);
                 } else {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, 
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET,
                             "''{0}'' is not under version control", targetPath);
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
             SVNWCNodeReposInfo reposInfo = context.getNodeReposInfo(targetPath);
             SVNURL repositoryRootUrl = reposInfo.reposRootUrl;
-            
+
             boolean added = context.isNodeAdded(targetPath);
             if (added) {
                 File parentPath = SVNFileUtil.getParentFile(targetPath);
                 try {
                     boolean parentIsAdded = context.isNodeAdded(parentPath);
-                    if (parentIsAdded) {                        
+                    if (parentIsAdded) {
                         Structure<NodeOriginInfo> origin = context.getNodeOrigin(parentPath, false, NodeOriginInfo.copyRootAbsPath, NodeOriginInfo.isCopy);
                         if (origin.is(NodeOriginInfo.isCopy)) {
                             parentPath = origin.get(NodeOriginInfo.copyRootAbsPath);
@@ -117,7 +119,7 @@ public class SvnNgCommitUtil {
                     }
                 } catch (SVNException e) {
                     if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, 
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT,
                                 "''{0}'' is scheduled for addition within unversioned parent", targetPath);
                         SVNErrorManager.error(err, SVNLogType.WC);
                     }
@@ -125,6 +127,9 @@ public class SvnNgCommitUtil {
                 }
             }
             bailOnTreeConflictedAncestor(context, targetPath);
+            if (i == depthEmptyStart) {
+                depth = SVNDepth.EMPTY;
+            }
             harvestCommittables(context, targetPath, packet, lockTokens, repositoryRootUrl, null, false, depth, justLocked, changelists, danglers, false, false, urlKindCallback, commitParameters, externalsStorage, context.getEventHandler());
         }
         for(SVNURL root : packet.getRepositoryRoots()) {

@@ -29,9 +29,9 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
-import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.SVNExternalsStore;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
@@ -1684,4 +1684,15 @@ public interface ISVNWCDb {
     File requiredLockForResolve(File localAbsPath) throws SVNException;
 
     Map<SVNURL, String> getNodeLockTokensRecursive(File localAbsPath) throws SVNException;
+
+    List<SVNWCContext.CommittableExternalInfo> committableExternalsBelow(File localAbsPath, boolean immediatesOnly) throws SVNException;
+
+    Moved scanMoved(File localAbsPath) throws SVNException;
+
+    static class Moved {
+        public File movedFromAbsPath;
+        public File opRootAbsPath;
+        public File opRootMovedFromAbsPath;
+        public File movedFromDeleteAbsPath;
+    }
 }
