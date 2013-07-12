@@ -1905,7 +1905,7 @@ public class SVNClientImpl implements ISVNClient {
             return DiffSummary.DiffKind.deleted;
         } else if (type == SVNStatusType.STATUS_MODIFIED) {
             return DiffSummary.DiffKind.modified;
-        } else if (type == SVNStatusType.STATUS_NORMAL) {
+        } else if (type == SVNStatusType.STATUS_NORMAL || type == SVNStatusType.STATUS_NONE) {
             return DiffSummary.DiffKind.normal;
         } else {
             throw new IllegalArgumentException("Unknown status type: " + type);
