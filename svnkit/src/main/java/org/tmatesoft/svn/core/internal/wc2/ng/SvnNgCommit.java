@@ -153,74 +153,74 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
         SVNProperties revisionProperties = getOperation().getRevisionProperties();
         SVNPropertiesManager.validateRevisionProperties(revisionProperties);
 
-        for (SVNURL repositoryRoot : packet.getRepositoryRoots()) {
-            Collection<SvnCommitItem> items = packet.getItems(repositoryRoot);
-            for (SvnCommitItem item : items) {
-                if (item.hasFlag(SvnCommitItem.MOVED_HERE)) {
-                    SVNWCContext.NodeMovedHere nodeMovedHere = context.nodeWasMovedHere(item.getPath());
-                    File movedFromAbsPath = nodeMovedHere.movedFromAbsPath;
-                    File deleteOpRootAbsPath = nodeMovedHere.deleteOpRootAbsPath;
+        SVNException bumpError = null;
+        SVNCommitInfo info = null;
+        try {
+            for (SVNURL repositoryRoot : packet.getRepositoryRoots()) {
+                Collection<SvnCommitItem> items = packet.getItems(repositoryRoot);
+                for (SvnCommitItem item : items) {
+                    if (item.hasFlag(SvnCommitItem.MOVED_HERE)) {
+                        SVNWCContext.NodeMovedHere nodeMovedHere = context.nodeWasMovedHere(item.getPath());
+                        File movedFromAbsPath = nodeMovedHere.movedFromAbsPath;
+                        File deleteOpRootAbsPath = nodeMovedHere.deleteOpRootAbsPath;
 
-                    if (movedFromAbsPath != null && deleteOpRootAbsPath != null && movedFromAbsPath.equals(deleteOpRootAbsPath)) {
-                        boolean foundDeleteHalf = packet.getItem(deleteOpRootAbsPath) != null;
-                        if (!foundDeleteHalf) {
-                            File deleteHalfParentAbsPath = SVNFileUtil.getFileDir(deleteOpRootAbsPath);
-                            if (!deleteOpRootAbsPath.equals(deleteHalfParentAbsPath)) {
-                                File parentDeleteOpRootAbsPath = context.getNodeDeletedAncestor(deleteHalfParentAbsPath);
-                                if (parentDeleteOpRootAbsPath != null) {
-                                    foundDeleteHalf = packet.getItem(parentDeleteOpRootAbsPath) != null;
+                        if (movedFromAbsPath != null && deleteOpRootAbsPath != null && movedFromAbsPath.equals(deleteOpRootAbsPath)) {
+                            boolean foundDeleteHalf = packet.getItem(deleteOpRootAbsPath) != null;
+                            if (!foundDeleteHalf) {
+                                File deleteHalfParentAbsPath = SVNFileUtil.getFileDir(deleteOpRootAbsPath);
+                                if (!deleteOpRootAbsPath.equals(deleteHalfParentAbsPath)) {
+                                    File parentDeleteOpRootAbsPath = context.getNodeDeletedAncestor(deleteHalfParentAbsPath);
+                                    if (parentDeleteOpRootAbsPath != null) {
+                                        foundDeleteHalf = packet.getItem(parentDeleteOpRootAbsPath) != null;
+                                    }
                                 }
                             }
-                        }
 
-                        if (!foundDeleteHalf) {
-                            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot commit ''{0}'' because it was moved from " +
-                                    "''{1}'' which is not part of the commit; both " + "sides of the move must be committed together", item.getPath(), deleteOpRootAbsPath);
+                            if (!foundDeleteHalf) {
+                                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot commit ''{0}'' because it was moved from " +
+                                        "''{1}'' which is not part of the commit; both " + "sides of the move must be committed together", item.getPath(), deleteOpRootAbsPath);
+                                SVNErrorManager.error(errorMessage, SVNLogType.WC);
+                            }
+                        }
+                    }
+
+                    if (item.hasFlag(SvnCommitItem.DELETE)) {
+                        SVNWCContext.NodeMovedAway nodeMovedAway = context.nodeWasMovedAway(item.getPath());
+                        File movedToAbsPath = nodeMovedAway.movedToAbsPath;
+                        File copyOpRootAbsPath = nodeMovedAway.opRootAbsPath;
+
+                        if (movedToAbsPath != null && copyOpRootAbsPath != null &&
+                            !movedToAbsPath.equals(copyOpRootAbsPath) && packet.getItem(copyOpRootAbsPath) == null) {
+                            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot commit ''{0}'' because it was moved to '%s' " +
+                                    "which is not part of the commit; both sides of " + "the move must be committed together", item.getPath(), copyOpRootAbsPath);
                             SVNErrorManager.error(errorMessage, SVNLogType.WC);
                         }
                     }
                 }
+            }
 
-                if (item.hasFlag(SvnCommitItem.DELETE)) {
-                    SVNWCContext.NodeMovedAway nodeMovedAway = context.nodeWasMovedAway(item.getPath());
-                    File movedToAbsPath = nodeMovedAway.movedToAbsPath;
-                    File copyOpRootAbsPath = nodeMovedAway.opRootAbsPath;
-
-                    if (movedToAbsPath != null && copyOpRootAbsPath != null &&
-                        !movedToAbsPath.equals(copyOpRootAbsPath) && packet.getItem(copyOpRootAbsPath) == null) {
-                        SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot commit ''{0}'' because it was moved to '%s' " +
-                                "which is not part of the commit; both sides of " + "the move must be committed together", item.getPath(), copyOpRootAbsPath);
-                        SVNErrorManager.error(errorMessage, SVNLogType.WC);
+            String commitMessage = getOperation().getCommitMessage();
+            if (getOperation().getCommitHandler() != null) {
+                Collection<SvnCommitItem> items = new ArrayList<SvnCommitItem>();
+                for (SVNURL rootUrl : packet.getRepositoryRoots()) {
+                    items.addAll(packet.getItems(rootUrl));
+                }
+                SvnCommitItem[] itemsArray = items.toArray(new SvnCommitItem[items.size()]);
+                try {
+                    commitMessage = getOperation().getCommitHandler().getCommitMessage(commitMessage, itemsArray);
+                    if (commitMessage == null) {
+                        return SVNCommitInfo.NULL;
                     }
+                    revisionProperties = getOperation().getCommitHandler().getRevisionProperties(commitMessage, itemsArray, revisionProperties);
+                } catch (SVNException e) {
+                    SVNErrorMessage err = e.getErrorMessage().wrap("Commit failed (details follow):");
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
-        }
+            commitMessage = commitMessage == null ? "" : SVNCommitUtil.validateCommitMessage(commitMessage);
 
-        String commitMessage = getOperation().getCommitMessage();
-        if (getOperation().getCommitHandler() != null) {
-            Collection<SvnCommitItem> items = new ArrayList<SvnCommitItem>();
-            for (SVNURL rootUrl : packet.getRepositoryRoots()) {
-                items.addAll(packet.getItems(rootUrl));
-            }
-            SvnCommitItem[] itemsArray = items.toArray(new SvnCommitItem[items.size()]);
-            try {
-                commitMessage = getOperation().getCommitHandler().getCommitMessage(commitMessage, itemsArray);
-                if (commitMessage == null) {
-                    return SVNCommitInfo.NULL;
-                }
-                revisionProperties = getOperation().getCommitHandler().getRevisionProperties(commitMessage, itemsArray, revisionProperties);
-            } catch (SVNException e) {
-                SVNErrorMessage err = e.getErrorMessage().wrap("Commit failed (details follow):");
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-        }
-        commitMessage = commitMessage == null ? "" : SVNCommitUtil.validateCommitMessage(commitMessage);
+            boolean keepLocks = getOperation().isKeepLocks();
 
-        boolean keepLocks = getOperation().isKeepLocks();
-        
-        SVNException bumpError = null;
-        SVNCommitInfo info = null;
-        try {
             SVNURL repositoryRootUrl = packet.getRepositoryRoots().iterator().next();
             if (packet.isEmpty(repositoryRootUrl)) {
                 return SVNCommitInfo.NULL;
