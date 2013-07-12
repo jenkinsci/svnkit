@@ -554,7 +554,7 @@ public class SvnNgCommitUtil {
                     cfRelPath = originalRelPath;
                     cfRev = originalRev;
 
-                    if (status.getMovedFromPath() != null && copyMode) {
+                    if (status.getMovedFromPath() != null && !copyMode) {
                         stateFlags |= SvnCommitItem.MOVED_HERE;
                         movedFromAbsPath = status.getMovedFromPath();
                     }
