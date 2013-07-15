@@ -413,7 +413,7 @@ public class SvnWcDbCopy extends SvnWcDbShared {
                             infoStmt.bindf("is", dstPdh.getWCRoot().getWcId(), dstParentRelpath);
                             boolean haveRow = infoStmt.next();
                             assert haveRow;
-                            if (infoStmt.getColumnBoolean(NODES__Fields.moved_to) && dstOpDepths[0] == dstOpDepths[2]) {
+                            if (infoStmt.getColumnBoolean(NODES__Fields.moved_here) && dstOpDepths[0] == dstOpDepths[2]) {
                                 stmt.bindLong(7, 1);
                             } else {
                                 infoStmt.reset();
@@ -620,7 +620,8 @@ public class SvnWcDbCopy extends SvnWcDbShared {
     }
     
     private static long[] getOpDepthForCopy(SVNWCDbRoot wcRoot, File localRelpath, long copyFromReposId, File copyFromRelpath, long copyFromRevision) throws SVNException {
-        long[] result = new long[] {SVNWCUtils.relpathDepth(localRelpath), -1};
+        File parentRelPath = SVNFileUtil.getFileDir(localRelpath);
+        long[] result = new long[] {SVNWCUtils.relpathDepth(localRelpath), -1, SVNWCUtils.relpathDepth(parentRelPath)};
         if (copyFromRelpath == null) {
             return result;
         }
@@ -641,14 +642,19 @@ public class SvnWcDbCopy extends SvnWcDbShared {
         } finally {
             reset(stmt);
         }
-        File parentRelpath = SVNFileUtil.getFileDir(localRelpath);
-        bindf(stmt, "is", wcRoot.getWcId(), parentRelpath);
+        bindf(stmt, "is", wcRoot.getWcId(), parentRelPath);
         if (stmt.next()) {
+            SVNWCDbStatus presence = SvnWcDbStatementUtil.getColumnPresence(stmt, NODES__Fields.presence);
+
             long parentOpDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
+            result[2] = parentOpDepth;
             if (parentOpDepth < minOpDepth) {
                 reset(stmt);
                 return result;
             }
+
+            assert presence == SVNWCDbStatus.Normal;
+
             if (incompleteOpDepth < 0 || incompleteOpDepth == parentOpDepth) {
                 long parentCopyFromReposId = getColumnInt64(stmt, NODES__Fields.repos_id);
                 File parentCopyFromRelpath = getColumnPath(stmt, NODES__Fields.repos_path);

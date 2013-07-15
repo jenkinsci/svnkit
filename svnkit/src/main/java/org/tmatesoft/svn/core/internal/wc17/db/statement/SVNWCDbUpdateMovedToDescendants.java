@@ -46,6 +46,11 @@ public class SVNWCDbUpdateMovedToDescendants extends SVNSqlJetUpdateStatement {
     }
 
     @Override
+    protected String getRowPath() throws SVNException {
+        return getColumnString(SVNWCDbSchema.NODES__Fields.moved_to);
+    }
+
+    @Override
     protected String getPathScope() {
         return (String) getBind(2);
     }

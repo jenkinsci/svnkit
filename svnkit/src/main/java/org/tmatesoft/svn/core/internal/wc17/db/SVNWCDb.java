@@ -604,7 +604,7 @@ public class SVNWCDb implements ISVNWCDb {
                 }
             }
 
-            SVNSqlJetStatement deleteStmt = root.getSDb().getStatement(SVNWCDbStatements.DELETE_NODES_RECURSIVE);
+            SVNSqlJetStatement deleteStmt = root.getSDb().getStatement(SVNWCDbStatements.DELETE_NODES_ABOVE_DEPTH_RECURSIVE);
             try {
                 deleteStmt.bindf("isi", root.getWcId(), localRelPath, deleteDepth);
                 deleteStmt.done();
@@ -1062,7 +1062,7 @@ public class SVNWCDb implements ISVNWCDb {
                 try {
                     stmt.bindf("is", wcId, SVNFileUtil.createFilePath(localRelpath, name));
                     boolean haveRow = stmt.next();
-                    if (haveRow && stmt.isColumnNull(NODES__Fields.moved_to)) {
+                    if (haveRow && !stmt.isColumnNull(NODES__Fields.moved_to)) {
                         movedToRelPaths.put(name, stmt.getColumnString(NODES__Fields.moved_to));
                     }
                 } finally {
@@ -2201,7 +2201,7 @@ public class SVNWCDb implements ISVNWCDb {
             verifyDirUsable(parsedMovedTo.wcDbDir);
             if (!pdh.getWCRoot().getAbsPath().equals(parsedMovedTo.wcDbDir.getWCRoot().getAbsPath())) {
                 SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
-                        "Cannot move '{0}' to '{1}' because they are not in the same working copy", localAbsPath, movedToAbsPath);
+                        "Cannot move ''{0}'' to ''{1}'' because they are not in the same working copy", localAbsPath, movedToAbsPath);
                 SVNErrorManager.error(errorMessage, SVNLogType.WC);
             }
             movedToRelPath = parsedMovedTo.localRelPath;
