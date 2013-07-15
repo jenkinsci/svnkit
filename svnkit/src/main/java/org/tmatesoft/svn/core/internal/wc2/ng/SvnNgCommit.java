@@ -190,9 +190,9 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
                         File copyOpRootAbsPath = nodeMovedAway.opRootAbsPath;
 
                         if (movedToAbsPath != null && copyOpRootAbsPath != null &&
-                            !movedToAbsPath.equals(copyOpRootAbsPath) && packet.getItem(copyOpRootAbsPath) == null) {
-                            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot commit ''{0}'' because it was moved to '%s' " +
-                                    "which is not part of the commit; both sides of " + "the move must be committed together", item.getPath(), copyOpRootAbsPath);
+                            movedToAbsPath.equals(copyOpRootAbsPath) && packet.getItem(copyOpRootAbsPath) == null) {
+                            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot commit ''{0}'' because it was moved to ''{1}'' " +
+                                    "which is not part of the commit; both sides of the move must be committed together", item.getPath(), copyOpRootAbsPath);
                             SVNErrorManager.error(errorMessage, SVNLogType.WC);
                         }
                     }
