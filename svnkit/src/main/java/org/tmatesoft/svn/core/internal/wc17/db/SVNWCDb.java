@@ -6812,7 +6812,6 @@ public class SVNWCDb implements ISVNWCDb {
 
         public List<File> markerFiles;
 
-        @Override
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             markerFiles = new ArrayList<File>();
 
@@ -6919,7 +6918,6 @@ public class SVNWCDb implements ISVNWCDb {
 
         public boolean movedBack;
 
-        @Override
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             movedBack = false;
             boolean different = false;
@@ -7055,7 +7053,6 @@ public class SVNWCDb implements ISVNWCDb {
 
         public File requiredRelPath;
 
-        @Override
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             requiredRelPath = localRelPath;
 

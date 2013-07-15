@@ -450,7 +450,6 @@ public class SvnNgCommitUtil {
 
         public SvnCommitPacket committables;
 
-        @Override
         public void receive(SvnTarget target, SvnStatus status) throws SVNException {
             File localAbsPath = target.getFile();
 

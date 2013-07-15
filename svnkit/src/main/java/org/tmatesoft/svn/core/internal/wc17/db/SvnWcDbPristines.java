@@ -411,7 +411,6 @@ public class SvnWcDbPristines extends SvnWcDbShared {
         public SVNWCDbRoot dstWcRoot;
         public File srcRelPath;
 
-        @Override
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.SELECT_COPY_PRISTINES);
             try {

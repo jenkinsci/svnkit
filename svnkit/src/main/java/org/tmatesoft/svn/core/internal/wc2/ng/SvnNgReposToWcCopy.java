@@ -538,7 +538,6 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         ISVNEditor editor = new SVNCopyForeignEditor(dstAbsPath, getWcContext());
         editor = SVNCancellableEditor.newInstance(editor, getWcContext().getEventHandler(), SVNDebugLog.getDefaultLog());
         repository.update(locRev, "", SVNDepth.INFINITY, false, new ISVNReporterBaton() {
-            @Override
             public void report(ISVNReporter reporter) throws SVNException {
                 reporter.setPath("", null, locRev, depth, true);
                 reporter.finishReport();
@@ -776,11 +775,9 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         private final SVNWCContext context;
         SVNDeltaProcessor svnDeltaProcessor = new SVNDeltaProcessor();
 
-        @Override
         public void targetRevision(long revision) throws SVNException {
         }
 
-        @Override
         public void openRoot(long revision) throws SVNException {
             currentDirectory = new DirectoryBaton(null);
             currentDirectory.localAbsPath = anchorAbsPath;
@@ -788,19 +785,15 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             SVNFileUtil.ensureDirectoryExists(anchorAbsPath);
         }
 
-        @Override
         public void deleteEntry(String path, long revision) throws SVNException {
         }
 
-        @Override
         public void absentDir(String path) throws SVNException {
         }
 
-        @Override
         public void absentFile(String path) throws SVNException {
         }
 
-        @Override
         public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
             currentDirectory = new DirectoryBaton(currentDirectory);
             currentDirectory.localAbsPath = SVNFileUtil.createFilePath(anchorAbsPath, path);
@@ -811,11 +804,9 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             SVNFileUtil.ensureDirectoryExists(currentDirectory.localAbsPath);
         }
 
-        @Override
         public void openDir(String path, long revision) throws SVNException {
         }
 
-        @Override
         public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
             if (!SVNProperty.isRegularProperty(name) && SVNProperty.MERGE_INFO.equals(name)) {
                 return;
@@ -832,7 +823,6 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             }
         }
 
-        @Override
         public void closeDir() throws SVNException {
             ensureAdded(currentDirectory);
         }
@@ -852,7 +842,6 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             svnNgAdd.addFromDisk(currentDirectory.localAbsPath, currentDirectory.properties, true);
         }
 
-        @Override
         public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
             currentFile = new FileBaton(currentDirectory);
             currentFile.localAbsPath = SVNFileUtil.createFilePath(anchorAbsPath, path);
@@ -862,11 +851,9 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             }
         }
 
-        @Override
         public void openFile(String path, long revision) throws SVNException {
         }
 
-        @Override
         public void changeFileProperty(String path, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
             if (!SVNProperty.isRegularProperty(propertyName) && SVNProperty.MERGE_INFO.equals(propertyName)) {
                 return;
@@ -879,7 +866,6 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             }
         }
 
-        @Override
         public void closeFile(String path, String textChecksum) throws SVNException {
             ensureAdded(currentFile.parentBaton);
             if (textChecksum != null && currentFile.checksum != null) {
@@ -894,16 +880,13 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             svnNgAdd.addFromDisk(currentFile.localAbsPath, currentFile.properties, true);
         }
 
-        @Override
         public SVNCommitInfo closeEdit() throws SVNException {
             return null;
         }
 
-        @Override
         public void abortEdit() throws SVNException {
         }
 
-        @Override
         public void applyTextDelta(String path, String baseChecksum) throws SVNException {
             assert !currentFile.writing;
 
@@ -912,12 +895,10 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             svnDeltaProcessor.applyTextDelta(SVNFileUtil.DUMMY_IN, SVNFileUtil.openFileForWriting(currentFile.localAbsPath), true);
         }
 
-        @Override
         public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
             return svnDeltaProcessor.textDeltaChunk(diffWindow);
         }
 
-        @Override
         public void textDeltaEnd(String path) throws SVNException {
             currentFile.checksum = svnDeltaProcessor.textDeltaEnd();
         }
