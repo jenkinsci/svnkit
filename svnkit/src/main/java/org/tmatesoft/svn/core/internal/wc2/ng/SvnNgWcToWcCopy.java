@@ -415,6 +415,18 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
 
     private void verifyPaths(Collection<SvnCopyPair> copyPairs, boolean makeParents, boolean move) throws SVNException {
         for (SvnCopyPair copyPair : copyPairs) {
+            SVNNodeKind dstKind = readKind(copyPair.dst, false, true);
+            if (dstKind != SVNNodeKind.NONE) {
+                SVNWCContext.NodePresence nodePresence = getWcContext().getNodePresence(copyPair.dst, false);
+                if (nodePresence.isExcluded || nodePresence.isServerExcluded) {
+                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Path ''{0}'' exists, but is excluded", copyPair.dst);
+                    SVNErrorManager.error(errorMessage, SVNLogType.WC);
+                } else {
+                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "Path ''{0}'' already exists", copyPair.dst);
+                    SVNErrorManager.error(errorMessage, SVNLogType.WC);
+                }
+            }
+
             SVNFileType srcType = SVNFileType.getType(copyPair.source);
             SVNFileType dstType = SVNFileType.getType(copyPair.dst);
 
@@ -450,7 +462,14 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                     throw e;
                 }
             } else if (dstParentKind != SVNNodeKind.DIR) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "Path ''{0}'' is not a directory", copyPair.dstParent);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "Path ''{0}'' is not a directory", copyPair.dstParent);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
+            dstParentKind = SVNFileType.getNodeKind(SVNFileType.getType(copyPair.dstParent));
+
+            if (dstParentKind != SVNNodeKind.DIR) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_MISSING, "Path ''{0}'' is not a directory", copyPair.dstParent);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }

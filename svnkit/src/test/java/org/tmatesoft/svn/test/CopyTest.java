@@ -402,6 +402,43 @@ public class CopyTest {
         }
     }
 
+    @Test
+    public void testCopyIntoMissingDirectory() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCopyIntoMissingDirectory", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addDirectory("directory/subdirectory");
+            commitBuilder.addDirectory("missing");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File subdirectory = workingCopy.getFile("directory/subdirectory");
+            final File missing = workingCopy.getFile("missing");
+
+            SVNFileUtil.deleteAll(missing, true);
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.setFailWhenDstExists(false);
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(subdirectory), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(missing));
+            try {
+                copy.run();
+                Assert.fail("An exception should be thrown");
+            } catch (SVNException e) {
+                //expected
+                Assert.assertEquals(SVNErrorCode.WC_MISSING, e.getErrorMessage().getErrorCode());
+                Assert.assertTrue(e.getMessage().contains("is not a directory"));
+            }
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertNoRepositoryPathStartsWithSlash(SvnOperationFactory svnOperationFactory, File workingCopyDirectory) throws SVNException {
         final SVNWCContext context = new SVNWCContext(ISVNWCDb.SVNWCDbOpenMode.ReadOnly, svnOperationFactory.getOptions(), false, false, svnOperationFactory.getEventHandler());
         try {

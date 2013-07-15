@@ -3484,7 +3484,7 @@ public class SVNWCDb implements ISVNWCDb {
                 if (allowMissing) {
                     return SVNNodeKind.UNKNOWN;
                 } else {
-                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node '{0}' was not found.", SVNFileUtil.createFilePath(wcRoot.getAbsPath(), localRelPath));
+                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", SVNFileUtil.createFilePath(wcRoot.getAbsPath(), localRelPath));
                     SVNErrorManager.error(errorMessage, SVNLogType.WC);
                 }
             }
