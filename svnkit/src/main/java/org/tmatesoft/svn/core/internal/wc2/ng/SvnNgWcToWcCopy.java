@@ -9,7 +9,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -21,7 +20,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatusEditor17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.PristineContentsInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.*;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
@@ -31,7 +29,6 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.Repos
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.AdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.ExternalNodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectUnreferencedPristines;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.*;
@@ -432,8 +429,8 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             copyPair.dstParent = new File(SVNPathUtil.validateFilePath(SVNFileUtil.getParentFile(copyPair.dst).getAbsolutePath()));
             copyPair.baseName = SVNFileUtil.getFileName(copyPair.dst);
 
-            final SVNFileType dstParentType = SVNFileType.getType(copyPair.dstParent);
-            if (makeParents && (dstParentType == SVNFileType.NONE || getOperation().isVirtual())) {
+            SVNNodeKind dstParentKind = readKind(copyPair.dstParent, false, true);
+            if (makeParents && (dstParentKind == SVNNodeKind.NONE || getOperation().isVirtual())) {
                 SVNFileUtil.ensureDirectoryExists(copyPair.dstParent);
                 
                 SvnScheduleForAddition add = getOperation().getOperationFactory().createScheduleForAddition();
@@ -447,16 +444,21 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                 try {
                     add.run();
                 } catch (SVNException e) {
-                    if (dstParentType == SVNFileType.NONE) {
+                    if (dstParentKind == SVNNodeKind.NONE) {
                         SVNFileUtil.deleteAll(copyPair.dstParent, true);
                     }
                     throw e;
                 }
-            } else if (dstParentType != SVNFileType.DIRECTORY) {
+            } else if (dstParentKind != SVNNodeKind.DIR) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "Path ''{0}'' is not a directory", copyPair.dstParent);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
+    }
+
+    private SVNNodeKind readKind(File path, boolean showDeleted, boolean showHidden) throws SVNException {
+        SVNNodeKind kind = getWcContext().getDb().readKind(path, true, showDeleted, showHidden);
+        return kind == SVNNodeKind.UNKNOWN ? SVNNodeKind.NONE : kind;
     }
 
     private boolean verifyPaths(SVNFileType srcType, SVNFileType dstType, SvnCopyPair copyPair, int copyPairsCount, boolean move) throws SVNException {

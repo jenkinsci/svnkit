@@ -365,6 +365,43 @@ public class CopyTest {
         }
      }
 
+    @Test
+    public void testCopyIntoUnversionedDirectory() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCopyIntoUnversionedDirectory", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addDirectory("directory/subdirectory");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File subdirectory = workingCopy.getFile("directory/subdirectory");
+            final File unversioned = workingCopy.getFile("unversioned");
+            final File unversionedTarget = new File(unversioned, "subdirectory");
+
+            SVNFileUtil.ensureDirectoryExists(unversioned);
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.setMakeParents(true);
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(subdirectory), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(unversionedTarget));
+            copy.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
+            Assert.assertEquals(SVNStatusType.STATUS_ADDED, statuses.get(unversioned).getNodeStatus());
+            Assert.assertFalse(statuses.get(unversioned).isCopied());
+            Assert.assertEquals(SVNStatusType.STATUS_ADDED, statuses.get(unversionedTarget).getNodeStatus());
+            Assert.assertTrue(statuses.get(unversionedTarget).isCopied());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertNoRepositoryPathStartsWithSlash(SvnOperationFactory svnOperationFactory, File workingCopyDirectory) throws SVNException {
         final SVNWCContext context = new SVNWCContext(ISVNWCDb.SVNWCDbOpenMode.ReadOnly, svnOperationFactory.getOptions(), false, false, svnOperationFactory.getEventHandler());
         try {
