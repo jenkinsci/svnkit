@@ -1,5 +1,10 @@
 == version 1.7.9 ==
 
++ SSH agent support added via JSCH library.
++ Minor stability improvements and bugfixes. 
+
+== version 1.7.9 ==
+
 + SSL support improvements.
 + SqlJet library 1.1.7 is used.
 + Other minor stability improvements and bugfixes. 
