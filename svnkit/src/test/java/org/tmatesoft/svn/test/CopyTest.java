@@ -439,6 +439,92 @@ public class CopyTest {
         }
     }
 
+    @Test
+    public void testMarkerFilesNotCopied() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testMarkerFilesNotCopied", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addDirectory("directory");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.addFile("directory/file", "another contents".getBytes());
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+            final File directory = workingCopy.getFile("directory");
+            final File targetDirectory = workingCopy.getFile("targetDirectory");
+            final File file = workingCopy.getFile("directory/file");
+            TestUtil.writeFileContentsString(file, "contents");
+            workingCopy.add(file);
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(directory), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(targetDirectory));
+            copy.run();
+
+            final File mineCopiedFile = new File(targetDirectory, "file.mine");
+            File r0CopiedFile = new File(targetDirectory, "file.r0");
+            File r2CopiedFile = new File(targetDirectory, "file.r2");
+            Assert.assertFalse(mineCopiedFile.exists());
+            Assert.assertFalse(r0CopiedFile.exists());
+            Assert.assertFalse(r2CopiedFile.exists());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testCopyOverExcludedDirectoryShouldFail() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCopyOverExcludedDirectoryShouldFail", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addDirectory("sourceDirectory");
+            commitBuilder.addDirectory("targetDirectory");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File targetDirectory = workingCopy.getFile("targetDirectory");
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setDepthIsSticky(true);
+            update.setDepth(SVNDepth.EXCLUDE);
+            update.setSingleTarget(SvnTarget.fromFile(targetDirectory));
+            update.run();
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromURL(url.appendPath("sourceDirectory", false)), SVNRevision.HEAD));
+            copy.setSingleTarget(SvnTarget.fromFile(targetDirectory));
+            try {
+                copy.run();
+                Assert.fail("An exception should be thrown");
+            } catch (SVNException e) {
+                Assert.assertEquals(SVNErrorCode.WC_OBSTRUCTED_UPDATE, e.getErrorMessage().getErrorCode());
+                Assert.assertTrue(e.getMessage().contains("exists, but is excluded"));
+            }
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertNoRepositoryPathStartsWithSlash(SvnOperationFactory svnOperationFactory, File workingCopyDirectory) throws SVNException {
         final SVNWCContext context = new SVNWCContext(ISVNWCDb.SVNWCDbOpenMode.ReadOnly, svnOperationFactory.getOptions(), false, false, svnOperationFactory.getEventHandler());
         try {

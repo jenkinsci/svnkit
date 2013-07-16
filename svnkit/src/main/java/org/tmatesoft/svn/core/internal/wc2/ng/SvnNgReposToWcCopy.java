@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbCopy;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.LocationsInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RevisionsPair;
@@ -285,31 +286,60 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
     
     private Void copy(Collection<SvnCopyPair> copyPairs, File topDst, boolean ignoreExternals, SVNRepository repository) throws SVNException {
         for (SvnCopyPair pair : copyPairs) {
-            SVNNodeKind dstKind  = getWcContext().readKind(pair.dst, false);
-            if (dstKind == SVNNodeKind.NONE) {
-                continue;
-            }
-            Structure<NodeInfo> nodeInfo = getWcContext().getDb().readInfo(pair.dst, NodeInfo.status);
-            ISVNWCDb.SVNWCDbStatus status = nodeInfo.get(NodeInfo.status);
-            nodeInfo.release();
-            if (status == SVNWCDbStatus.Excluded) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "''{0}'' is already under version control",
-                        pair.dst);
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-            if (status == SVNWCDbStatus.ServerExcluded) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "''{0}'' is already under version control",
-                        pair.dst);
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-            if (dstKind != SVNNodeKind.DIR) {
-                if ((status != SVNWCDbStatus.Deleted) && (status != SVNWCDbStatus.NotPresent)) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Entry for ''{0}'' exists (though the working file is missing)",
-                            pair.dst);
-                    SVNErrorManager.error(err, SVNLogType.WC);
+            SVNNodeKind dstKind  = SvnWcDbCopy.readKind(getWcContext().getDb(), pair.dst, false, true);
+            if (dstKind != SVNNodeKind.NONE) {
+                SVNWCContext.NodePresence nodePresence = getWcContext().getNodePresence(pair.dst, false);
+                boolean isExcluded = nodePresence.isExcluded;
+                boolean isServerExcluded = nodePresence.isServerExcluded;
+
+                if (isExcluded || isServerExcluded) {
+                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Path ''{0}'' exists, but is excluded", pair.dst);
+                    SVNErrorManager.error(errorMessage, SVNLogType.WC);
+                } else {
+                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "Path ''{0}'' already exists", pair.dst);
+                    SVNErrorManager.error(errorMessage, SVNLogType.WC);
                 }
             }
-            
+            dstKind = SVNFileType.getNodeKind(SVNFileType.getType(pair.dst));
+
+            if (dstKind != SVNNodeKind.NONE) {
+                if (getOperation().isMove() && copyPairs.size() == 1 && SVNFileUtil.getParentFile(pair.sourceFile).equals(SVNFileUtil.getParentFile(pair.dst))) {
+                    try {
+                        boolean caseRenamed = pair.sourceFile.getCanonicalPath().equals(pair.dst.getCanonicalPath());
+                        if (caseRenamed) {
+                            continue;
+                        }
+                    } catch (IOException e) {
+                        SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e);
+                        SVNErrorManager.error(errorMessage, SVNLogType.WC);
+                    }
+                }
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "Path ''{0}'' already exists as unversioned node", pair.dst);
+                SVNErrorManager.error(errorMessage, SVNLogType.WC);
+            }
+
+            File dstParentAbsPath = SVNFileUtil.getParentFile(pair.dst);
+            SVNNodeKind dstParentKind = SvnWcDbCopy.readKind(getWcContext().getDb(), dstParentAbsPath, false, true);
+
+            if (getOperation().isMakeParents() && dstParentKind == SVNNodeKind.NONE) {
+                SvnScheduleForAddition scheduleForAddition = getOperation().getOperationFactory().createScheduleForAddition();
+                scheduleForAddition.setMkDir(true);
+
+                SvnNgAdd svnNgAdd = new SvnNgAdd();
+                svnNgAdd.setWcContext(getWcContext());
+                svnNgAdd.setOperation(scheduleForAddition);
+                svnNgAdd.addFromDisk(dstParentAbsPath, null, true);
+            } else if (dstParentKind != SVNNodeKind.DIR) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "Path ''{0}'' is not a directory", dstParentAbsPath);
+                SVNErrorManager.error(errorMessage, SVNLogType.WC);
+            }
+
+            dstParentKind = SVNFileType.getNodeKind(SVNFileType.getType(dstParentAbsPath));
+
+            if (dstParentKind != SVNNodeKind.DIR) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_MISSING, "Path ''{0}'' is not a directory", dstParentAbsPath);
+                SVNErrorManager.error(errorMessage, SVNLogType.WC);
+            }
         }
         boolean sameRepositories = false;
         try {

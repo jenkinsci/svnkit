@@ -415,7 +415,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
 
     private void verifyPaths(Collection<SvnCopyPair> copyPairs, boolean makeParents, boolean move) throws SVNException {
         for (SvnCopyPair copyPair : copyPairs) {
-            SVNNodeKind dstKind = readKind(copyPair.dst, false, true);
+            SVNNodeKind dstKind = SvnWcDbCopy.readKind(getWcContext().getDb(), copyPair.dst, false, true);
             if (dstKind != SVNNodeKind.NONE) {
                 SVNWCContext.NodePresence nodePresence = getWcContext().getNodePresence(copyPair.dst, false);
                 if (nodePresence.isExcluded || nodePresence.isServerExcluded) {
@@ -441,7 +441,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             copyPair.dstParent = new File(SVNPathUtil.validateFilePath(SVNFileUtil.getParentFile(copyPair.dst).getAbsolutePath()));
             copyPair.baseName = SVNFileUtil.getFileName(copyPair.dst);
 
-            SVNNodeKind dstParentKind = readKind(copyPair.dstParent, false, true);
+            SVNNodeKind dstParentKind = SvnWcDbCopy.readKind(getWcContext().getDb(), copyPair.dstParent, false, true);
             if (makeParents && (dstParentKind == SVNNodeKind.NONE || getOperation().isVirtual())) {
                 SVNFileUtil.ensureDirectoryExists(copyPair.dstParent);
                 
@@ -473,11 +473,6 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
-    }
-
-    private SVNNodeKind readKind(File path, boolean showDeleted, boolean showHidden) throws SVNException {
-        SVNNodeKind kind = getWcContext().getDb().readKind(path, true, showDeleted, showHidden);
-        return kind == SVNNodeKind.UNKNOWN ? SVNNodeKind.NONE : kind;
     }
 
     private boolean verifyPaths(SVNFileType srcType, SVNFileType dstType, SvnCopyPair copyPair, int copyPairsCount, boolean move) throws SVNException {

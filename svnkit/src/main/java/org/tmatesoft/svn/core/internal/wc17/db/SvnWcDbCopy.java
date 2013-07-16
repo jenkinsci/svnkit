@@ -12,7 +12,6 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
@@ -24,7 +23,6 @@ import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectMovedTo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -35,7 +33,7 @@ import java.util.*;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.*;
 
 public class SvnWcDbCopy extends SvnWcDbShared {
-    
+
     private enum CopyInfo {
         copyFromId, 
         copyFromRelpath,
@@ -326,6 +324,11 @@ public class SvnWcDbCopy extends SvnWcDbShared {
             }
         }
         
+    }
+
+    public static SVNNodeKind readKind(ISVNWCDb db, File path, boolean showDeleted, boolean showHidden) throws SVNException {
+        SVNNodeKind kind = db.readKind(path, true, showDeleted, showHidden);
+        return kind == SVNNodeKind.UNKNOWN ? SVNNodeKind.NONE : kind;
     }
 
     private static void doCopy(SVNWCDbDir srcPdh, File localSrcRelpath, SVNWCDbDir dstPdh, File localDstRelpath, File dstOpRootRelPath, boolean isMove, SVNSkel workItems) throws SVNException {

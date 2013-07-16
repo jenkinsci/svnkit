@@ -15,7 +15,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 public class SVNWCDbSelectConflictVictims extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.ACTUAL_NODE__Fields> {
 
     public SVNWCDbSelectConflictVictims(SVNSqlJetDb sDb) throws SVNException {
-        super(sDb, SVNWCDbSchema.ACTUAL_NODE);
+        super(sDb, SVNWCDbSchema.ACTUAL_NODE, SVNWCDbSchema.ACTUAL_NODE__Indices.I_ACTUAL_PARENT);
     }
 
     @Override
@@ -26,7 +26,7 @@ public class SVNWCDbSelectConflictVictims extends SVNSqlJetSelectFieldsStatement
 
     @Override
     protected boolean isFilterPassed() throws SVNException {
-        return getColumnBlob(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data) != null;
+        return !isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data);
     }
 
     @Override
