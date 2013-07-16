@@ -525,7 +525,14 @@ public class SVNStatusEditor17 {
             }            
             
         }
-        final List<Structure<InheritedProperties>> inheritedProps = SvnWcDbProperties.readInheritedProperties(root, localRelPath, SVNProperty.INHERITABLE_IGNORES);
+        List<Structure<InheritedProperties>> inheritedProps = null;
+        try {
+            inheritedProps = SvnWcDbProperties.readInheritedProperties(root, localRelPath, SVNProperty.INHERITABLE_IGNORES);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_UNEXPECTED_STATUS) {
+                return patterns;
+            }
+        }
         for (Structure<InheritedProperties> element : inheritedProps) {
             final SVNProperties inherited = element.get(InheritedProperties.properties);
             SvnNgPropertiesManager.splitAndAppend(patterns, inherited.getStringValue(SVNProperty.INHERITABLE_IGNORES));
