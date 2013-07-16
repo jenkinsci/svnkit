@@ -14,6 +14,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatusEditor17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
@@ -90,6 +91,16 @@ public class SvnNgCommitUtil {
             File targetPath = SVNFileUtil.createFilePath(baseDirPath, target);
             SVNNodeKind kind = context.readKind(targetPath, false);
             if (kind == SVNNodeKind.NONE) {
+                try {
+                    Structure<NodeInfo> nodeInfoStructure = context.getDb().readInfo(targetPath, NodeInfo.status);
+                } catch (SVNException e) {
+                    if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                        SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "''{0}'' is not under version control", targetPath);
+                        SVNErrorManager.error(errorMessage, SVNLogType.WC);
+                    } else {
+                        throw e;
+                    }
+                }
                 SVNTreeConflictDescription tc = context.getTreeConflict(targetPath);
                 if (tc != null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT,
