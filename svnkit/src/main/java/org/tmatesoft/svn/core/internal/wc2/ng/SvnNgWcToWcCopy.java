@@ -587,12 +587,48 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         }
         Structure<NodeInfo> nodeInfo = context.getDb().readInfo(source, NodeInfo.kind, NodeInfo.conflicted);
         if (nodeInfo.get(NodeInfo.kind) == SVNWCDbKind.Dir) {
-            // TODO remove conflict markers
+            removeAllConflictMarkers(context.getDb(), source, dst);
         }
         if (nodeInfo.is(NodeInfo.conflicted)) {
-            // TODO remove conflict markers
+            removeAllConflictMarkers(context.getDb(), source, dst);
         }
         SvnNgRemove.delete(getWcContext(), source, moveDegradedToCopy ? null : dst, true, false, this);
+    }
+
+    private void removeAllConflictMarkers(ISVNWCDb db, File srcDirAbsPath, File wcDirAbsPath) throws SVNException {
+        Map<String, ISVNWCDb.SVNWCDbInfo> children = new HashMap<String, ISVNWCDb.SVNWCDbInfo>();
+        Set<String> conflicts = new HashSet<String>();
+        db.readChildren(srcDirAbsPath, children, conflicts);
+
+        for (Map.Entry<String, ISVNWCDb.SVNWCDbInfo> entry : children.entrySet()) {
+            String name = entry.getKey();
+            ISVNWCDb.SVNWCDbInfo info = entry.getValue();
+
+            if (info.conflicted) {
+                removeNodeConflictMarkers(db, SVNFileUtil.createFilePath(srcDirAbsPath, name), SVNFileUtil.createFilePath(wcDirAbsPath, name));
+            }
+            if (info.kind == SVNWCDbKind.Dir) {
+                removeAllConflictMarkers(db, SVNFileUtil.createFilePath(srcDirAbsPath, name), SVNFileUtil.createFilePath(wcDirAbsPath, name));
+            }
+
+        }
+    }
+
+    private void removeNodeConflictMarkers(ISVNWCDb db, File srcAbsPath, File nodeAbsPath) throws SVNException {
+        SVNSkel conflict = SvnWcDbConflicts.readConflict((SVNWCDb) db, srcAbsPath);
+        if (conflict != null) {
+            File srcDir = SVNFileUtil.getParentFile(srcAbsPath);
+            File dstDir = SVNFileUtil.getParentFile(nodeAbsPath);
+
+            List<File> markers = SvnWcDbConflicts.readConflictMarkers((SVNWCDb) db, srcAbsPath, conflict);
+            for (File marker : markers) {
+                File childRelPath = SVNFileUtil.skipAncestor(srcDir, marker);
+                if (childRelPath != null) {
+                    File childAbsPath = SVNFileUtil.createFilePath(dstDir, childRelPath);
+                    SVNFileUtil.deleteFile(childAbsPath);
+                }
+            }
+        }
     }
 
     protected boolean copy(SVNWCContext context, File source, File dst, boolean metadataOnly) throws SVNException {
