@@ -898,9 +898,9 @@ public class SvnNgUpgradeSDb {
                 sDb.getDb().alterTable("ALTER TABLE NODES ADD COLUMN inherited_props BLOB;");
 
                 sDb.getDb().dropIndex("I_NODES_PARENT");
-                sDb.getDb().createIndex("CREATE UNIQUE INDEX I_NODESL_PARENT ON NODES (wc_id, parent_relpaht, local_relpath, op_depth);");
+                sDb.getDb().createIndex("CREATE UNIQUE INDEX I_NODESL_PARENT ON NODES (wc_id, parent_relpath, local_relpath, op_depth);");
                 sDb.getDb().dropIndex("I_ACTUAL_PARENT");
-                sDb.getDb().createIndex("CREATE UNIQUE INDEX I_ACTUAL_PARENT ON ACTUAL_NODE (wc_id, parent_relpaht, local_relpath);");
+                sDb.getDb().createIndex("CREATE UNIQUE INDEX I_ACTUAL_PARENT ON ACTUAL_NODE (wc_id, parent_relpath, local_relpath);");
             } catch (SqlJetException e) {
                 SVNSqlJetDb.createSqlJetError(e);
             }
