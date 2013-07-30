@@ -49,6 +49,7 @@ jar {
         'Bundle-ActivationPolicy' : 'lazy',
         'Eclipse-BundleShape' : 'jar',
         'Require-Bundle': 'net.java.dev.jna;bundle-version="[3.2.7,4.0.0)";resolution:=optional,' +
+            'com.trilead.ssh2;bundle-version="[1.0.0,2.0.0)",' +        
 			'org.tmatesoft.sqljet;bundle-version="[1.0.5,2.0.0)",' +
 			'org.eclipse.core.runtime;bundle-version="[3.0.0,4.0.0)"'
 
