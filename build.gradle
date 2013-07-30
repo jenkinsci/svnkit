@@ -1,10 +1,10 @@
 group = 'org.tmatesoft.svnkit'
-version = '1.7.10'
+version = '1.7.11'
 
 project.ext {
    release = false
    target = '1.5'
-   compatibleSvnVersion = '1.7.9'
+   compatibleSvnVersion = '1.7.11'
 }
 
 apply from: 'build.pom.gradle'
@@ -103,9 +103,9 @@ project(':svnkit') {
 project(':svnkit-javahl16') {
     dependencies {
         compile project(path: ':svnkit')
-        compile 'org.apache.subversion:svn-javahl-api:1.7.9'
+        compile 'org.apache.subversion:svn-javahl-api:1.7.11'
 
-        testCompile 'org.apache.subversion:svn-javahl-tests:1.7.9'
+        testCompile 'org.apache.subversion:svn-javahl-tests:1.7.11'
     }
     artifacts { maven jar, sourcesJar, javadocJar }
 }
