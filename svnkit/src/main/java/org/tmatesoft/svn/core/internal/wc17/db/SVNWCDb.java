@@ -391,6 +391,7 @@ public class SVNWCDb implements ISVNWCDb {
         public File localRelPath;
         public long deleteDepth;
         public ISVNEventHandler eventHandler;
+        public Collection<File> paths;
         
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             WCDbInfo info = readInfo(root, localRelPath, InfoField.status, InfoField.opRoot);
@@ -428,27 +429,14 @@ public class SVNWCDb implements ISVNWCDb {
                 addWork = true;
                 selectDepth = readOpDepth(root, localRelPath);
             } 
-            // collect files to delete.
-            stmt = new SVNWCDbCreateSchema(root.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.DELETE_LIST, -1);
-            try {
-                stmt.done();
-            } finally {
-                stmt.reset();
-            }
-            
-            if (eventHandler != null) {
-                stmt = new SVNWCDbInsertDeleteList(root.getSDb());
-                try {
-                    stmt.bindf("isi", root.getWcId(), localRelPath, selectDepth);
-                    stmt.done();
-                } finally {
-                    stmt.reset();
-                }
-            }
 
             SVNSqlJetStatement deleteStmt = root.getSDb().getStatement(SVNWCDbStatements.DELETE_NODES_RECURSIVE);
             try {
-                deleteStmt.bindf("isi", root.getWcId(), localRelPath, deleteDepth);
+                deleteStmt.bindf("isii", root.getWcId(), localRelPath, deleteDepth, selectDepth);
+                if (eventHandler != null) {
+                    paths = new LinkedHashSet<File>();
+                    ((SVNWCDbDeleteNodesRecursive) deleteStmt).setCollectPaths(paths);
+                }
                 deleteStmt.done();
             } finally {
                deleteStmt.reset();
@@ -1853,23 +1841,11 @@ public class SVNWCDb implements ISVNWCDb {
             } catch (SqlJetException e) {
                 SVNSqlJetDb.createSqlJetError(e);
             }
-            if (notifyHandler != null && pdh.getWCRoot().getSDb().getTemporaryDb().hasTable(SVNWCDbSchema.DELETE_LIST.toString())) {
-                SVNSqlJetStatement selectDeleteList = new SVNSqlJetSelectStatement(pdh.getWCRoot().getSDb().getTemporaryDb(), SVNWCDbSchema.DELETE_LIST);
-                try {
-                    while(selectDeleteList.next()) {
-                        File path = getColumnPath(selectDeleteList, DELETE_LIST__Fields.local_relpath);
-                        path = pdh.getWCRoot().getAbsPath(path);
-                        notifyHandler.handleEvent(SVNEventFactory.createSVNEvent(path, SVNNodeKind.NONE, null, -1, SVNEventAction.DELETE, 
-                                SVNEventAction.DELETE, null, null, 1, 1), -1);
-                    }
-                } finally {
-                    selectDeleteList.reset();
-                }
-                SVNSqlJetStatement dropList = new SVNWCDbCreateSchema(pdh.getWCRoot().getSDb().getTemporaryDb(), SVNWCDbCreateSchema.DROP_DELETE_LIST, -1);
-                try {
-                    dropList.done();
-                } finally {
-                    dropList.reset();
+            if (notifyHandler != null && deleteTxn.paths != null) {
+                for (File path : deleteTxn.paths) {
+                    path = pdh.getWCRoot().getAbsPath(path);
+                    notifyHandler.handleEvent(SVNEventFactory.createSVNEvent(path, SVNNodeKind.NONE, null, -1, SVNEventAction.DELETE, 
+                            SVNEventAction.DELETE, null, null, 1, 1), -1);
                 }
             }
         } catch (SVNException e) {
