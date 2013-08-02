@@ -724,10 +724,12 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
     }
     
     private boolean singleFileMergeNotify(File path, SVNEventAction action, SVNStatusType contents, SVNStatusType props, SVNEvent header, boolean headerSent) throws SVNException {
-        SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.FILE, null, -1, contents, props,SVNStatusType.LOCK_INAPPLICABLE, action, null, null, null, null);
+        SVNEventAction expectedAction = SVNEventAction.SKIP;
         if (contents == SVNStatusType.MISSING) {
+            expectedAction = action;
             action = SVNEventAction.SKIP;
         }
+        SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.FILE, null, -1, contents, props,SVNStatusType.LOCK_INAPPLICABLE, action, expectedAction, null, null, null);
         if (isOperativeNotification(event) && header != null && !headerSent) {
             handleEvent(header, -1);
             headerSent = true;

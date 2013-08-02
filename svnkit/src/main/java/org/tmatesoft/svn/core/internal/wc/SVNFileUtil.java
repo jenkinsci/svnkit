@@ -2038,7 +2038,7 @@ public class SVNFileUtil {
         return outBuf.flip().toString();
     }
 
-    private static String getCurrentUser() throws SVNException {
+    public static String getCurrentUser() throws SVNException {
         if (isWindows || isOpenVMS) {
             return System.getProperty("user.name");
         }
@@ -2053,7 +2053,7 @@ public class SVNFileUtil {
         return ourUserID;
     }
 
-    private static String getCurrentGroup() throws SVNException {
+    public static String getCurrentGroup() throws SVNException {
         if (isWindows || isOpenVMS) {
             return System.getProperty("user.name");
         }

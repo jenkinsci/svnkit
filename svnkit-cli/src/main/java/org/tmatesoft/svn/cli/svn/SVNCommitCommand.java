@@ -101,6 +101,7 @@ public class SVNCommitCommand extends SVNCommand {
         client.setCommitHandler(getSVNEnvironment());
         boolean keepLocks = getSVNEnvironment().getOptions().isKeepLocks();
         SVNCommitInfo info = null;
+        client.setFailOnMultipleRepositories(true);
         try {
             info = client.doCommit(files, keepLocks, getSVNEnvironment().getMessage(),
                     getSVNEnvironment().getRevisionProperties(),
@@ -113,6 +114,8 @@ public class SVNCommitCommand extends SVNCommand {
                 SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             throw svne;
+        } finally {
+            client.setFailOnMultipleRepositories(false);
         }
 
         if (!getSVNEnvironment().isQuiet()) {

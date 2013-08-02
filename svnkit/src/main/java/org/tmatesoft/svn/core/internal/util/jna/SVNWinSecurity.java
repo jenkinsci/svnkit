@@ -93,10 +93,11 @@ public class SVNWinSecurity {
             newContext = pContext;
         }
         
+        final int bufferSize = 8192;
         SecBuffer outSecBuffer = new SecBuffer();
-        outSecBuffer.cbBuffer = new NativeLong(512);
+        outSecBuffer.cbBuffer = new NativeLong(bufferSize);
         outSecBuffer.BufferType = new NativeLong(ISVNSecurityLibrary.SECBUFFER_TOKEN);
-        outSecBuffer.pvBuffer = new Memory(512);
+        outSecBuffer.pvBuffer = new Memory(bufferSize);
         outSecBuffer.write();
         
         SecBufferDesc outBufferDescription = new SecBufferDesc();
@@ -136,11 +137,11 @@ public class SVNWinSecurity {
                         new NativeLong(0), 
                         new NativeLong(ISVNSecurityLibrary.SECURITY_NATIVE_DREP), 
                         lastToken != null ? inBufferDescription.getPointer() : Pointer.NULL, 
-                                new NativeLong(0), 
-                                newContext.getPointer(), 
-                                outBufferDescription.getPointer(), 
-                                contextAttributes, 
-                                ltime.getPointer());
+                        new NativeLong(0), 
+                        newContext.getPointer(), 
+                        outBufferDescription.getPointer(), 
+                        contextAttributes, 
+                        ltime.getPointer());
 
         if (securityStatus < 0) {
             endSequence(params);

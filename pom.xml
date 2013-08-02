@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.jenkins-ci.svnkit</groupId>
   <artifactId>svnkit</artifactId>
-  <version>1.7.6-jenkins-2</version>
+  <version>1.7.10-jenkins-1</version>
   <name>SVNKit</name>
   <description>A pure Java Subversion library, formerly known as JavaSVN</description>
   <url>http://svnkit.com/</url>
@@ -65,20 +65,32 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.jvnet.hudson</groupId>
+      <groupId>org.jenkins-ci</groupId>
       <artifactId>trilead-ssh2</artifactId>
-      <version>build212-hudson-6</version>
+      <version>build217-jenkins-1</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>com.jcraft</groupId>
+      <artifactId>jsch.agentproxy.connector-factory</artifactId>
+      <version>0.0.6</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>com.jcraft</groupId>
+      <artifactId>jsch.agentproxy.svnkit-trilead-ssh2</artifactId>
+      <version>0.0.6</version>
       <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.tmatesoft.sqljet</groupId>
       <artifactId>sqljet</artifactId>
-      <version>1.1.0</version>
+      <version>1.1.7</version>
     </dependency>
     <dependency>
       <groupId>de.regnis.q.sequence</groupId>
       <artifactId>sequence-library</artifactId>
-      <version>1.0.1</version>
+      <version>1.0.2</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>

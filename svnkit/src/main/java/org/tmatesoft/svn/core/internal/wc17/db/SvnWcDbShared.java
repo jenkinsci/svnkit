@@ -58,6 +58,11 @@ public class SvnWcDbShared {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", absolutePath);
         SVNErrorManager.error(err, SVNLogType.WC);
     }
+
+    protected static void nodeIsNotInstallable(File absolutePath) throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' is not installable.", absolutePath);
+        SVNErrorManager.error(err, SVNLogType.WC);
+    }
     
     protected static boolean doesNodeExists(SVNWCDbRoot wcDbRoot, File relpath) throws SVNException {
         SVNSqlJetStatement stmt = null;

@@ -474,7 +474,7 @@ public class SvnWcDbCopy extends SvnWcDbShared {
                 
                 if (changelist != null || properties != null) {
                     reset(stmt);
-                    stmt = srcPdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.INSERT_ACTUAL_NODE);
+                    stmt = dstPdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.INSERT_ACTUAL_NODE);
                     try {
                         stmt.bindf("issbssssss",
                                 dstPdh.getWCRoot().getWcId(),

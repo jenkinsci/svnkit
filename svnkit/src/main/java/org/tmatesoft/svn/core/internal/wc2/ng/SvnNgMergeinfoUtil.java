@@ -403,7 +403,7 @@ public class SvnNgMergeinfoUtil {
             if (path.startsWith("/")) {
                 path = path.substring(1);
             }
-            String prefixedPath = SVNFileUtil.createFilePath(prefix, path).getPath();
+            String prefixedPath = SVNFileUtil.getFilePath(SVNFileUtil.createFilePath(prefix, path));
             result.put(prefixedPath, mi);
         }
         return result;

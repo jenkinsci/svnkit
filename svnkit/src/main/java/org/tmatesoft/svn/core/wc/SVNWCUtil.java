@@ -178,7 +178,7 @@ public class SVNWCUtil {
      */
     public static ISVNAuthenticationManager createDefaultAuthenticationManager(File configDir, String userName, String password, File privateKey, String passphrase, boolean storeAuth) {
         // check whether we are running inside Eclipse.
-        if (isEclipse()) {
+        if (isEclipseKeyringSupported()) {
             // use reflection to allow compilation when there is no Eclipse.
             try {
                 ClassLoader loader = SVNWCUtil.class.getClassLoader();
@@ -320,24 +320,70 @@ public class SVNWCUtil {
         return SvnOperationFactory.getWorkingCopyRoot(versionedDir, stopOnExternals);
     }
     
-    private static boolean isEclipse() {
+    public static synchronized boolean isEclipseKeyringSupported() {
         if (ourIsEclipse == null) {
+            ourIsEclipse = Boolean.FALSE;
             try {
                 ClassLoader loader = SVNWCUtil.class.getClassLoader();
                 if (loader == null) {
                     loader = ClassLoader.getSystemClassLoader();
                 }
-                Class<?> platform = loader.loadClass("org.eclipse.core.runtime.Platform");
-                Method isRunning = platform.getMethod("isRunning", new Class[0]);
-                Object result = isRunning.invoke(null, new Object[0]);
+                final Class<?> platform = loader.loadClass("org.eclipse.core.runtime.Platform");
+                final Method isRunning = platform.getMethod("isRunning", new Class[0]);
+                final Object result = isRunning.invoke(null, new Object[0]);
                 if (result != null && Boolean.TRUE.equals(result)) {
-                    ourIsEclipse = Boolean.TRUE;
-                    return true;
+                    final EclipseVersion authBundleVersion = getBundle("org.eclipse.core.runtime.compatibility.auth");
+                    boolean supportsKeyring = false;
+                    if (authBundleVersion != null && authBundleVersion.major >= 3) {
+                        supportsKeyring = true;
+                    } else {
+                        final EclipseVersion runtimeBundleVersion = getBundle("org.eclipse.core.runtime");
+                        supportsKeyring = runtimeBundleVersion.major < 3 || (runtimeBundleVersion.major == 3 && runtimeBundleVersion.minor <= 2);
+                    }
+                    ourIsEclipse = supportsKeyring ? Boolean.TRUE : Boolean.FALSE;
                 }
             } catch (Throwable th) {
             }
-            ourIsEclipse = Boolean.FALSE;
         }
         return ourIsEclipse.booleanValue();
+    }
+    
+    private static EclipseVersion getBundle(String bundleName) throws Throwable {
+        ClassLoader loader = SVNWCUtil.class.getClassLoader();
+        if (loader == null) {
+            loader = ClassLoader.getSystemClassLoader();
+        }
+        final Class<?> platform = loader.loadClass("org.eclipse.core.runtime.Platform");
+        if (platform == null) {
+            return null;
+        }
+        final Method getBundle = platform.getMethod("getBundle", new Class[] {String.class});
+        final Object bundle = getBundle.invoke(null, new Object[] {bundleName});
+        if (bundle == null) {
+            return null;
+        }
+        final Class<?> bundleClazz = loader.loadClass("org.osgi.framework.Bundle");        
+        final Method getVersion = bundleClazz.getMethod("getVersion", new Class[0]);
+        final Object version = getVersion.invoke(bundle, new Object[0]);
+        if (version == null) {
+            return null;
+        }
+        final Class<?> versionClazz = loader.loadClass("org.osgi.framework.Version");
+        final Method getMajor = versionClazz.getMethod("getMajor", new Class[0]);
+        final Method getMinor = versionClazz.getMethod("getMinor", new Class[0]);
+        
+        final Object major = getMajor.invoke(version, new Object[0]);
+        final Object minor = getMinor.invoke(version, new Object[0]);
+        
+        final EclipseVersion result = new EclipseVersion();
+        result.major = (Integer) major;
+        result.minor = (Integer) minor;
+        return result;
+        
+    }
+    
+    private static class EclipseVersion {
+        int major; 
+        int minor; 
     }
 }

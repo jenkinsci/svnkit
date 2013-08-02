@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.wc17;
 
+import static org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.isAbsolute;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -32,6 +34,7 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.logging.Level;
 
+import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -85,6 +88,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.WalkerChildInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader.InstallInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -112,8 +116,6 @@ import org.tmatesoft.svn.util.SVNLogType;
 import de.regnis.q.sequence.line.QSequenceLineRAByteData;
 import de.regnis.q.sequence.line.QSequenceLineRAData;
 import de.regnis.q.sequence.line.QSequenceLineRAFileData;
-
-import static org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.isAbsolute;
 
 /**
  * @version 1.4
@@ -1520,7 +1522,10 @@ public class SVNWCContext {
         }
         if (lockAnchor) {
             assert (returnLockRoot);
-            File parentAbspath = SVNFileUtil.getFileDir(localAbspath);
+            File parentAbspath = SVNFileUtil.getParentFile(localAbspath);
+            if (parentAbspath == null) {
+                return localAbspath;
+            }
             SVNWCDbKind parentKind = SVNWCDbKind.Unknown;
             try {
                 parentKind = db.readKind(parentAbspath, true);
@@ -3036,7 +3041,7 @@ public class SVNWCContext {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
 
-            if (result.getMergedFile() != null) {
+            if (result.isIsSaveMerged()) {
                 info.workItems = saveMergeResult(targetAbspath, result.getMergedFile() != null ? result.getMergedFile() : resultTarget);
             }
         }
@@ -3494,9 +3499,17 @@ public class SVNWCContext {
             if (tinfo.special) {
                 return;
             }
-            ctx.syncFileFlags(localAbspath);
+            
+            final Structure<InstallInfo> installInfo = SvnWcDbReader.readNodeInstallInfo((SVNWCDb) ctx.getDb(), 
+                    localAbspath, InstallInfo.changedDate, InstallInfo.pristineProps);            
+            final SVNProperties props = installInfo.get(InstallInfo.pristineProps);
+            if (props != null &&
+                    (props.containsName(SVNProperty.EXECUTABLE) ||
+                     props.containsName(SVNProperty.NEEDS_LOCK))) {
+                ctx.syncFileFlags(localAbspath);
+            }
             if (useCommitTimes) {
-                SVNDate changedDate = ctx.getDb().readInfo(localAbspath, InfoField.changedDate).changedDate;
+                final SVNDate changedDate = installInfo.get(InstallInfo.changedDate);
                 if (changedDate != null) {
                     SVNFileUtil.setLastModified(localAbspath, changedDate.getTime());
                 }
@@ -4511,5 +4524,11 @@ public class SVNWCContext {
         DirParsedInfo parseDir = ((SVNWCDb) getDb()).parseDir(path, Mode.ReadWrite);
         SvnWcDbShared.canonicalizeURLs(parseDir.wcDbDir.getWCRoot(), true, externalsStore, omitDefaultPort);
         wqRun(path);
+    }
+
+    public void setSqliteJournalMode(SqlJetPagerJournalMode sqliteJournalMode) {
+        if (this.db != null) {
+            ((SVNWCDb) this.db).setJournalModel(sqliteJournalMode);
+        }
     }
 }

@@ -22,8 +22,8 @@ import java.text.ParseException;
  */
 class HTTPParser {
     
-    private static ThreadLocal ourLocalReadBuffer = new ThreadLocal() {
-        protected Object initialValue() {
+    private static ThreadLocal<byte[]> ourLocalReadBuffer = new ThreadLocal<byte[]>() {
+        protected byte[] initialValue() {
             return new byte[8192];
         }
     };
@@ -52,7 +52,7 @@ class HTTPParser {
         if (length <= 0) {
             return null;
         }
-        byte[] buffer = (byte[]) ourLocalReadBuffer.get();
+        byte[] buffer = ourLocalReadBuffer.get();
         if (length > 0 && buffer[length - 1] == '\n') {
             length--;
             if (length > 0 && buffer[length - 1] == '\r') {
@@ -65,7 +65,7 @@ class HTTPParser {
     private static int readPlainLine(InputStream is) throws IOException {
         int ch;
         int i = 0;
-        byte[] buffer = (byte[]) ourLocalReadBuffer.get();
+        byte[] buffer = ourLocalReadBuffer.get();
         while (i < buffer.length && (ch = is.read()) >= 0) {
             buffer[i] = (byte) (ch & 0xFF);
             if (ch == '\n') {

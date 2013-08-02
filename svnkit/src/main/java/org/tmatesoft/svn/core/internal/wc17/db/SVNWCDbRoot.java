@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -23,7 +24,6 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgUpgradeSDb;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -77,7 +77,11 @@ public class SVNWCDbRoot {
         }
 
         /* If we construct a wcroot, then we better have a format. */
-        assert (format >= 1);
+        /* This is most probably due to a concurrect db access during db creation */
+        if (format < 1) {
+            final SqlJetException busyException = new SqlJetException(SqlJetErrorCode.BUSY);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR), busyException, SVNLogType.WC);
+        }
 
         /* If this working copy is PRE-1.0, then simply bail out. */
         if (format < 4) {

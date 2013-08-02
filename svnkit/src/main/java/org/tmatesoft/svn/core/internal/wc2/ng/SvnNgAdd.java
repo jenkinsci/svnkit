@@ -1,7 +1,10 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -12,7 +15,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
@@ -36,15 +38,50 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition> {
 
-    @Override
-    protected Void run(SVNWCContext context) throws SVNException {
-        for (SvnTarget target : getOperation().getTargets()) {
-            add(target);            
-        }
-        return null;
-    }
+	@Override
+	protected Void run(SVNWCContext context) throws SVNException {
+		final Map<File, List<SvnTarget>> rootToTargets = new HashMap<File, List<SvnTarget>>();
+		for (SvnTarget target : getOperation().getTargets()) {
+		    final File targetFile = target.getFile();
+		    final File root;
+		    final SVNFileType targetType = SVNFileType.getType(target.getFile());
+		    
+		    if (targetType == SVNFileType.FILE || !getWcContext().getDb().isWCRoot(targetFile, true)) {
+	            File parentPath = SVNFileUtil.getParentFile(targetFile);
+	            if (getOperation().isAddParents()) {
+	                parentPath = findExistingParent(parentPath);
+	            }
+	            root = getWcContext().getDb().getWCRoot(parentPath);
+	        } else {
+	            root = targetFile;
+	        }
+		    
+			List<SvnTarget> targets = rootToTargets.get(root);
+			if (targets == null) {
+				targets = new ArrayList<SvnTarget>();
+				rootToTargets.put(root, targets);
+			}
 
-    private void add(SvnTarget target) throws SVNException {
+			targets.add(target);
+		}
+
+		for (File root : rootToTargets.keySet()) {
+			final List<SvnTarget> targets = rootToTargets.get(root);
+			final File lockRoot = getWcContext().acquireWriteLock(root, false, true);
+			try {
+				for (SvnTarget target : targets) {
+					add(target);
+				}
+			}
+			finally {
+				getWcContext().releaseWriteLock(lockRoot);
+			}
+		}
+
+		return null;
+	}
+
+	private void add(SvnTarget target) throws SVNException {
         if (target.isURL()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "''{0}'' is not a local path", target.getURL());
             SVNErrorManager.error(err, SVNLogType.WC);
@@ -70,8 +107,7 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
         } else if (targetType == SVNFileType.NONE && getOperation().isMkDir()) {
             SVNFileUtil.ensureDirectoryExists(path);
         }
-        
-        File lockRoot = getWcContext().acquireWriteLock(existingParent, false, true);
+
         try {
             add(path, parentPath, existingParent);
         } catch (SVNException e) {
@@ -79,8 +115,6 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
                 SVNFileUtil.deleteAll(path, true);
             }
             throw e;
-        } finally {
-            getWcContext().releaseWriteLock(lockRoot);
         }
     }
 
@@ -139,59 +173,38 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
         
     }
 
-    private void addFile(File path) throws SVNException {
-        boolean special = SVNFileType.getType(path) == SVNFileType.SYMLINK;
+    private void addFile(final File path) throws SVNException {
+        final boolean special = SVNFileType.getType(path) == SVNFileType.SYMLINK;
         SVNProperties properties = null;
-        String mimeType = null;
         
         if (!special) {
-            Map<?, ?> autoProps = SVNPropertiesManager.computeAutoProperties(getOperation().getOptions(), path, null);
-            properties = SVNProperties.wrap(autoProps);
-            mimeType = properties.getStringValue(SVNProperty.MIME_TYPE);
+            final Map<?, ?> autoProps = SVNPropertiesManager.computeAutoProperties(getOperation().getOptions(), path, null);
+            if (autoProps != null && !autoProps.isEmpty()) {
+                properties = SVNProperties.wrap(autoProps);
+            }
         } else {
             properties = new SVNProperties();
             properties.put(SVNProperty.SPECIAL, "*");
         }
         addFromDisk(path, false);
         if (properties != null) {
-            for (String propertyName : properties.nameSet()) {
-                SVNPropertyValue value = properties.getSVNPropertyValue(propertyName);
-                if (value != null) {
-                    try {
-                        SvnNgPropertiesManager.setProperty(getWcContext(), path, propertyName, value, SVNDepth.EMPTY, false, null, null);
-                    } catch (SVNException e) {
-                        if (SVNProperty.EOL_STYLE.equals(propertyName) &&
-                                e.getErrorMessage().getErrorCode() == SVNErrorCode.ILLEGAL_TARGET &&
-                                e.getErrorMessage().getMessage().indexOf("newlines") >= 0) {
-                            final ISvnAddParameters addParameters = getOperation().getAddParameters() == null ? 
-                                    ISvnAddParameters.DEFAULT :
-                                    getOperation().getAddParameters();
-                            ISvnAddParameters.Action action = addParameters.onInconsistentEOLs(path);
-                            if (action == ISvnAddParameters.Action.REPORT_ERROR) {
-                                doRevert(path);
-                                throw e;
-                            } else if (action == ISvnAddParameters.Action.ADD_AS_IS) {
-                                SvnNgPropertiesManager.setProperty(getWcContext(), path, propertyName, null, SVNDepth.EMPTY, false, null, null);
-                            } else if (action == ISvnAddParameters.Action.ADD_AS_BINARY) {
-                                SvnNgPropertiesManager.setProperty(getWcContext(), path, propertyName, null, SVNDepth.EMPTY, false, null, null);
-                                mimeType = SVNFileUtil.BINARY_MIME_TYPE;
-                            }
-                        } else {
-                            doRevert(path);
-                            throw e;
-                        }
-                    }
+            final ISvnAddParameters addParameters = getOperation().getAddParameters() == null ?
+                    ISvnAddParameters.DEFAULT :
+                    getOperation().getAddParameters();
+            SvnNgPropertiesManager.setAutoProperties(getWcContext(), path, properties, addParameters, new Runnable() {
+                public void run() {
+                    doRevert(path);
                 }
-            }
-            if (mimeType != null) {
-                SvnNgPropertiesManager.setProperty(getWcContext(), path, SVNProperty.MIME_TYPE, SVNPropertyValue.create(mimeType), SVNDepth.EMPTY, false, null, null);
-            } else {
-                mimeType = properties.getStringValue(SVNProperty.MIME_TYPE);
-            }
+                
+            });
         }
-
-        handleEvent(SVNEventFactory.createSVNEvent(path, SVNNodeKind.FILE, mimeType, -1, SVNEventAction.ADD, 
-                SVNEventAction.ADD, null, null, 1, 1));
+        handleEvent(SVNEventFactory.createSVNEvent(path, 
+                SVNNodeKind.FILE, 
+                properties != null ?
+                properties.getStringValue(SVNProperty.MIME_TYPE) : null, -1, 
+                SVNEventAction.ADD, 
+                SVNEventAction.ADD, 
+                null, null, 1, 1));
     }
 
     private void doRevert(File path) {

@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCConflictDescription17;
@@ -34,6 +35,7 @@ import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
 import org.tmatesoft.svn.core.wc.ISVNDiffStatusHandler;
 import org.tmatesoft.svn.core.wc.ISVNExternalsHandler;
+import org.tmatesoft.svn.core.wc.ISVNFileFilter;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.ISVNPropertyValueProvider;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
@@ -74,6 +76,7 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnWorkingCopyInfo;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnExternalsHandler;
+import org.tmatesoft.svn.core.wc2.hooks.ISvnFileFilter;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnFileListHook;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnPropertyValueProvider;
 
@@ -236,6 +239,8 @@ public class SvnCodec {
         result.setSwitched(status.isSwitched());
         result.setVersioned(status.isVersioned());
         result.setWcLocked(status.isLocked());
+
+        result.setWorkingCopyFormat(status.getWorkingCopyFormat());
         
         try {
             result.setCopyFromUrl(status.getCopyFromURL() != null ? SVNURL.parseURIEncoded(status.getCopyFromURL()) : null);
@@ -368,7 +373,7 @@ public class SvnCodec {
         if (result.getNodeStatus() == SVNStatusType.STATUS_ADDED) {
             result.setPropertiesStatus(SVNStatusType.STATUS_NONE);
         }
-        result.setWorkingCopyFormat(ISVNWCDb.WC_FORMAT_17);
+        result.setWorkingCopyFormat(status.getWorkingCopyFormat());
         
         result.setCopyFromRevision(status.getCopyFromRevision() >= 0 ? SVNRevision.create(status.getCopyFromRevision()) : SVNRevision.UNDEFINED);
         result.setCopyFromURL(status.getCopyFromUrl() != null ? status.getCopyFromUrl().toString() : null);
@@ -638,17 +643,45 @@ public class SvnCodec {
             packet.dispose();
         }
         
+        public SvnCommitPacket getPacket() {
+            return this.packet;
+        }
+        
         public SvnCommit getOperation() {
             return operation;
         }
-        
+
+        @Override
+        public void setCommitItemSkipped(SVNCommitItem item, boolean skipped) {
+            super.setCommitItemSkipped(item, skipped);
+            packet.setItemSkipped(item.getFile(), skipped);
+        }
+
+        @Override
+        public SVNCommitPacket removeSkippedItems() {
+            packet.removeSkippedItems();
+
+            if (this == EMPTY) {
+                return EMPTY;
+            }
+            Collection items = new ArrayList();
+            Map lockTokens = getLockTokens() == null ? null : new SVNHashMap(getLockTokens());
+            SVNCommitItem[] filteredItems = filterSkippedItemsAndLockTokens(items, lockTokens);
+            return new SVNCommitPacketWrapper(getOperation(), packet, filteredItems, lockTokens);
+        }
     }
     
     public static SVNCommitPacket commitPacket(final SvnCommit operation, final SvnCommitPacket packet) {
+        Collection<SVNCommitItem> skippedItems = new ArrayList<SVNCommitItem>();
         Collection<SVNCommitItem> oldItems = new ArrayList<SVNCommitItem>();
         for (SVNURL reposRoot : packet.getRepositoryRoots()) {
             for (SvnCommitItem item : packet.getItems(reposRoot)) {
-                oldItems.add(commitItem(item));
+                SVNCommitItem oldItem = commitItem(item);
+                oldItems.add(oldItem);
+
+                if (packet.isItemSkipped(item.getPath())) {
+                    skippedItems.add(oldItem);
+                }
             }
         }
         final SVNCommitItem[] allItems = oldItems.toArray(new SVNCommitItem[oldItems.size()]);
@@ -660,8 +693,12 @@ public class SvnCodec {
                 oldLockTokens.put(url.toString(), token);
             }
         }
-        
-        return new SVNCommitPacketWrapper(operation, packet, allItems, oldLockTokens);
+
+        final SVNCommitPacketWrapper packetWrapper = new SVNCommitPacketWrapper(operation, packet, allItems, oldLockTokens);
+        for (SVNCommitItem skippedItem : skippedItems) {
+            packetWrapper.setCommitItemSkipped(skippedItem, true);
+        }
+        return packetWrapper;
     }
 
     public static SvnCommitPacket commitPacket(ISvnCommitRunner runner, SVNCommitPacket oldPacket) {
@@ -718,13 +755,16 @@ public class SvnCodec {
                 flags |= SvnCommitItem.PROPS_MODIFIED;
             }
             try {
-                packet.addItem(item.getFile(), 
+                SvnCommitItem newItem = packet.addItem(item.getFile(),
                         rootUrl,
                         item.getKind(),
-                        item.getURL(), item.getRevision() != null ? item.getRevision().getNumber() : -1, 
-                        item.getCopyFromURL(), 
-                        item.getCopyFromRevision() != null ? item.getCopyFromRevision().getNumber() : -1, 
-                                flags);
+                        item.getURL(), item.getRevision() != null ? item.getRevision().getNumber() : -1,
+                        item.getCopyFromURL(),
+                        item.getCopyFromRevision() != null ? item.getCopyFromRevision().getNumber() : -1,
+                        flags);
+                if (oldPacket.isCommitItemSkipped(item)) {
+                    packet.setItemSkipped(newItem.getPath(), true);
+                }
             } catch (SVNException e) {
                 //
             }
@@ -788,48 +828,72 @@ public class SvnCodec {
         if (target == null) {
             return null;
         }
-        return new ISvnCommitHandler() {
-            
-            public SVNProperties getRevisionProperties(String message, SvnCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
-                SVNCommitItem[] targetItems = new SVNCommitItem[commitables.length];
-                for (int i = 0; i < targetItems.length; i++) {
-                    targetItems[i] = commitItem(commitables[i]);
-                }
-                return target.getRevisionProperties(message, targetItems, revisionProperties);
-            }
-            
-            public String getCommitMessage(String message, SvnCommitItem[] commitables) throws SVNException {
-                SVNCommitItem[] targetItems = new SVNCommitItem[commitables.length];
-                for (int i = 0; i < targetItems.length; i++) {
-                    targetItems[i] = commitItem(commitables[i]);
-                }
-                return target.getCommitMessage(message, targetItems);
-            }
-        };
+        return new SvnCommitHandlerWithFilter(target);
     }
 
     public static ISVNCommitHandler commitHandler(final ISvnCommitHandler target) {
         if (target == null) {
             return null;
         }
-        return new ISVNCommitHandler() {
-            public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
-                SvnCommitItem[] targetItems = new SvnCommitItem[commitables.length];
-                for (int i = 0; i < targetItems.length; i++) {
-                    targetItems[i] = commitItem(commitables[i]);
-                }
-                return target.getRevisionProperties(message, targetItems, revisionProperties);
-            }
-            
-            public String getCommitMessage(String message, SVNCommitItem[] commitables) throws SVNException {
-                SvnCommitItem[] targetItems = new SvnCommitItem[commitables.length];
-                for (int i = 0; i < targetItems.length; i++) {
-                    targetItems[i] = commitItem(commitables[i]);
-                }
-                return target.getCommitMessage(message, targetItems);
-            }
-        };
+        return new SVNCommitHandler(target);
+    }
+    
+    private static class SVNCommitHandler implements ISVNCommitHandler, ISVNFileFilter {
         
+        private final ISvnCommitHandler targetHandler;
+        
+        public SVNCommitHandler(ISvnCommitHandler target) {
+            targetHandler = target;
+        }
+
+        public boolean accept(File file) throws SVNException {
+            return targetHandler instanceof ISvnFileFilter ? ((ISvnFileFilter) targetHandler).accept(file) : true;
+        }
+
+        public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
+            SvnCommitItem[] targetItems = new SvnCommitItem[commitables.length];
+            for (int i = 0; i < targetItems.length; i++) {
+                targetItems[i] = commitItem(commitables[i]);
+            }
+            return targetHandler.getRevisionProperties(message, targetItems, revisionProperties);
+        }
+        
+        public String getCommitMessage(String message, SVNCommitItem[] commitables) throws SVNException {
+            SvnCommitItem[] targetItems = new SvnCommitItem[commitables.length];
+            for (int i = 0; i < targetItems.length; i++) {
+                targetItems[i] = commitItem(commitables[i]);
+            }
+            return targetHandler.getCommitMessage(message, targetItems);
+        }   
+    }
+
+    private static class SvnCommitHandlerWithFilter implements ISvnCommitHandler, ISvnFileFilter {
+        
+        private final ISVNCommitHandler targetHandler;
+        
+        public SvnCommitHandlerWithFilter(ISVNCommitHandler target) {
+            targetHandler = target;
+        }
+
+        public boolean accept(File file) throws SVNException {
+            return targetHandler instanceof ISVNFileFilter ? ((ISVNFileFilter) targetHandler).accept(file) : true;
+        }
+
+        public SVNProperties getRevisionProperties(String message, SvnCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
+            SVNCommitItem[] targetItems = new SVNCommitItem[commitables.length];
+            for (int i = 0; i < targetItems.length; i++) {
+                targetItems[i] = commitItem(commitables[i]);
+            }
+            return targetHandler.getRevisionProperties(message, targetItems, revisionProperties);
+        }
+        
+        public String getCommitMessage(String message, SvnCommitItem[] commitables) throws SVNException {
+            SVNCommitItem[] targetItems = new SVNCommitItem[commitables.length];
+            for (int i = 0; i < targetItems.length; i++) {
+                targetItems[i] = commitItem(commitables[i]);
+            }
+            return targetHandler.getCommitMessage(message, targetItems);
+        }
     }
     
     public static ISVNExternalsHandler externalsHandler(final ISvnExternalsHandler target) {

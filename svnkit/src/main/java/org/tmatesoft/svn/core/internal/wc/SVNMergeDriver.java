@@ -2881,10 +2881,14 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
     private boolean notifySingleFileMerge(File targetWCPath, SVNEventAction action, 
             SVNStatusType cstate, SVNStatusType pstate, SVNEvent headerEvent, 
             boolean isHeaderSent) throws SVNException {
-        action = cstate == SVNStatusType.MISSING ? SVNEventAction.SKIP : action;
+        SVNEventAction expectedAction = null;
+        if (cstate == SVNStatusType.MISSING) {
+            expectedAction = action;
+            action = SVNEventAction.SKIP;
+        }
         SVNEvent event = SVNEventFactory.createSVNEvent(targetWCPath, SVNNodeKind.FILE, null, 
                 SVNRepository.INVALID_REVISION, cstate, pstate, SVNStatusType.LOCK_INAPPLICABLE, action, 
-                null, null, null);
+                expectedAction, null, null);
         if (isOperativeNotification(event) && headerEvent != null && !isHeaderSent) {
             handleEvent(headerEvent, ISVNEventHandler.UNKNOWN);
             isHeaderSent = true;

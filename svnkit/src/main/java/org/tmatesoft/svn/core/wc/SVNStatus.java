@@ -772,30 +772,21 @@ public class SVNStatus {
     }
     
     public SVNStatusType getCombinedNodeAndContentsStatus() {
-        if (getWorkingCopyFormat() == ISVNWCDb.WC_FORMAT_17) {
-            if (getNodeStatus() == SVNStatusType.STATUS_CONFLICTED) {
-                if (!isVersioned() && isConflicted()) {
-                    return SVNStatusType.STATUS_MISSING;
-                }
-                return getContentsStatus();
-            } else if (getNodeStatus() == SVNStatusType.STATUS_MODIFIED) {
-                return getContentsStatus();
-            }
-            return getNodeStatus();
-        } else {
-            return getContentsStatus();
-        }
+        int workingCopyFormat = getWorkingCopyFormat();
+        SVNStatusType nodeStatus = getNodeStatus();
+        SVNStatusType contentsStatus = getContentsStatus();
+        boolean versioned = isVersioned();
+        boolean conflicted = isConflicted();
+
+        return combineNodeAndContentsStatus(workingCopyFormat, nodeStatus, contentsStatus, versioned, conflicted);
     }
 
     public SVNStatusType getCombinedRemoteNodeAndContentsStatus() {
-        if (getWorkingCopyFormat() == ISVNWCDb.WC_FORMAT_17) {
-            if (getRemoteNodeStatus() == SVNStatusType.STATUS_MODIFIED) {
-                return getRemoteContentsStatus();
-            }
-            return getRemoteNodeStatus();
-        } else {
-            return getRemoteContentsStatus();
-        }
+        int workingCopyFormat = getWorkingCopyFormat();
+        SVNStatusType remoteNodeStatus = getRemoteNodeStatus();
+        SVNStatusType remoteContentsStatus = getRemoteContentsStatus();
+
+        return combineRemoteNodeAndContentsStatus(workingCopyFormat, remoteNodeStatus, remoteContentsStatus);
     }
 
     public SVNStatusType getNodeStatus() {
@@ -816,7 +807,7 @@ public class SVNStatus {
     public String getRepositoryRelativePath() {
         return myRepositoryRelativePath;
     }
-    
+
     public SVNDepth getDepth() {
         return myDepth;
     }
@@ -976,7 +967,7 @@ public class SVNStatus {
     public void setIsConflicted(boolean isConflicted) {
         myIsConflicted = isConflicted;
     }
-    
+
     public void setIsVersioned(boolean isVersioned) {
         myIsVersioned = isVersioned;
     }
@@ -984,5 +975,31 @@ public class SVNStatus {
     public void setDepth(SVNDepth depth) {
         myDepth = depth;
     }
-    
+
+    public static SVNStatusType combineNodeAndContentsStatus(int workingCopyFormat, SVNStatusType nodeStatus, SVNStatusType contentsStatus, boolean versioned, boolean conflicted) {
+        if (workingCopyFormat >= ISVNWCDb.WC_FORMAT_17) {
+            if (nodeStatus == SVNStatusType.STATUS_CONFLICTED) {
+                if (!versioned && conflicted) {
+                    return SVNStatusType.STATUS_MISSING;
+                }
+                return contentsStatus;
+            } else if (nodeStatus == SVNStatusType.STATUS_MODIFIED) {
+                return contentsStatus;
+            }
+            return nodeStatus;
+        } else {
+            return contentsStatus;
+        }
+    }
+
+    public static SVNStatusType combineRemoteNodeAndContentsStatus(int workingCopyFormat, SVNStatusType remoteNodeStatus, SVNStatusType remoteContentsStatus) {
+        if (workingCopyFormat >= ISVNWCDb.WC_FORMAT_17) {
+            if (remoteNodeStatus == SVNStatusType.STATUS_MODIFIED) {
+                return remoteContentsStatus;
+            }
+            return remoteNodeStatus;
+        } else {
+            return remoteContentsStatus;
+        }
+    }
 }

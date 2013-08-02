@@ -77,6 +77,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.svn.SVNSSHConnector;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
@@ -85,23 +86,11 @@ import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchHunkInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnDiffGenerator;
 import org.tmatesoft.svn.core.javahl.JavaHLCompositeLog;
 import org.tmatesoft.svn.core.javahl.JavaHLDebugLog;
-import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
-import org.tmatesoft.svn.core.wc.SVNConflictAction;
-import org.tmatesoft.svn.core.wc.SVNConflictChoice;
-import org.tmatesoft.svn.core.wc.SVNConflictDescription;
-import org.tmatesoft.svn.core.wc.SVNConflictReason;
-import org.tmatesoft.svn.core.wc.SVNConflictResult;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNOperation;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnAnnotate;
 import org.tmatesoft.svn.core.wc2.SvnAnnotateItem;
@@ -568,7 +557,7 @@ public class SVNClientImpl implements ISVNClient {
 
             SvnCommit commit = svnOperationFactory.createCommit();
             commit.setDepth(getSVNDepth(depth));
-            commit.setKeepLocks(!noUnlock);
+            commit.setKeepLocks(noUnlock);
             commit.setKeepChangelists(keepChangelist);
             commit.setApplicalbeChangelists(changelists);
             commit.setRevisionProperties(getSVNProperties(revpropTable));
@@ -1223,7 +1212,7 @@ public class SVNClientImpl implements ISVNClient {
             SvnCat cat = svnOperationFactory.createCat();
             cat.setSingleTarget(getTarget(path, pegRevision));
             cat.setRevision(getSVNRevision(revision));
-            cat.setExpandKeywords(false);
+            cat.setExpandKeywords(true);
             cat.setOutput(stream);
 
             cat.run();
@@ -1552,23 +1541,13 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
-    private static SVNStatusType combineStatus(SvnStatus status) {
-        if (status.getNodeStatus() == SVNStatusType.STATUS_CONFLICTED) {
-            if (!status.isVersioned() && status.isConflicted()) {
-                return SVNStatusType.STATUS_MISSING;
-            }
-            return status.getTextStatus();
-        } else if (status.getNodeStatus() == SVNStatusType.STATUS_MODIFIED) {
-            return status.getTextStatus();
-        }
-        return status.getNodeStatus();
-    }
-
     private Status getStatus(SvnStatus status) throws SVNException {
         String repositoryRelativePath = status.getRepositoryRelativePath() == null ? "" : status.getRepositoryRelativePath();
         SVNURL repositoryRootUrl = status.getRepositoryRootUrl();
 
         String itemUrl = repositoryRootUrl == null ? null : getUrlString(repositoryRootUrl.appendPath(repositoryRelativePath, false));
+
+        int statusFormat = status.getWorkingCopyFormat();
 
         return new Status(
                 getFilePath(status.getPath()),
@@ -1578,9 +1557,9 @@ public class SVNClientImpl implements ISVNClient {
                 status.getChangedRevision(),
                 getLongDate(status.getChangedDate()),
                 status.getChangedAuthor(),
-                getStatusKind(combineStatus(status)),
+                getStatusKind(SVNStatus.combineNodeAndContentsStatus(statusFormat, status.getNodeStatus(), status.getTextStatus(), status.isVersioned(), status.isConflicted())),
                 getStatusKind(status.getPropertiesStatus()),
-                getStatusKind(status.getRepositoryTextStatus()),
+                getStatusKind(SVNStatus.combineRemoteNodeAndContentsStatus(statusFormat, status.getRepositoryNodeStatus(), status.getRepositoryTextStatus())),
                 getStatusKind(status.getRepositoryPropertiesStatus()),
                 status.isWcLocked(),
                 status.isCopied(),
@@ -1926,7 +1905,7 @@ public class SVNClientImpl implements ISVNClient {
             return DiffSummary.DiffKind.deleted;
         } else if (type == SVNStatusType.STATUS_MODIFIED) {
             return DiffSummary.DiffKind.modified;
-        } else if (type == SVNStatusType.STATUS_NORMAL) {
+        } else if (type == SVNStatusType.STATUS_NORMAL || type == SVNStatusType.STATUS_NONE) {
             return DiffSummary.DiffKind.normal;
         } else {
             throw new IllegalArgumentException("Unknown status type: " + type);
@@ -1939,7 +1918,12 @@ public class SVNClientImpl implements ISVNClient {
         }
         return new ISvnObjectReceiver<SvnDiffStatus>() {
             public void receive(SvnTarget target, SvnDiffStatus diffStatus) throws SVNException {
-                if (diffStatus != null && diffStatus.getModificationType() == SVNStatusType.STATUS_NONE) {
+                if (diffStatus == null) {
+                    return;
+                }
+                if (!diffStatus.isPropertiesModified() &&
+                        (diffStatus.getModificationType() == SVNStatusType.STATUS_NONE ||
+                         diffStatus.getModificationType() == SVNStatusType.STATUS_NORMAL)) {
                     return;
                 }
                 receiver.onSummary(getDiffSummary(diffStatus));
@@ -2192,7 +2176,7 @@ public class SVNClientImpl implements ISVNClient {
         String url = getUrlString(info.getUrl());
         String repositoryRoot = getUrlString(info.getRepositoryRootUrl());
         boolean hasWcInfo = info.getWcInfo() != null;
-        String path = (repositoryRoot != null && url != null) ? SVNPathUtil.getRelativePath(repositoryRoot, url) :
+        String path = (repositoryRoot != null && url != null) ? SVNEncodingUtil.uriDecode(SVNPathUtil.getRelativePath(repositoryRoot, url)) :
                         (hasWcInfo ? getFilePath(info.getWcInfo().getPath()) : null);
 
         return new Info(path,

@@ -538,7 +538,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
     }
 
     private SvnStatus getStatus(File interestingFile) throws SVNException {
-        final String interestingPath = interestingFile.getPath().replace(File.separatorChar, '/');
+        final String interestingPath = SVNFileUtil.getFilePath(interestingFile);
 
         final SvnStatus[] status2 = new SvnStatus[1];
 
@@ -560,7 +560,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                 if (path == null) {
                     return;
                 }
-                final String statusPath = path.getPath().replace(File.separatorChar, '/');
+                final String statusPath = SVNFileUtil.getFilePath(path);
                 if (statusPath.equals(interestingPath)) {
                     status2[0] = svnStatus;
                 }

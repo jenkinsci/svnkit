@@ -210,6 +210,72 @@ public class UpdateTest {
         }
     }
 
+    @Test
+    public void testUpdateAlwaysUpdatesFileTimestamp() throws Exception {
+        //SVNKIT-322: file timestamp is updated to some time in past
+        // if update rolls back a file to some contents that is already present in .svn/pristine
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateAlwaysUpdatesFileTimestamp", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("file", "original contents".getBytes());
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.changeFile("file", "changes contents".getBytes());
+            commitBuilder2.commit();
+
+            final CommitBuilder commitBuilder3 = new CommitBuilder(url);
+            commitBuilder3.changeFile("file", "original contents".getBytes());
+            commitBuilder3.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File file = workingCopy.getFile("file");
+
+            final SvnGetInfo getInfoBeforeUpdates = svnOperationFactory.createGetInfo();
+            getInfoBeforeUpdates.setSingleTarget(SvnTarget.fromFile(file));
+            final SvnInfo infoBeforeUpdates = getInfoBeforeUpdates.run();
+
+            Thread.sleep(1000); // make expected file timestamp different from the actual
+
+            final SvnUpdate update1 = svnOperationFactory.createUpdate();
+            update1.setSingleTarget(SvnTarget.fromFile(file));
+            update1.setRevision(SVNRevision.create(2));
+            update1.run();
+
+            final SvnGetInfo getInfoBetweenUpdates = svnOperationFactory.createGetInfo();
+            getInfoBetweenUpdates.setSingleTarget(SvnTarget.fromFile(file));
+            final SvnInfo infoBetweenUpdates = getInfoBetweenUpdates.run();
+
+            Thread.sleep(1000); // make expected file timestamp different from the actual
+
+            final SvnUpdate update2 = svnOperationFactory.createUpdate();
+            update2.setSingleTarget(SvnTarget.fromFile(file));
+            update2.setRevision(SVNRevision.create(1));
+            update2.run();
+
+            final SvnGetInfo getInfoAfterUpdates = svnOperationFactory.createGetInfo();
+            getInfoAfterUpdates.setSingleTarget(SvnTarget.fromFile(file));
+            final SvnInfo infoAfterUpdates = getInfoAfterUpdates.run();
+
+            final long timestampBeforeUpdates = infoBeforeUpdates.getWcInfo().getRecordedTime();
+            final long timestampBetweenUpdates = infoBetweenUpdates.getWcInfo().getRecordedTime();
+            final long timestampAfterUpdates = infoAfterUpdates.getWcInfo().getRecordedTime();
+
+            // timestamps should always increase, otherwise this confuses build tools that rely on timestamps
+            Assert.assertTrue(timestampBeforeUpdates < timestampBetweenUpdates);
+            Assert.assertTrue(timestampBetweenUpdates < timestampAfterUpdates);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertDavPropertiesAreCleaned(WorkingCopy workingCopy) throws SqlJetException, SVNException {
         final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
         try {

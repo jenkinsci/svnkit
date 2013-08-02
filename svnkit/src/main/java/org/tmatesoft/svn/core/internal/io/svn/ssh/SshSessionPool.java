@@ -12,6 +12,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import com.trilead.ssh2.ServerHostKeyVerifier;
+import com.trilead.ssh2.auth.AgentProxy;
 
 public class SshSessionPool {
     
@@ -58,29 +59,35 @@ public class SshSessionPool {
     }
     
     public SshSession openSession(String host, int port, String userName,
-            char[] privateKey, char[] passphrase, char[] password,
-            ServerHostKeyVerifier verifier, int connectTimeout) throws IOException {
-        
-        SshHost sshHost = new SshHost(host, port);
-        sshHost.setCredentials(userName, privateKey, passphrase, password);
-        sshHost.setConnectionTimeout(connectTimeout);
-        sshHost.setHostVerifier(verifier);
+            char[] privateKey, char[] passphrase, char[] password,  AgentProxy agentProxy,
+            ServerHostKeyVerifier verifier, int connectTimeout, int readTimeout) throws IOException {
+
+        final SshHost newHost = new SshHost(host, port);
+        newHost.setCredentials(userName, privateKey, passphrase, password, agentProxy);
+        newHost.setConnectionTimeout(connectTimeout);
+        newHost.setHostVerifier(verifier);
+        newHost.setReadTimeout(readTimeout);
         
         SshSession session = null;
-        
+        final String hostKey = newHost.getKey();
+
         while(session == null) {
+            SshHost sshHost;
             synchronized (myPool) {
-               if (!myPool.containsKey(sshHost.getKey())) {
-                   myPool.put(sshHost.getKey(), sshHost);
-               } else {
-                   sshHost = myPool.get(sshHost.getKey());
-               }
+                sshHost = myPool.get(hostKey);
+                if (sshHost == null) {
+                    sshHost = newHost;
+                    myPool.put(hostKey, newHost);
+                }
             }
             
             try {
                 session = sshHost.openSession();
             } catch (SshHostDisposedException e) {
                 // host has been removed from the pool.
+                synchronized (myPool) {
+                  myPool.remove(hostKey);
+                }
                 continue;
             }
             break;

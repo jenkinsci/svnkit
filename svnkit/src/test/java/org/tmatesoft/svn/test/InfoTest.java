@@ -144,6 +144,34 @@ public class InfoTest {
         }
     }
 
+    @Test
+    public void testBackslashInFilename() throws Exception {
+        //SVNKIT-332
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testBackslashInFilename", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file\\with\\backslash");
+            commitBuilder.commit();
+
+            final  SVNURL fileUrl = url.appendPath("file\\with\\backslash", false);
+
+            final SvnGetInfo getInfo = svnOperationFactory.createGetInfo();
+            getInfo.setSingleTarget(SvnTarget.fromURL(fileUrl));
+            final SvnInfo info = getInfo.run();
+
+            Assert.assertEquals(1, info.getRevision());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private String getTestName() {
         return "InfoTest";
     }

@@ -21,14 +21,20 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
+import java.net.CookieHandler;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
@@ -78,7 +84,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-class HTTPConnection implements IHTTPConnection {
+public class HTTPConnection implements IHTTPConnection {
     
     private static final DefaultHandler DEFAULT_SAX_HANDLER = new DefaultHandler();
     private static EntityResolver NO_ENTITY_RESOLVER = new EntityResolver() {
@@ -106,6 +112,8 @@ class HTTPConnection implements IHTTPConnection {
     }
 
     private static SAXParserFactory ourSAXParserFactory;
+    private final static Map<String,List<String>> emptyHeader = Collections.unmodifiableMap(Collections.<String, List<String>>emptyMap());
+    
     private byte[] myBuffer;
     private SAXParser mySAXParser;
     private SVNURL myHost;
@@ -125,7 +133,6 @@ class HTTPConnection implements IHTTPConnection {
     private boolean myIsSpoolAll;
     private File mySpoolDirectory;
     private long myNextRequestTimeout;
-    private Collection<String> myCookies;
     private int myRequestCount;
     private HTTPStatus myLastStatus;
 
@@ -202,11 +209,8 @@ class HTTPConnection implements IHTTPConnection {
                             authAttempts++;
                             debugLog.logFine(SVNLogType.NETWORK, "authentication attempt #" + authAttempts);
                             Collection<String> proxyAuthHeaders = connectRequest.getResponseHeader().getHeaderValues(HTTPHeader.PROXY_AUTHENTICATE_HEADER);
-                            Collection<String> authTypes = null;
-                            if (authManager != null && authManager instanceof DefaultSVNAuthenticationManager) {
-                                DefaultSVNAuthenticationManager defaultAuthManager = (DefaultSVNAuthenticationManager) authManager;
-                                authTypes = defaultAuthManager.getAuthTypes(myRepository.getLocation());
-                            }
+                            Collection<String> authTypes = Arrays.asList("Basic", "Digest", "Negotiate", "NTLM");
+                            
                             debugLog.logFine(SVNLogType.NETWORK, "authentication methods supported: " + authTypes);
                             try {
                                 myProxyAuthentication = HTTPAuthentication.parseAuthParameters(proxyAuthHeaders, myProxyAuthentication, myCharset, authTypes, null, myRequestCount); 
@@ -234,9 +238,10 @@ class HTTPConnection implements IHTTPConnection {
                                 }
                             }
                             
-                            if (ntlmProxyAuth != null && ntlmProxyAuth.isNative() && authAttempts == 1) {
-                                debugLog.logFine(SVNLogType.NETWORK, "NTLM system credentials would be used");
-                                continue;
+                            if (ntlmProxyAuth != null && authAttempts == 1) {
+                                if (!ntlmProxyAuth.allowPropmtForCredentials()) {
+                                    continue;
+                                }
                             }
                             if (negotiateProxyAuth != null && !negotiateProxyAuth.needsLogin()) {
                                 debugLog.logFine(SVNLogType.NETWORK, "Negotiate will use existing credentials");
@@ -263,6 +268,11 @@ class HTTPConnection implements IHTTPConnection {
                             SVNErrorManager.error(err, connectRequest.getErrorMessage(), SVNLogType.NETWORK);
                         }
                     }
+                } else if (proxyManager.getProxyUserName() != null && proxyManager.getProxyPassword() != null ){
+                    myProxyAuthentication = new HTTPBasicAuthentication("UTF-8");
+                    myProxyAuthentication.setCredentials(new SVNPasswordAuthentication(proxyManager.getProxyUserName(), 
+                            proxyManager.getProxyPassword(), false, myRepository.getLocation(), false));
+                    debugLog.logFine(SVNLogType.NETWORK, "explicit credentials set");
                 }
             } else {
                 myIsProxied = false;
@@ -339,7 +349,6 @@ class HTTPConnection implements IHTTPConnection {
     }
     
     public void clearAuthenticationCache() {
-        myCookies = null;
         myLastValidAuth = null;
         myTrustManager = null;
         myKeyManager = null;
@@ -394,6 +403,7 @@ class HTTPConnection implements IHTTPConnection {
         TrustManager trustManager = myTrustManager == null && authManager != null ? authManager.getTrustManager(myRepository.getLocation()) : myTrustManager;
         ISVNProxyManager proxyManager = authManager != null ? authManager.getProxyManager(myRepository.getLocation()) : null;
 
+        String sslRealm = composeRealm("");
         SVNAuthentication httpAuth = myLastValidAuth;
         boolean isAuthForced = authManager != null ? authManager.isAuthenticationForced() : false;
         if (httpAuth == null && isAuthForced) {
@@ -431,6 +441,12 @@ class HTTPConnection implements IHTTPConnection {
                 err = null;
                 String httpAuthResponse = null;
                 String proxyAuthResponse = null;
+                URI actualURI = null;
+                try {
+                    actualURI = new URI(myRepository.getLocation().toString());
+                } catch (URISyntaxException e) {
+                    myRepository.getDebugLog().logError(SVNLogType.NETWORK, e);
+                }
                 while(retryCount >= 0) {
                     connect(keyManager, trustManager, proxyManager);
                     request.reset();
@@ -453,8 +469,12 @@ class HTTPConnection implements IHTTPConnection {
                         request.setAuthentication(httpAuthResponse);
                     }
 
-                    if (myCookies != null && !myCookies.isEmpty()) {
-                        request.setCookies(myCookies);
+                    final CookieHandler cookieHandler = CookieHandler.getDefault();
+                    if (cookieHandler != null && actualURI != null) {
+                        final Map<String, List<String>> cookieHeader = cookieHandler.get(actualURI, emptyHeader);
+                        if (cookieHeader != null) {
+                            request.setCookies(cookieHeader);
+                        }
                     }
                     try {                        
                         request.dispatch(method, path, header, ok1, ok2, context);
@@ -470,8 +490,9 @@ class HTTPConnection implements IHTTPConnection {
                         retryCount--;
                     }
                 }
-                if (request.getResponseHeader().hasHeader(HTTPHeader.SET_COOKIE)) {
-                    myCookies = request.getResponseHeader().getHeaderValues(HTTPHeader.COOKIE);
+                final CookieHandler cookieHandler = CookieHandler.getDefault();
+                if(cookieHandler != null && actualURI != null){
+                    cookieHandler.put(actualURI, request.getResponseHeader().getRawHeaders());
                 }
                 myNextRequestTimeout = request.getNextRequestTimeout();
                 myLastStatus = request.getStatus();
@@ -563,7 +584,7 @@ class HTTPConnection implements IHTTPConnection {
                     if (ntlmProxyAuth.isInType3State()) {
                         continue;
                     }
-                }
+                } 
 
                 err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "HTTP proxy authorization failed");
                 if (proxyManager != null) {
@@ -645,14 +666,16 @@ class HTTPConnection implements IHTTPConnection {
 
                 myLastValidAuth = null;
 
-                if (ntlmAuth != null && ntlmAuth.isNative() && authAttempts == 1) {
+                if (ntlmAuth != null && authAttempts == 1) {
                     /*
                      * if this is the first time we get HTTP_UNAUTHORIZED, NTLM is the target auth scheme
                      * and JNA is available, we should try a native auth mechanism first without calling 
                      * auth providers. 
-                     */
-                    continue;
-                }
+                     */                
+                    if (!ntlmAuth.allowPropmtForCredentials()) {
+                        continue;
+                    }
+               }
 
                 if (negoAuth != null && !negoAuth.needsLogin()) {
                     continue;
@@ -665,7 +688,7 @@ class HTTPConnection implements IHTTPConnection {
 
                 realm = myChallengeCredentials.getChallengeParameter("realm");
                 realm = realm == null ? "" : " " + realm;
-                realm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">" + realm;
+                realm = composeRealm(realm); 
                 
                 if (httpAuth == null || httpAuth==BOGUS_AUTH) {
                     httpAuth = authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myRepository.getLocation());
@@ -733,8 +756,8 @@ class HTTPConnection implements IHTTPConnection {
                 myLastValidAuth = httpAuth;
             }
 
-            if (authManager instanceof ISVNAuthenticationManagerExt) {
-                ((ISVNAuthenticationManagerExt)authManager).acknowledgeConnectionSuccessful(myRepository.getLocation());
+            if (myLastStatus.getCodeClass() == 2 && authManager instanceof ISVNAuthenticationManagerExt) {
+                ((ISVNAuthenticationManagerExt) authManager).acknowledgeConnectionSuccessful(myRepository.getLocation(), method);
             }
 
             myLastStatus.setHeader(request.getResponseHeader());
@@ -753,6 +776,25 @@ class HTTPConnection implements IHTTPConnection {
         err2.setChildErrorMessage(err);
         SVNErrorManager.error(err2, SVNLogType.NETWORK);
         return null;
+    }
+
+    private String composeRealm(String realm) {
+        final StringBuffer buffer = new StringBuffer();
+        buffer.append("<");
+        buffer.append(myHost.getProtocol());
+        buffer.append("://");
+        if (myHost.getUserInfo() != null && !"".equals(myHost.getUserInfo().trim())) {
+            buffer.append(myHost.getUserInfo());
+            buffer.append("@");
+        }
+        buffer.append(myHost.getHost());
+        buffer.append(":");
+        buffer.append(myHost.getPort());
+        buffer.append(">");
+        if (realm != null) {
+            buffer.append(realm);
+        }
+        return buffer.toString();
     }
 
     private boolean isClearCredentialsOnClose(HTTPAuthentication auth) {

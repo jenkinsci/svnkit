@@ -1229,7 +1229,10 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
             SVNWCContext wcContext = null;
             runLevel++;
             try {
-                wcContext = obtainWcContext();
+                wcContext = obtainWcContext(operation);
+                if (runLevel == 1 && wcContext != null) {
+                    wcContext.setSqliteJournalMode(operation.getSqliteJournalMode());
+                }
                 runner.setWcContext(wcContext);
                 getOperationHandler().beforeOperation(operation);
                 Object result = runner.run(operation);
@@ -1243,6 +1246,9 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
             } finally {
                 runLevel--;
                 if (runLevel == 0) {
+                    if (wcContext != null) {
+                        wcContext.setSqliteJournalMode(null);
+                    }
                     releaseWcContext(wcContext);
                 }
             }
@@ -1264,7 +1270,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         }
     }
 
-    private SVNWCContext obtainWcContext() {
+    private SVNWCContext obtainWcContext(SvnOperation<?> operation) {
         if (wcContext == null) {
             wcContext = new SVNWCContext(getOptions(), getEventHandler());
         }
@@ -1773,7 +1779,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
             SVNWCContext wcContext = null;
             runLevel++;
             try {
-                wcContext = obtainWcContext();
+                wcContext = obtainWcContext(operation);
                 runner.setWcContext(wcContext);
                 return ((ISvnCommitRunner) runner).collectCommitItems(operation);
             } finally {

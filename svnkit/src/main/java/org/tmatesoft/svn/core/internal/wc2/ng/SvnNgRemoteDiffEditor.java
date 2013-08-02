@@ -303,7 +303,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
                 SVNStatusType.MISSING, 
                 SVNStatusType.LOCK_INAPPLICABLE, 
                 SVNEventAction.SKIP, 
-                SVNEventAction.SKIP, null, null, null);
+                null, null, null, null);
         handleEvent(event);
     }
 
@@ -314,7 +314,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
                 SVNStatusType.MISSING, 
                 SVNStatusType.LOCK_INAPPLICABLE, 
                 SVNEventAction.SKIP, 
-                SVNEventAction.SKIP, null, null, null);
+                null, null, null, null);
         handleEvent(event);
     }
 

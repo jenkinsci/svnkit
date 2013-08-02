@@ -17,6 +17,7 @@ import java.util.EnumMap;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.sqljet.core.internal.SqlJetSafetyLevel;
 import org.tmatesoft.sqljet.core.table.ISqlJetBusyHandler;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
@@ -47,6 +48,7 @@ public class SVNSqlJetDb {
     
     private static final ISqlJetBusyHandler DEFAULT_BUSY_HANDLER = new SqlJetTimeoutBusyHandler(10000);
     private static boolean logTransactions = "true".equalsIgnoreCase(System.getProperty("svnkit.log.transactions", "false"));
+    private static SqlJetPagerJournalMode ourPagerJournalMode = SqlJetPagerJournalMode.DELETE; 
 
     private SqlJetDb db;
     private EnumMap<SVNWCDbStatements, SVNSqlJetStatement> statements;
@@ -85,21 +87,36 @@ public class SVNSqlJetDb {
             }
         }
     }
+    
+    public static void setJournalMode(SqlJetPagerJournalMode journalMode) { 
+        ourPagerJournalMode = journalMode == null ? SqlJetPagerJournalMode.DELETE : journalMode;
+    }
+
+    public static SqlJetPagerJournalMode getJournalMode() {
+        return ourPagerJournalMode;
+    }
 
     public static SVNSqlJetDb open(File sdbAbsPath, Mode mode) throws SVNException {
+        return open(sdbAbsPath, mode, getJournalMode());
+    }
+
+    public static SVNSqlJetDb open(File sdbAbsPath, Mode mode, SqlJetPagerJournalMode journalMode) throws SVNException {
         if (mode != Mode.RWCreate) {
             if (!sdbAbsPath.exists()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found ''{0}''", sdbAbsPath);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
+        if (journalMode == null) {
+            journalMode = getJournalMode();
+        }
         try {
             SqlJetDb db = SqlJetDb.open(sdbAbsPath, mode != Mode.ReadOnly);
             db.setBusyHandler(DEFAULT_BUSY_HANDLER);
             db.setSafetyLevel(SqlJetSafetyLevel.OFF);
+            db.setJournalMode(journalMode);
             
-            SVNSqlJetDb sDb = new SVNSqlJetDb(db);
-            return sDb;
+            return new SVNSqlJetDb(db);
         } catch (SqlJetException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
             SVNErrorManager.error(err, SVNLogType.WC);

@@ -557,8 +557,8 @@ public class SVNPropertiesManager {
         if (fetcher == null) {
             return;
         }
-        SVNTranslatorOutputStream out = new SVNTranslatorOutputStream(SVNFileUtil.DUMMY_OUT, new byte[0], false, null, false);
-
+        final SVNPropertyValue charset = fetcher.getProperty(SVNProperty.CHARSET);
+        final OutputStream out = SVNTranslator.getTranslatingOutputStream(SVNFileUtil.DUMMY_OUT, SVNPropertyValue.getPropertyAsString(charset), new byte[0], false, null, false);
         try {
             fetcher.fetchFileContent(out);
         } catch (SVNException e) {

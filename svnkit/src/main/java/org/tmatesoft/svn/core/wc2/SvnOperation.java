@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -55,6 +56,8 @@ public class SvnOperation<V> implements ISvnOperationOptionsProvider {
     private Collection<String> changelists;
     private SvnOperationFactory operationFactory;
     private boolean isSleepForTimestamp;
+    
+    private SqlJetPagerJournalMode sqliteJournalMode;
     
     private volatile boolean isCancelled;
     
@@ -391,6 +394,14 @@ public class SvnOperation<V> implements ISvnOperationOptionsProvider {
      */
     public boolean isChangesWorkingCopy() {
         return true;
+    }
+    
+    public SqlJetPagerJournalMode getSqliteJournalMode() {
+        return sqliteJournalMode;
+    }
+    
+    public void setSqliteJournalMode(SqlJetPagerJournalMode journalMode) {
+        sqliteJournalMode = journalMode; 
     }
 
     protected File getOperationalWorkingCopy() {
