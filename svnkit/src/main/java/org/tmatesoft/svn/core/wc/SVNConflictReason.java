@@ -56,6 +56,10 @@ public class SVNConflictReason {
     /** Constant saying that an object has been moved here
      * @since New in 1.8. */
     public static final SVNConflictReason MOVED_HERE = new SVNConflictReason("moved-here");
+    /**
+     * @since New in 1.8. */
+    public static final SVNConflictReason SKIP = new SVNConflictReason("skip");
+    public static final SVNConflictReason WC_SKIP = new SVNConflictReason("wc-skip");
 
     /**
      * Converts a string reason name to an <code>SVNConflictReason</code> object.

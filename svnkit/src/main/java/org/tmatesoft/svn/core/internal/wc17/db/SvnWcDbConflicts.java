@@ -11,6 +11,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCConflictDescription17;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
@@ -589,6 +590,58 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         prependLocation(origins, original);
         why.prepend(origins);
         why.prependString(CONFLICT_OP_MERGE);
+    }
+
+    public static SVNSkel createConflictMarkers(ISVNWCDb db, File localAbsPath, SVNSkel conflictSkel) throws SVNException {
+        Structure<ConflictInfo> conflictInfoStructure = readConflictInfo(conflictSkel);
+        SVNOperation conflictOperation = conflictInfoStructure.get(ConflictInfo.conflictOperation);
+        boolean propConflicted = conflictInfoStructure.is(ConflictInfo.propConflicted);
+
+        if (propConflicted) {
+            File markerDir;
+            String markerName;
+
+            SVNFileType type = SVNFileType.getType(localAbsPath);
+            if (type == SVNFileType.DIRECTORY) {
+                markerDir = localAbsPath;
+                markerName = "dir_conflicts";
+            } else {
+                markerDir = SVNFileUtil.getParentFile(localAbsPath);
+                markerName = SVNFileUtil.getFileName(localAbsPath);
+            }
+
+            File markerAbsPath = SVNFileUtil.createUniqueFile(markerDir, markerName, ".prej", false);
+            File markerRelPath = db.toRelPath(markerAbsPath);
+
+            SVNSkel propConflict = getConflict(conflictSkel, ConflictKind.prop);
+            propConflict.first().next().prependPath(markerRelPath);
+
+            Structure<PropertyConflictInfo> propertyConflictInfoStructure = readPropertyConflict(db, localAbsPath, conflictSkel);
+            SVNProperties mineProps = propertyConflictInfoStructure.get(PropertyConflictInfo.mineProps);
+            SVNProperties theirOriginalProps = propertyConflictInfoStructure.get(PropertyConflictInfo.theirOldProps);
+            SVNProperties theirProps = propertyConflictInfoStructure.get(PropertyConflictInfo.theirProps);
+            Collection<String> conflictedPropNames = propertyConflictInfoStructure.get(PropertyConflictInfo.conflictedPropNames);
+
+
+            SVNProperties oldProps;
+            if (conflictOperation == SVNOperation.MERGE) {
+                oldProps = db.readPristineProperties(localAbsPath);
+            } else {
+                oldProps = theirOriginalProps;
+            }
+
+            SVNSkel propData = createConflictSkel();
+            for (String propName : conflictedPropNames) {
+                addPropConflict(propData, propName,
+                        oldProps != null ? oldProps.getSVNPropertyValue(propName) : null,
+                        mineProps != null ? mineProps.getSVNPropertyValue(propName) : null,
+                        theirProps != null ? theirProps.getSVNPropertyValue(propName) : null,
+                        theirOriginalProps != null ? theirOriginalProps.getSVNPropertyValue(propName) : null);
+            }
+
+            return SVNWCContext.wqBuildPrejInstall(db, localAbsPath, propData);
+        }
+        return null;
     }
 
     private static SVNSkel getOperation(SVNSkel conflictSkel) throws SVNException {

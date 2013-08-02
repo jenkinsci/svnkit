@@ -2152,14 +2152,14 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         return;
     }
 
-    private static class AccumulatedChangeInfo {
+    public static class AccumulatedChangeInfo {
 
         public long changedRev;
         public SVNDate changedDate;
         public String changedAuthor;
     }
 
-    private AccumulatedChangeInfo accumulateLastChange(File localAbspath, SVNProperties entryProps) throws SVNException {
+    public static AccumulatedChangeInfo accumulateLastChange(File localAbspath, SVNProperties entryProps) throws SVNException {
         AccumulatedChangeInfo info = new AccumulatedChangeInfo();
         info.changedRev = SVNWCContext.INVALID_REVNUM;
         info.changedDate = null;

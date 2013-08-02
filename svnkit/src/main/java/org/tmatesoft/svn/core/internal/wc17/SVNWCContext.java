@@ -543,6 +543,14 @@ public class SVNWCContext {
 
     }
 
+    public static class ObstructionData {
+        public SVNStatusType obstructionState;
+        public boolean deleted;
+        public boolean excluded;
+        public SVNNodeKind kind;
+        public SVNDepth parentDepth;
+    }
+
     public class ScheduleInternalInfo {
 
         public SVNWCSchedule schedule;
@@ -824,7 +832,7 @@ public class SVNWCContext {
             while (bytes_read1 == STREAM_CHUNK_SIZE && bytes_read2 == STREAM_CHUNK_SIZE) {
                 bytes_read1 = stream1.read(buf1);
                 bytes_read2 = stream2.read(buf2);
-                if ((bytes_read1 != bytes_read2) || !(Arrays.equals(buf1, buf2))) {
+                if ((bytes_read1 != bytes_read2) || !(arraysEqual(buf1, buf2, (int) bytes_read1))) {
                     same = false;
                     break;
                 }
@@ -835,6 +843,15 @@ public class SVNWCContext {
             SVNErrorManager.error(err, e, Level.FINE, SVNLogType.DEFAULT);
             return false;
         }
+    }
+
+    private boolean arraysEqual(byte[] array1, byte[] array2, int size) {
+        for (int i = 0; i < size; i++) {
+            if (array1[i] != array2[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static InputStream readSpecialFile(File localAbsPath) throws SVNException {
@@ -3766,10 +3783,14 @@ public class SVNWCContext {
     }
 
     public SVNSkel wqBuildPrejInstall(File localAbspath, SVNSkel conflictSkel) throws SVNException {
+        return wqBuildPrejInstall(getDb(), localAbspath, conflictSkel);
+    }
+
+    public static SVNSkel wqBuildPrejInstall(ISVNWCDb db, File localAbspath, SVNSkel conflictSkel) throws SVNException {
         assert (conflictSkel != null);
         SVNSkel workItem = SVNSkel.createEmptyList();
         workItem.prepend(conflictSkel);
-        workItem.prependPath(getRelativePath(localAbspath));
+        workItem.prependPath(getRelativePath((SVNWCDb)db, localAbspath));
         workItem.prependString(WorkQueueOperation.PREJ_INSTALL.getOpName());
         return workItem;
     }
@@ -5977,5 +5998,144 @@ public class SVNWCContext {
             return deletionInfo.baseDelAbsPath;
         }
         return null;
+    }
+
+    public ObstructionData checkForObstructions(File localAbsPath, boolean noWcRootCheck) throws SVNException {
+        assert SVNFileUtil.isAbsolute(localAbsPath);
+
+        SVNWCContext.ObstructionData obstructionData = new SVNWCContext.ObstructionData();
+        obstructionData.obstructionState = SVNStatusType.INAPPLICABLE;
+        obstructionData.deleted = false;
+        obstructionData.excluded = false;
+        obstructionData.parentDepth = SVNDepth.UNKNOWN;
+        obstructionData.kind = SVNNodeKind.NONE;
+
+        SVNNodeKind diskKind = SVNFileType.getNodeKind(SVNFileType.getType(localAbsPath));
+
+        SVNWCDbStatus status;
+        SVNWCDbKind kind;
+        try {
+            Structure<NodeInfo> nodeInfoStructure = getDb().readInfo(localAbsPath, NodeInfo.status, NodeInfo.kind);
+            status = nodeInfoStructure.get(NodeInfo.status);
+            kind = nodeInfoStructure.get(NodeInfo.kind);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                if (diskKind != SVNNodeKind.NONE) {
+                    obstructionData.obstructionState = SVNStatusType.OBSTRUCTED;
+                    return obstructionData;
+                }
+                try {
+                Structure<NodeInfo> nodeInfoStructure = getDb().readInfo(SVNFileUtil.getFileDir(localAbsPath), NodeInfo.status, NodeInfo.kind, NodeInfo.depth);
+                status = nodeInfoStructure.get(NodeInfo.status);
+                kind = nodeInfoStructure.get(NodeInfo.kind);
+                obstructionData.parentDepth = nodeInfoStructure.get(NodeInfo.depth);
+                } catch (SVNException e1) {
+                    if (e1.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                        obstructionData.obstructionState = SVNStatusType.OBSTRUCTED;
+                        return obstructionData;
+                    }
+                    throw e1;
+                }
+
+                if (kind != SVNWCDbKind.Dir || (status != SVNWCDbStatus.Normal && status != SVNWCDbStatus.Added)) {
+                    obstructionData.obstructionState = SVNStatusType.OBSTRUCTED;
+                }
+                return obstructionData;
+            }
+            throw e;
+        }
+
+        if (!noWcRootCheck && kind == SVNWCDbKind.Dir && status == SVNWCDbStatus.Normal) {
+            boolean isRoot = getDb().isWCRoot(localAbsPath);
+            if (isRoot) {
+                obstructionData.obstructionState = SVNStatusType.OBSTRUCTED;
+                return obstructionData;
+            }
+        }
+
+        obstructionData.kind = convertDbKindToNodeKind(kind == SVNWCDbKind.Dir ? SVNNodeKind.DIR : SVNNodeKind.FILE, status, false);
+
+        switch (status) {
+            case Deleted:
+                obstructionData.deleted = true;
+                break;
+            case NotPresent:
+                if (diskKind != SVNNodeKind.NONE) {
+                    obstructionData.obstructionState = SVNStatusType.OBSTRUCTED;
+                }
+                break;
+            case Excluded:
+            case ServerExcluded:
+                obstructionData.excluded = true;
+                break;
+            case Incomplete:
+                obstructionData.obstructionState = SVNStatusType.MISSING;
+                break;
+            case Added:
+            case Normal:
+                if (diskKind == SVNNodeKind.NONE) {
+                    obstructionData.obstructionState = SVNStatusType.MISSING;
+                } else {
+                    if (diskKind != convertDbKindToNodeKind(kind == SVNWCDbKind.Dir ? SVNNodeKind.DIR : SVNNodeKind.FILE, status, false)) {
+                        obstructionData.obstructionState = SVNStatusType.OBSTRUCTED;
+                    }
+                }
+                break;
+            default:
+                SVNErrorManager.assertionFailure(false, null, SVNLogType.WC);
+        }
+
+        return obstructionData;
+    }
+
+    private SVNNodeKind convertDbKindToNodeKind(SVNNodeKind dbKind, SVNWCDbStatus dbStatus, boolean showHidden) {
+        if (!showHidden) {
+            switch (dbStatus) {
+                case NotPresent:
+                case ServerExcluded:
+                case Excluded:
+                    return SVNNodeKind.NONE;
+                default:
+                    return dbKind;
+            }
+        }
+        return dbKind;
+    }
+
+    public void deleteTreeConflict(File victimAbsPath) throws SVNException {
+        assert SVNFileUtil.isAbsolute(victimAbsPath);
+        getDb().opMarkResolved(victimAbsPath, false, false, true, null);
+    }
+
+    public void addTreeConflict(SVNWCConflictDescription17 conflict) throws SVNException {
+        assert conflict != null;
+        assert conflict.getOperation() == SVNOperation.MERGE || (conflict.getReason() != SVNConflictReason.MOVED_AWAY && conflict.getReason() != SVNConflictReason.MOVED_HERE);
+
+        try {
+            ConflictInfo conflictInfo = getConflicted(conflict.getLocalAbspath(), false, false, true);
+            SVNTreeConflictDescription existingConflict = conflictInfo.treeConflict;
+            if (existingConflict != null) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Attempt to add tree conflict that already exists at ''{0}''", conflict.getLocalAbspath());
+                SVNErrorManager.error(errorMessage, SVNLogType.WC);
+            } else if (conflict == null) {
+                return;
+            }
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                throw e;
+            }
+        }
+
+        SVNSkel conflictSkel = SvnWcDbConflicts.createConflictSkel();
+        SvnWcDbConflicts.addTreeConflict(conflictSkel, getDb(), conflict.getLocalAbspath(), conflict.getReason(), conflict.getAction(), null);
+
+        if (conflict.getOperation() == SVNOperation.UPDATE) {
+            SvnWcDbConflicts.conflictSkelOpUpdate(conflictSkel, conflict.getSrcLeftVersion(), conflict.getSrcRightVersion());
+        } else if (conflict.getOperation() == SVNOperation.SWITCH) {
+            SvnWcDbConflicts.conflictSkelOpSwitch(conflictSkel, conflict.getSrcLeftVersion(), conflict.getSrcRightVersion());
+        } else if (conflict.getOperation() == SVNOperation.MERGE) {
+            SvnWcDbConflicts.conflictSkelOpMerge(conflictSkel, conflict.getSrcLeftVersion(), conflict.getSrcRightVersion());
+        }
+        getDb().opMarkConflict(conflict.getLocalAbspath(), conflictSkel, null);
     }
 }

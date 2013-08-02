@@ -767,7 +767,7 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
         return result;
     }
 
-    private SVNProperties omitMergeInfoChanges(SVNProperties props) {
+    protected static SVNProperties omitMergeInfoChanges(SVNProperties props) {
         SVNProperties result = new SVNProperties();
         for (String name : props.nameSet()) {
             if (SVNProperty.MERGE_INFO.equals(name)) {
@@ -896,7 +896,7 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
     }
     
     private boolean isForce() {
-        return driver.force;
+        return driver.forceDelete;
     }
 
     private boolean isSameRepos() {
@@ -940,16 +940,16 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
     }
     
     private SVNURL getSource1URL() {
-        return driver.source.url1;
+        return driver.mergeSource.url1;
     }
     private SVNURL getSource2URL() {
-        return driver.source.url2;
+        return driver.mergeSource.url2;
     }
     private long getSource1Rev() {
-        return driver.source.rev1;
+        return driver.mergeSource.rev1;
     }
     private long getSource2Rev() {
-        return driver.source.rev2;
+        return driver.mergeSource.rev2;
     }
     
     private Collection<File> getDryRunDeletions() {

@@ -97,15 +97,15 @@ public class SvnNgMergePegged extends SvnNgOperationRunner<Void, SvnMerge> {
                 String sourceUuid = repos.getRepositoryUUID(true);
                 sameRepos = targetUuid.equals(sourceUuid);
             }
+            mergeDriver.doMerge(null, sources, target,
+                    repos,
+                    true, sameRepos, getOperation().isIgnoreAncestry(), getOperation().isForce(),
+                    getOperation().isDryRun(),
+                    getOperation().isRecordOnly(),
+                    null, false, false, getOperation().getDepth(), getOperation().getMergeOptions());
         } finally {
             repos.closeSession();
         }
-        mergeDriver.doMerge(null, sources, target, 
-                true, 
-                true, sameRepos, getOperation().isIgnoreAncestry(), getOperation().isForce(), 
-                getOperation().isDryRun(), 
-                getOperation().isRecordOnly(), 
-                null, false, false, getOperation().getDepth(), getOperation().getMergeOptions());
     }
     
     

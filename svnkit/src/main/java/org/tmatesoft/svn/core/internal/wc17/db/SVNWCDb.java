@@ -7180,4 +7180,23 @@ public class SVNWCDb implements ISVNWCDb {
         moved.movedFromDeleteAbsPath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), tmp);
         return moved;
     }
+
+    public void dropRoot(File localAbsPath) throws SVNException {
+        SVNWCDbDir rootDir = dirData.get(localAbsPath);
+        if (rootDir == null) {
+            return;
+        }
+        if (!rootDir.getWCRoot().getAbsPath().equals(localAbsPath)) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "''{0}'' is not a working copy root", localAbsPath);
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
+        }
+        for (Iterator<Entry<String, SVNWCDbDir>> iterator = dirData.entrySet().iterator(); iterator.hasNext(); ) {
+            final Entry<String, SVNWCDbDir> entry = iterator.next();
+            SVNWCDbDir wcDir = entry.getValue();
+            if (rootDir == wcDir) {
+                iterator.remove();
+            }
+        }
+        rootDir.getWCRoot().close();
+    }
 }

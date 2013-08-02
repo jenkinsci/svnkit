@@ -1695,4 +1695,6 @@ public interface ISVNWCDb {
         public File opRootMovedFromAbsPath;
         public File movedFromDeleteAbsPath;
     }
+
+    void dropRoot(File localAbsPath) throws SVNException;
 }

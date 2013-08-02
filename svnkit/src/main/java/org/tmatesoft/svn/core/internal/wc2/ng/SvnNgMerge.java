@@ -14,7 +14,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc17.SvnConflictReport;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RevisionsPair;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgMergeDriver.MergeSource;
@@ -40,22 +42,40 @@ public class SvnNgMerge extends SvnNgOperationRunner<Void, SvnMerge> {
 
     @Override
     protected Void run(SVNWCContext context) throws SVNException {
+        SvnConflictReport conflictReport;
         File lockPath = getLockPath(getFirstTarget());
         if (getOperation().isDryRun()) {
-            merge(getFirstTarget());
+            conflictReport = merge(getFirstTarget());
         } else {
             try {
-                lockPath = context.acquireWriteLock(lockPath, false, true);                
-                merge(getFirstTarget());
+                lockPath = context.acquireWriteLock(lockPath, false, true);
+                conflictReport = merge(getFirstTarget());
             } finally {
                 context.releaseWriteLock(lockPath);
                 sleepForTimestamp();
             }
             
         }
+        makeMergeConflictError(conflictReport);
         return null;
     }
-    
+
+    private void makeMergeConflictError(SvnConflictReport report) throws SVNException {
+        assert report == null || SVNFileUtil.isAbsolute(report.getTargetAbsPath());
+
+        if (report != null && report.wasLastRange()) {
+            assert report.getConflictedRange().rev1 != report.getConflictedRange().rev2;
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, "One or more conflicts were produced while merging r{0}:{1} into\n" +
+                    "''{2}'' --\n" +
+                    "resolve all conflicts and rerun the merge to apply the remaining\n" +
+                    "unmerged revisions",
+                    report.getConflictedRange().rev1,
+                    report.getConflictedRange().rev2,
+                    report.getTargetAbsPath());
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
+        }
+    }
+
     private File getLockPath(File firstTarget) throws SVNException {
         SVNNodeKind kind = getWcContext().readKind(firstTarget, false);
         if (kind == SVNNodeKind.DIR) {
@@ -65,7 +85,7 @@ public class SvnNgMerge extends SvnNgOperationRunner<Void, SvnMerge> {
         }
     }
 
-    private void merge(File target) throws SVNException {
+    private SvnConflictReport merge(File target) throws SVNException {
         SVNFileType ft = SVNFileType.getType(target);
         if (ft == SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "Path ''{0}'' does not exist", target);
@@ -170,19 +190,23 @@ public class SvnNgMerge extends SvnNgOperationRunner<Void, SvnMerge> {
                 source.url2 = url2;
                 sources.add(source);
             }
-            
-            mergeDriver.doMerge(null, sources, target, 
-                    sourcesAncestral, 
-                    sourcesRelated, 
-                    sameRepos, 
-                    getOperation().isIgnoreAncestry(), 
-                    getOperation().isForce(), 
-                    getOperation().isDryRun(), 
-                    getOperation().isRecordOnly(), null, 
-                    false, 
-                    false, 
-                    getOperation().getDepth(), 
+
+            SvnNgMergeDriver.MergeData mergeData = mergeDriver.doMerge(null, sources, target,
+                    repos1,
+                    sourcesRelated,
+                    sameRepos,
+                    getOperation().isIgnoreAncestry(),
+                    getOperation().isForce(),
+                    getOperation().isDryRun(),
+                    getOperation().isRecordOnly(), null,
+                    false,
+                    false,
+                    getOperation().getDepth(),
                     getOperation().getMergeOptions());
+            if (mergeData.useSleep) {
+                SVNFileUtil.sleepForTimestamp();
+            }
+            return mergeData.conflictReport;
         } finally {
             repos1.closeSession();
             repos2.closeSession();
