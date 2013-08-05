@@ -54,6 +54,10 @@ public class SvnWcDbStatementUtil {
         kindMap2.put("unknown", SVNWCDbKind.Unknown);
     };
     
+    public static SVNWCDbKind getKindForString(String kind) {
+        return kindMap2.get(kind);
+    }
+    
     public static SVNSqlJetStatement bindf(SVNSqlJetStatement stmt, String format, Object... binds) throws SVNException {
         if (binds != null) {
             for (int i = 0; i < binds.length; i++) {

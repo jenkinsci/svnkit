@@ -1953,13 +1953,6 @@ public class SVNWCDb implements ISVNWCDb {
         sdb.beginTransaction(SqlJetTransactionMode.WRITE);
             
         try {
-            SVNSqlJetStatement stmt = new SVNWCDbCreateSchema(sdb.getTemporaryDb(), SVNWCDbCreateSchema.REVERT_LIST, -1);
-            try {
-                stmt.done();
-            } finally {
-                stmt.reset();
-            }
-
             if (depth == SVNDepth.INFINITY) {
                 SvnWcDbRevert.revertRecursive(pdh.getWCRoot(), parsed.localRelPath);
             } else if (depth == SVNDepth.EMPTY) {

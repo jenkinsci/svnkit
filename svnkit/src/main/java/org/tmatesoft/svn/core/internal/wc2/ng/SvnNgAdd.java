@@ -29,7 +29,6 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbRevert;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc2.ISvnAddParameters;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
@@ -213,7 +212,7 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
                 getWcContext().getDb().opRevert(path, SVNDepth.EMPTY);
                 SvnNgRevert.restore(getWcContext(), path, SVNDepth.EMPTY, false, null);
             } finally {
-                SvnWcDbRevert.dropRevertList(getWcContext(), path);
+                getWcContext().getDb().getSDb(path).dropRevertList();
             }
         } catch (SVNException svne) {
             //

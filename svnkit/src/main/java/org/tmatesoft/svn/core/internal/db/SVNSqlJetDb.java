@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnNodesPristineTrigger;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbRevertList;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -55,6 +56,7 @@ public class SVNSqlJetDb {
 
     private int openCount = 0;
     private SVNSqlJetDb temporaryDb;
+    private SvnWcDbRevertList revertList;
 
     private SVNSqlJetDb(SqlJetDb db) {
         this.db = db;
@@ -135,6 +137,13 @@ public class SVNSqlJetDb {
             }
         }
         return temporaryDb;
+    }
+    
+    public SvnWcDbRevertList getRevertList() {
+        if (revertList == null) {
+            revertList = new SvnWcDbRevertList();
+        }
+        return revertList;
     }
 
     public SVNSqlJetStatement getStatement(SVNWCDbStatements statementIndex) throws SVNException {
@@ -308,6 +317,10 @@ public class SVNSqlJetDb {
 
     private static boolean isLogTransactions() {
         return logTransactions;
+    }
+
+    public void dropRevertList() {
+        revertList = null;
     }
 
 }
