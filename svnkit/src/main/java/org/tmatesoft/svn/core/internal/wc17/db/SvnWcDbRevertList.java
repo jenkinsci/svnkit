@@ -65,6 +65,7 @@ public class SvnWcDbRevertList implements Comparator<SvnWcDbRevertList.RevertLis
         row.conflictNew = conflictNew;
         row.conflictOld = conflictOld;
         row.conflictWorking = conflictWorking;
+        row.propReject = propReject;
         row.notify = notify;
         
         if (actual == 1) {
