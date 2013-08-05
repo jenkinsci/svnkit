@@ -310,7 +310,7 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
             return;
         }
         if (expectedChecksum != null && textDeltas) {
-            if (!expectedChecksum.equals(fb.resultChecksum)) {
+            if (fb.resultChecksum != null && !expectedChecksum.equals(fb.resultChecksum)) {
                 SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, "Checksum mismatch for ''{0}''", fb.path);
                 SVNErrorManager.error(errorMessage, SVNLogType.WC);
             }

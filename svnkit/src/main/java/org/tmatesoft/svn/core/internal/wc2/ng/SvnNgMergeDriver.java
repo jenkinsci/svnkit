@@ -2460,9 +2460,12 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             mergeInfoChanged = propDiff.propChanges != null && propDiff.propChanges.containsName(SVNProperty.MERGE_INFO);
         }
 
+        ISVNEventHandler oldEventHandler = context.getEventHandler();
+        context.setEventHandler(null);
         SvnNgPropertiesManager.setProperty(context, localAbsPath, SVNProperty.MERGE_INFO, 
                 mergeInfoValue != null ? SVNPropertyValue.create(mergeInfoValue) : null, 
                 SVNDepth.EMPTY, true, null, null);
+        context.setEventHandler(oldEventHandler);
         
         if (notify && context.getEventHandler() != null) {
             SVNEvent event = SVNEventFactory.createSVNEvent(localAbsPath, 

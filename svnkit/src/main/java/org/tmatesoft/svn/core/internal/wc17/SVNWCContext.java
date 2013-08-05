@@ -2166,9 +2166,6 @@ public class SVNWCContext {
         }
         writeCheck(dirAbsPath);
         SVNSkel workItems = result.workItems;
-        if (workItems == null) {
-            workItems = SVNSkel.createEmptyList();
-        }
         getDb().opSetProps(localAbsPath, result.newActualProperties, null, hasMagicProperty(propChanges), workItems);
         wqRun(localAbsPath);
         return result;

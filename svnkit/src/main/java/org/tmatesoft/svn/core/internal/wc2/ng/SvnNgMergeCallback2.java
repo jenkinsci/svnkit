@@ -241,15 +241,14 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
             } else {
                 textState = SVNStatusType.UNCHANGED;
             }
-
-            if (textState == SVNStatusType.CONFLICTED ||
-                    textState == SVNStatusType.MERGED ||
-                    textState == SVNStatusType.CHANGED ||
-                    propertyState == SVNStatusType.CONFLICTED ||
-                    propertyState == SVNStatusType.MERGED ||
-                    propertyState == SVNStatusType.CHANGED) {
-                recordUpdateUpdate(localAbsPath, SVNNodeKind.FILE, textState, propertyState);
-            }
+        }
+        if (textState == SVNStatusType.CONFLICTED ||
+                textState == SVNStatusType.MERGED ||
+                textState == SVNStatusType.CHANGED ||
+                propertyState == SVNStatusType.CONFLICTED ||
+                propertyState == SVNStatusType.MERGED ||
+                propertyState == SVNStatusType.CHANGED) {
+            recordUpdateUpdate(localAbsPath, SVNNodeKind.FILE, textState, propertyState);
         }
     }
 
@@ -1021,7 +1020,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         assert SVNFileUtil.isAbsolute(localAbsPath);
 
         SVNProperties props = new SVNProperties();
-        SvnNgPropertiesManager.categorizeProperties(propChanges, null, null, props);
+        SvnNgPropertiesManager.categorizeProperties(propChanges, props, null, null);
 
         if (mergeDriver.recordOnly && props.size() != 0) {
             SVNProperties mergeInfoProps = new SVNProperties();
@@ -1050,17 +1049,25 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
 
         if (props.size() > 0) {
             for (String propName : props.nameSet()) {
-                boolean hasPristineMergeInfo = false;
-                SVNProperties pristineProps = context.getPristineProps(localAbsPath);
-                if (pristineProps != null && pristineProps.containsName(SVNProperty.MERGE_INFO)) {
-                    hasPristineMergeInfo = true;
-                }
+                if (propName.equals(SVNProperty.MERGE_INFO)) {
+                    boolean hasPristineMergeInfo = false;
+                    SVNProperties pristineProps = context.getPristineProps(localAbsPath);
+                    if (pristineProps != null && pristineProps.containsName(SVNProperty.MERGE_INFO)) {
+                        hasPristineMergeInfo = true;
+                    }
 
-                SVNPropertyValue propertyValue = props.getSVNPropertyValue(propName);
-                if (!hasPristineMergeInfo && propertyValue != null) {
-                    mergeDriver.pathsWithNewMergeInfo.add(localAbsPath);
-                } else if (hasPristineMergeInfo && propertyValue == null) {
-                    mergeDriver.pathsWithDeletedMergeInfo.add(localAbsPath);
+                    SVNPropertyValue propertyValue = props.getSVNPropertyValue(propName);
+                    if (!hasPristineMergeInfo && propertyValue != null) {
+                        if (mergeDriver.pathsWithNewMergeInfo == null) {
+                            mergeDriver.pathsWithNewMergeInfo = new HashSet<File>();
+                        }
+                        mergeDriver.pathsWithNewMergeInfo.add(localAbsPath);
+                    } else if (hasPristineMergeInfo && propertyValue == null) {
+                        if (mergeDriver.pathsWithDeletedMergeInfo == null) {
+                            mergeDriver.pathsWithDeletedMergeInfo = new HashSet<File>();
+                        }
+                        mergeDriver.pathsWithDeletedMergeInfo.add(localAbsPath);
+                    }
                 }
             }
         }
