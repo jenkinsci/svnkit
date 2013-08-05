@@ -2566,8 +2566,6 @@ public class SVNWCDb implements ISVNWCDb {
         boolean clearRecordedInfo;
 
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
-            assert (conflict == null);
-            addWorkItems(db, workItems);
             SVNProperties pristineProps = SvnWcDbProperties.readPristineProperties(pdh.getWCRoot(), localRelpath);
             if (props != null && pristineProps != null) {
                 SVNProperties propDiffs = SVNWCUtils.propDiffs(props, pristineProps);
@@ -2583,6 +2581,10 @@ public class SVNWCDb implements ISVNWCDb {
                 rfi.localRelpath = localRelpath;
                 rfi.wcRoot = pdh.getWCRoot();
                 rfi.transaction(db);
+            }
+            addWorkItems(db, workItems);
+            if (conflict != null) {
+                markConflictInternal(pdh.getWCRoot(), localRelpath, conflict);
             }
         }
 

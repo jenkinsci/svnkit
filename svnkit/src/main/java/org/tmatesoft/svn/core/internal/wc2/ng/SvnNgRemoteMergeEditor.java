@@ -183,7 +183,7 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
     public void openDir(String path, long revision) throws SVNException {
         DirectoryBaton pb = currentDirectory;
         DirectoryBaton db = new DirectoryBaton(path, pb, false, revision);
-        currentDirectory = pb;
+        currentDirectory = db;
 
         if (pb.skipChildren) {
             db.skip = true;
@@ -246,6 +246,7 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
             mergeResult.reset();
             processor.dirClosed(mergeResult, SVNFileUtil.createFilePath(db.path), db.leftSource, db.rightSource);
         }
+        currentDirectory = currentDirectory.parentBaton;
     }
 
     @Override
@@ -332,6 +333,7 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
                 processor.fileChanged(mergeResult, SVNFileUtil.createFilePath(fb.path), fb.leftSource, fb.rightSource, fb.pathEndRevision != null ? fb.pathStartRevision : null, fb.pathEndRevision, fb.pristineProps, rightProps, fb.pathEndRevision != null, fb.propChanges);
             }
         }
+        currentFile = null;
     }
 
     @Override

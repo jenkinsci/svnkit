@@ -734,6 +734,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
     @Override
     public void dirClosed(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource) throws SVNException {
         handlePendingNotifications(currentDirectory);
+        currentDirectory = currentDirectory.parentBaton;
     }
 
     @Override
@@ -883,10 +884,10 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
 
     private void recordUpdateUpdate(File localAbsPath, SVNNodeKind kind, SVNStatusType contentState, SVNStatusType propState) throws SVNException {
         if (mergeDriver.mergeSource.ancestral || mergeDriver.reintegrateMerge) {
-            if (mergeDriver.mergedAbsPaths == null) {
-                mergeDriver.mergedAbsPaths = new HashSet<File>();
+            if (mergeDriver.mergedPaths == null) {
+                mergeDriver.mergedPaths = new HashSet<File>();
             }
-            mergeDriver.mergedAbsPaths.add(localAbsPath);
+            mergeDriver.mergedPaths.add(localAbsPath);
         }
 
         ISVNEventHandler eventHandler = context.getEventHandler();
@@ -900,10 +901,10 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
 
     private void recordUpdateAdd(File localAbsPath, SVNNodeKind kind, boolean notifyReplaced) throws SVNException {
         if (mergeDriver.mergeSource.ancestral || mergeDriver.reintegrateMerge) {
-            if (mergeDriver.mergedAbsPaths == null) {
-                mergeDriver.mergedAbsPaths = new HashSet<File>();
+            if (mergeDriver.mergedPaths == null) {
+                mergeDriver.mergedPaths = new HashSet<File>();
             }
-            mergeDriver.mergedAbsPaths.add(localAbsPath);
+            mergeDriver.mergedPaths.add(localAbsPath);
         }
         ISVNEventHandler eventHandler = context.getEventHandler();
         if (eventHandler != null) {
@@ -924,10 +925,10 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
             if (mergeDriver.addedPaths != null) {
                 mergeDriver.addedPaths.remove(localAbsPath);
             }
-            if (mergeDriver.mergedAbsPaths == null) {
-                mergeDriver.mergedAbsPaths = new HashSet<File>();
+            if (mergeDriver.mergedPaths == null) {
+                mergeDriver.mergedPaths = new HashSet<File>();
             }
-            mergeDriver.mergedAbsPaths.add(localAbsPath);
+            mergeDriver.mergedPaths.add(localAbsPath);
         }
         notifyMergeBegin(localAbsPath, true);
         if (currentFile.parentBaton != null) {
@@ -946,7 +947,10 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         File notifyAbsPath;
 
         if (mergeDriver.mergeSource.ancestral) {
-            SvnNgMergeDriver.MergePath child = SvnNgMergeDriver.findNearestAncestorWithIntersectingRanges(new long[2], mergeDriver.notifyBegin.nodesWithMergeInfo, !deleteAction, localAbsPath);
+            long[] nRangeRevisions = new long[2];
+            SvnNgMergeDriver.MergePath child = SvnNgMergeDriver.findNearestAncestorWithIntersectingRanges(nRangeRevisions, mergeDriver.notifyBegin.nodesWithMergeInfo, !deleteAction, localAbsPath);
+            nRange.setStartRevision(nRangeRevisions[0]);
+            nRange.setEndRevision(nRangeRevisions[1]);
             if (child == null && deleteAction) {
                 child = SvnNgMergeDriver.findNearestAncestor(mergeDriver.notifyBegin.nodesWithMergeInfo, true, localAbsPath);
             }
@@ -962,7 +966,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
 
             mergeDriver.notifyBegin.lastAbsPath = child.absPath;
 
-            if (child.absPath != null || child.remainingRanges.getSize() == 0 || !SVNRevision.isValidRevisionNumber(nRange.getStartRevision())) {
+            if (child.absent || child.remainingRanges.getSize() == 0 || !SVNRevision.isValidRevisionNumber(nRange.getStartRevision())) {
                 return;
             }
 
