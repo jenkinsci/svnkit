@@ -348,7 +348,7 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
             integrateNestedWcAsCopy(localAbsPath);
         }
 
-        if (getWcContext().getEventHandler() != null) {
+        if (fireEvent && getWcContext().getEventHandler() != null) {
             SVNEvent event = SVNEventFactory.createSVNEvent(localAbsPath, kind, null, -1, SVNEventAction.ADD, SVNEventAction.ADD, null, null);
             getWcContext().getEventHandler().handleEvent(event, UNKNOWN);
         }

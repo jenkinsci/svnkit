@@ -271,6 +271,9 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
             return;
         }
         if ((mergeDriver.mergeSource.ancestral || mergeDriver.reintegrateMerge) && (currentFile.parentBaton == null || currentFile.parentBaton.added)) {
+            if (mergeDriver.addedPaths == null) {
+                mergeDriver.addedPaths = new HashSet<File>();
+            }
             mergeDriver.addedPaths.add(localAbsPath);
         }
         InputStream pristineStream = null;
@@ -689,6 +692,9 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         assert db.edited && !mergeDriver.recordOnly;
 
         if ((mergeDriver.mergeSource.ancestral || mergeDriver.reintegrateMerge) && (db.parentBaton == null || !db.parentBaton.added)) {
+            if (mergeDriver.addedPaths == null) {
+                mergeDriver.addedPaths = new HashSet<File>();
+            }
             mergeDriver.addedPaths.add(localAbsPath);
         }
 
@@ -698,7 +704,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
             File child = SVNFileUtil.skipAncestor(mergeDriver.targetAbsPath, localAbsPath);
             assert child != null;
 
-            SVNURL copyFromUrl = mergeDriver.reposRootUrl.appendPath(SVNFileUtil.getFilePath(child), false);
+            SVNURL copyFromUrl = mergeDriver.mergeSource.url2.appendPath(SVNFileUtil.getFilePath(child), false);
             long copyFromRevision = rightSource.getRevision();
 
             checkReposMatch(mergeDriver.reposRootUrl, localAbsPath, copyFromUrl);
@@ -1347,7 +1353,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
             SVNErrorManager.error(errorMessage, SVNLogType.WC);
         }
         if (originalRevision != copyFromRevision || !copyFromUrl.equals(originalRootUrl.appendPath(SVNFileUtil.getFilePath(originalReposRelPath), false))) {
-            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_COPYFROM_PATH_NOT_FOUND, "Copyfrom ''{0}'' doesn't match original location of ''{1}''", copyFromUrl, localAbsPath);
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_COPYFROM_PATH_NOT_FOUND, "Copyfrom ''{0}'' doesn''t match original location of ''{1}''", copyFromUrl, localAbsPath);
             SVNErrorManager.error(errorMessage, SVNLogType.WC);
         }
         SVNProperties regularProps = new SVNProperties();
@@ -1460,6 +1466,9 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
                     eventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
                 }
                 if (mergeDriver.mergeSource.ancestral || mergeDriver.reintegrateMerge) {
+                    if (mergeDriver.skippedPaths == null) {
+                        mergeDriver.skippedPaths = new HashSet<File>();
+                    }
                     mergeDriver.skippedPaths.add(localAbsPath);
                 }
             } else if (treeConflictReason != null) {
