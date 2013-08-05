@@ -325,30 +325,32 @@ public class SvnWcDbRevert extends SvnWcDbShared {
     public static void notifyRevert(SVNWCContext context, File localAbsPath, ISVNEventHandler eventHandler) throws SVNException {
         SVNWCDb db = (SVNWCDb) context.getDb();
         DirParsedInfo dirInfo = db.obtainWcRoot(localAbsPath);
-        File localRelpath = dirInfo.localRelPath;
+        String localRelpath = SVNFileUtil.getFilePath(dirInfo.localRelPath);
         SVNWCDbRoot root = dirInfo.wcDbDir.getWCRoot();
         
         final SvnWcDbRevertList revertList = root.getSDb().getRevertList();
         File previousPath = null;
-        for(Iterator<RevertListRow> rows = revertList.rows(); rows.hasNext();) {
-            final RevertListRow row = rows.next();
-            final String rowPath = row.localRelpath;
-            if (localRelpath.equals(rowPath) || "".equals(localRelpath) || rowPath.startsWith(localRelpath + "/")) {
-                if (!(row.notify != 0 || row.actual == 0)) {
+        if (eventHandler != null) {
+            for(Iterator<RevertListRow> rows = revertList.rows(); rows.hasNext();) {
+                final RevertListRow row = rows.next();
+                final String rowPath = row.localRelpath;
+                if (localRelpath.equals(rowPath) || "".equals(localRelpath) || rowPath.startsWith(localRelpath + "/")) {
+                    if (!(row.notify != 0 || row.actual == 0)) {
+                        continue;
+                    }
+                } else {
                     continue;
                 }
-            } else {
-                continue;
+                final File notifyRelPath = SVNFileUtil.createFilePath(rowPath);
+                if (previousPath != null && notifyRelPath.equals(previousPath)) {
+                    continue;
+                }
+                previousPath = notifyRelPath;
+                final File notifyAbsPath = SVNFileUtil.createFilePath(root.getAbsPath(), notifyRelPath);
+                eventHandler.handleEvent(SVNEventFactory.createSVNEvent(notifyAbsPath, SVNNodeKind.NONE, null, -1, SVNEventAction.REVERT, 
+                        SVNEventAction.REVERT, null, null, -1, -1), -1);
+                
             }
-            File notifyRelPath = SVNFileUtil.createFilePath(rowPath);
-            if (previousPath != null && notifyRelPath.equals(previousPath)) {
-                continue;
-            }
-            previousPath = notifyRelPath;
-            final File notifyAbsPath = SVNFileUtil.createFilePath(root.getAbsPath(), notifyRelPath);
-            eventHandler.handleEvent(SVNEventFactory.createSVNEvent(notifyAbsPath, SVNNodeKind.NONE, null, -1, SVNEventAction.REVERT, 
-                    SVNEventAction.REVERT, null, null, -1, -1), -1);
-            
         }
         for(Iterator<RevertListRow> rows = revertList.rows(); rows.hasNext();) {
             final RevertListRow row = rows.next();
