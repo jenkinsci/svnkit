@@ -54,12 +54,10 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         this.pureRemoteDiff = target == null;
     }
 
-    @Override
     public void targetRevision(long revision) throws SVNException {
         this.targetRevision = revision;
     }
 
-    @Override
     public void openRoot(long revision) throws SVNException {
         DirectoryBaton db = new DirectoryBaton("", null, false, revision);
         db.leftSource = new SvnDiffSource(this.revision);
@@ -137,7 +135,6 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         }
     }
 
-    @Override
     public void deleteEntry(String path, long revision) throws SVNException {
         DirectoryBaton parentBaton = currentDirectory;
         if (parentBaton.skipChildren) {
@@ -151,19 +148,16 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         }
     }
 
-    @Override
     public void absentDir(String path) throws SVNException {
         mergeResult.reset();
         processor.nodeAbsent(mergeResult, SVNFileUtil.createFilePath(path));
     }
 
-    @Override
     public void absentFile(String path) throws SVNException {
         mergeResult.reset();
         processor.nodeAbsent(mergeResult, SVNFileUtil.createFilePath(path));
     }
 
-    @Override
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         DirectoryBaton pb = currentDirectory;
         DirectoryBaton db = new DirectoryBaton(path, pb, true, -1);
@@ -179,7 +173,6 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         processor.dirOpened(mergeResult, SVNFileUtil.createFilePath(db.path), null, db.rightSource, null);
     }
 
-    @Override
     public void openDir(String path, long revision) throws SVNException {
         DirectoryBaton pb = currentDirectory;
         DirectoryBaton db = new DirectoryBaton(path, pb, false, revision);
@@ -197,7 +190,6 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         processor.dirOpened(mergeResult, SVNFileUtil.createFilePath(path), db.leftSource, db.rightSource, null);
     }
 
-    @Override
     public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
         DirectoryBaton db = currentDirectory;
         if (db.skip) {
@@ -214,7 +206,6 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         db.propChanges.put(name, value);
     }
 
-    @Override
     public void closeDir() throws SVNException {
         DirectoryBaton db = currentDirectory;
         boolean sendChanged = false;
@@ -249,7 +240,6 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         currentDirectory = currentDirectory.parentBaton;
     }
 
-    @Override
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         DirectoryBaton pb = currentDirectory;
         FileBaton fb = new FileBaton(path, pb, true);
@@ -266,7 +256,6 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         fb.skip = mergeResult.skip;
     }
 
-    @Override
     public void openFile(String path, long revision) throws SVNException {
         DirectoryBaton pb = currentDirectory;
         FileBaton fb = new FileBaton(path, pb, false);
@@ -285,7 +274,6 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         fb.skip = mergeResult.skip;
     }
 
-    @Override
     public void changeFileProperty(String path, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         FileBaton fb = currentFile;
         if (fb.skip) {
@@ -303,7 +291,6 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         fb.propChanges.put(propertyName, propertyValue);
     }
 
-    @Override
     public void closeFile(String path, String expectedChecksum) throws SVNException {
         FileBaton fb = currentFile;
         if (fb.skip) {
@@ -336,17 +323,14 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         currentFile = null;
     }
 
-    @Override
     public SVNCommitInfo closeEdit() throws SVNException {
         cleanup();
         return null;
     }
 
-    @Override
     public void abortEdit() throws SVNException {
     }
 
-    @Override
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
         if (currentFile.skip) {
             return;
@@ -382,7 +366,6 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         return globalTmpDir;
     }
 
-    @Override
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         if (currentFile.deltaProcessor != null) {
             return currentFile.deltaProcessor.textDeltaChunk(diffWindow);
@@ -390,7 +373,6 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         return SVNFileUtil.DUMMY_OUT;
     }
 
-    @Override
     public void textDeltaEnd(String path) throws SVNException {
         if (currentFile.deltaProcessor != null) {
             String checksum = currentFile.deltaProcessor.textDeltaEnd();

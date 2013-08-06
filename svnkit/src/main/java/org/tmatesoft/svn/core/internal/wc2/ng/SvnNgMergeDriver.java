@@ -40,7 +40,6 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SvnNgMergeDriver implements ISVNEventHandler {
 
     private static final Comparator<? super File> PATH_COMPARATOR = new Comparator<File>() {
-        @Override
         public int compare(File file1, File file2) {
             return SVNPathUtil.PATH_COMPARATOR.compare(SVNFileUtil.getFilePath(file1), SVNFileUtil.getFilePath(file2));
         }
@@ -3070,7 +3069,6 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             this.depth = depth;
         }
 
-        @Override
         public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
             if (logEntry.getChangedPaths() == null) {
                 return;
