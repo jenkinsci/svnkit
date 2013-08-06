@@ -282,31 +282,35 @@ public class SvnWcDbRevert extends SvnWcDbShared {
         
         RevertListRow row = root.getSDb().getRevertList().getActualRow(SVNFileUtil.getFilePath(localRelpath));
         row = row == null ? root.getSDb().getRevertList().getRow(SVNFileUtil.getFilePath(localRelpath)) : null;
-        if (row.actual != 0) {
-            result.set(RevertInfo.reverted, row.notify != 0);
-            if (row.conflictOld != null) {
-                result.set(RevertInfo.conflictOld, SVNFileUtil.createFilePath(root.getAbsPath(), row.conflictOld));
-            }
-            if (row.conflictNew != null) {
-                result.set(RevertInfo.conflictNew, SVNFileUtil.createFilePath(root.getAbsPath(), row.conflictNew));
-            }
-            if (row.conflictWorking != null) {
-                result.set(RevertInfo.conflictWorking, SVNFileUtil.createFilePath(root.getAbsPath(), row.conflictWorking));
-            }
-            if (row.propReject != null) {
-                result.set(RevertInfo.propReject, SVNFileUtil.createFilePath(root.getAbsPath(), row.propReject));
-            }
-            row = root.getSDb().getRevertList().getRow(SVNFileUtil.getFilePath(localRelpath));
-        }
         if (row != null) {
-            result.set(RevertInfo.reverted, true);
-            if (row.reposId != 0) {
-                result.set(RevertInfo.copiedHere, row.opDepth == SVNWCUtils.relpathDepth(localRelpath));
+            if (row.actual != 0) {
+                result.set(RevertInfo.reverted, row.notify != 0);
+                if (row.conflictOld != null) {
+                    result.set(RevertInfo.conflictOld, SVNFileUtil.createFilePath(root.getAbsPath(), row.conflictOld));
+                }
+                if (row.conflictNew != null) {
+                    result.set(RevertInfo.conflictNew, SVNFileUtil.createFilePath(root.getAbsPath(), row.conflictNew));
+                }
+                if (row.conflictWorking != null) {
+                    result.set(RevertInfo.conflictWorking, SVNFileUtil.createFilePath(root.getAbsPath(), row.conflictWorking));
+                }
+                if (row.propReject != null) {
+                    result.set(RevertInfo.propReject, SVNFileUtil.createFilePath(root.getAbsPath(), row.propReject));
+                }
+                row = root.getSDb().getRevertList().getRow(SVNFileUtil.getFilePath(localRelpath));
             }
-            result.set(RevertInfo.kind, SvnWcDbStatementUtil.getKindForString(row.kind));
-            
+            if (row != null) {
+                result.set(RevertInfo.reverted, true);
+                if (row.reposId != 0) {
+                    result.set(RevertInfo.copiedHere, row.opDepth == SVNWCUtils.relpathDepth(localRelpath));
+                }
+                result.set(RevertInfo.kind, SvnWcDbStatementUtil.getKindForString(row.kind));
+                
+            }
+            if (row != null) {
+                root.getSDb().getRevertList().deleteRow(row.localRelpath);
+            }
         }
-        root.getSDb().getRevertList().deleteRow(SVNFileUtil.getFilePath(localRelpath));
         return result;
     }
 
