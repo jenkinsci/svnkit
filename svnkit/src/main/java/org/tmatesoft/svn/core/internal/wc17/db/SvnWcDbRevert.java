@@ -307,9 +307,7 @@ public class SvnWcDbRevert extends SvnWcDbShared {
                 result.set(RevertInfo.kind, SvnWcDbStatementUtil.getKindForString(row.kind));
                 
             }
-            if (row != null) {
-                root.getSDb().getRevertList().deleteRow(row.localRelpath);
-            }
+            root.getSDb().getRevertList().deleteRow((SVNFileUtil.getFilePath(localRelpath)));
         }
         return result;
     }
