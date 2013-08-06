@@ -6,7 +6,6 @@ import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.*;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslatorInputStream;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatusEditor17;
 import org.tmatesoft.svn.core.internal.wc17.SVNUpdateEditor17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCConflictDescription17;
@@ -16,8 +15,6 @@ import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbConflicts;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
-import org.tmatesoft.svn.core.io.SVNLocationEntry;
-import org.tmatesoft.svn.core.io.SVNLocationSegment;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
@@ -42,7 +39,6 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         this.mergeDriver = mergeDriver;
     }
 
-    @Override
     public void fileOpened(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, SvnDiffSource copyFromSource) throws SVNException {
         File localAbsPath = SVNFileUtil.createFilePath(mergeDriver.targetAbsPath, relPath);
 
@@ -165,7 +161,6 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         }
     }
 
-    @Override
     public void fileChanged(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, File leftFile, File rightFile, SVNProperties leftProps, SVNProperties rightProps, boolean fileModified, SVNProperties propChanges) throws SVNException {
         File localAbsPath = SVNFileUtil.createFilePath(mergeDriver.targetAbsPath, relPath);
 
@@ -252,7 +247,6 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         }
     }
 
-    @Override
     public void fileAdded(SvnDiffCallbackResult result, File relPath, SvnDiffSource copyFromSource, SvnDiffSource rightSource, File copyFromFile, File rightFile, SVNProperties copyFromProps, SVNProperties rightProps) throws SVNException {
         File localAbsPath = SVNFileUtil.createFilePath(mergeDriver.targetAbsPath, relPath);
         assert SVNFileUtil.isAbsolute(localAbsPath);
@@ -326,7 +320,6 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         }
     }
 
-    @Override
     public void fileDeleted(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, File leftFile, SVNProperties leftProps) throws SVNException {
         File localAbsPath = SVNFileUtil.createFilePath(mergeDriver.targetAbsPath, relPath);
         currentFile.markFileEdited(localAbsPath);
@@ -368,7 +361,6 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         }
     }
 
-    @Override
     public void dirOpened(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, SvnDiffSource copyFromSource) throws SVNException {
         File localAbsPath = SVNFileUtil.createFilePath(mergeDriver.targetAbsPath, relPath);
         DirectoryBaton db = new DirectoryBaton();
@@ -559,7 +551,6 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         }
     }
 
-    @Override
     public void dirChanged(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, SVNProperties leftProps, SVNProperties rightProps, SVNProperties propChanges) throws SVNException {
         File localAbsPath = SVNFileUtil.createFilePath(mergeDriver.targetAbsPath, relPath);
 
@@ -598,7 +589,6 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         }
     }
 
-    @Override
     public void dirDeleted(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SVNProperties leftProps) throws SVNException {
         File localAbsPath = SVNFileUtil.createFilePath(mergeDriver.targetAbsPath, relPath);
         DirectoryBaton db = currentDirectory;
@@ -673,7 +663,6 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         }
     }
 
-    @Override
     public void dirAdded(SvnDiffCallbackResult result, File relPath, SvnDiffSource copyFromSource, SvnDiffSource rightSource, SVNProperties copyFromProps, SVNProperties rightProps) throws SVNException {
         File localAbsPath = SVNFileUtil.createFilePath(mergeDriver.targetAbsPath, relPath);
 
@@ -732,17 +721,14 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         }
     }
 
-    @Override
     public void dirPropsChanged(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, SVNProperties leftProps, SVNProperties rightProps, SVNProperties propChanges) throws SVNException {
     }
 
-    @Override
     public void dirClosed(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource) throws SVNException {
         handlePendingNotifications(currentDirectory);
         currentDirectory = currentDirectory.parentBaton;
     }
 
-    @Override
     public void nodeAbsent(SvnDiffCallbackResult result, File relPath) throws SVNException {
         File localAbsPath = SVNFileUtil.createFilePath(mergeDriver.targetAbsPath, relPath);
         recordSkip(localAbsPath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP, SVNStatusType.MISSING);
@@ -1492,7 +1478,6 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
             this.deleteBaton = deleteBaton;
         }
 
-        @Override
         public void receive(SvnTarget target, SvnStatus status) throws SVNException {
             File localAbsPath = target.getFile();
 
