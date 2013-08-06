@@ -27,6 +27,7 @@ import org.apache.subversion.javahl.types.CopySource;
 import org.apache.subversion.javahl.types.Depth;
 import org.apache.subversion.javahl.types.DiffOptions;
 import org.apache.subversion.javahl.types.Mergeinfo;
+import org.apache.subversion.javahl.types.Mergeinfo.LogKind;
 import org.apache.subversion.javahl.types.Revision;
 import org.apache.subversion.javahl.types.RevisionRange;
 import org.apache.subversion.javahl.types.Version;
@@ -378,5 +379,17 @@ public class SVNClient implements ISVNClient {
 
     public byte[] propertyGet(String path, String name, Revision revision, Revision pegRevision, Collection<String> changelists) throws ClientException {
         return delegate.propertyGet(path, name, revision, pegRevision, changelists);
+    }
+
+    public void merge(String path1, Revision revision1, String path2, Revision revision2, String localPath, boolean force, Depth depth, boolean ignoreMergeinfo, boolean diffIgnoreAncestry, boolean dryRun, boolean recordOnly) throws ClientException {
+        delegate.merge(path1, revision1, path2, revision2, localPath, force, depth, ignoreMergeinfo, diffIgnoreAncestry, dryRun, recordOnly);
+    }
+
+    public void merge(String path, Revision pegRevision, List<RevisionRange> revisions, String localPath, boolean force, Depth depth, boolean ignoreMergeinfo, boolean diffIgnoreAncestry, boolean dryRun, boolean recordOnly) throws ClientException {
+        delegate.merge(path, pegRevision, revisions, localPath, force, depth, ignoreMergeinfo, diffIgnoreAncestry, dryRun, recordOnly);
+    }
+
+    public void getMergeinfoLog(LogKind kind, String pathOrUrl, Revision pegRevision, String mergeSourceUrl, Revision srcPegRevision, Revision srcStartRevision, Revision srcEndRevision, boolean discoverChangedPaths, Depth depth, Set<String> revProps, LogMessageCallback callback) throws ClientException {
+        delegate.getMergeinfoLog(kind, pathOrUrl, pegRevision, mergeSourceUrl, srcPegRevision, srcStartRevision, srcEndRevision, discoverChangedPaths, depth, revProps, callback);
     }
 }

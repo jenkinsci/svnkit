@@ -27,6 +27,7 @@ import org.apache.subversion.javahl.ConflictResult;
 import org.apache.subversion.javahl.ConflictResult.Choice;
 import org.apache.subversion.javahl.DiffSummary;
 import org.apache.subversion.javahl.ISVNClient;
+import org.apache.subversion.javahl.JavaHLObjectFactory;
 import org.apache.subversion.javahl.SubversionException;
 import org.apache.subversion.javahl.callback.BlameCallback;
 import org.apache.subversion.javahl.callback.ChangelistCallback;
@@ -53,6 +54,7 @@ import org.apache.subversion.javahl.types.Depth;
 import org.apache.subversion.javahl.types.DiffOptions;
 import org.apache.subversion.javahl.types.DirEntry;
 import org.apache.subversion.javahl.types.Info;
+import org.apache.subversion.javahl.types.JavaHLTypesObjectFactory;
 import org.apache.subversion.javahl.types.Lock;
 import org.apache.subversion.javahl.types.Mergeinfo;
 import org.apache.subversion.javahl.types.Mergeinfo.LogKind;
@@ -90,11 +92,24 @@ import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchHunkInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnDiffGenerator;
 import org.tmatesoft.svn.core.javahl.JavaHLCompositeLog;
 import org.tmatesoft.svn.core.javahl.JavaHLDebugLog;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNConflictAction;
+import org.tmatesoft.svn.core.wc.SVNConflictChoice;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNConflictReason;
+import org.tmatesoft.svn.core.wc.SVNConflictResult;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNOperation;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnAnnotate;
 import org.tmatesoft.svn.core.wc2.SvnAnnotateItem;
@@ -1696,9 +1711,13 @@ public class SVNClientImpl implements ISVNClient {
         if (commitable == null) {
             return null;
         }
-        return new CommitItem(getFilePath(commitable.getPath()), getNodeKind(commitable.getKind()), commitable.getFlags(),
-                getUrlString(commitable.getUrl()), getUrlString(commitable.getCopyFromUrl()),
-                commitable.getCopyFromRevision());
+        return JavaHLObjectFactory.createCommitItem(getFilePath(commitable.getPath()), 
+                getNodeKind(commitable.getKind()), 
+                commitable.getFlags(),
+                getUrlString(commitable.getUrl()), 
+                getUrlString(commitable.getCopyFromUrl()),
+                commitable.getCopyFromRevision(),
+                getFilePath(commitable.getMovedFromAbsPath()));
     }
 
     private String getFilePath(File path) {
@@ -2388,10 +2407,12 @@ public class SVNClientImpl implements ISVNClient {
         if (conflictVersion == null) {
             return null;
         }
-        return new ConflictVersion(getUrlString(conflictVersion.getRepositoryRoot()),
+        return JavaHLTypesObjectFactory.createConflictVersion(
+                getUrlString(conflictVersion.getRepositoryRoot()),
+                null, // TODO repos UUID
                 conflictVersion.getPegRevision(),
                 conflictVersion.getPath(),
-                getNodeKind(conflictVersion.getKind()));
+                getNodeKind(conflictVersion.getKind()));                
     }
 
     private SVNConflictResult getSVNConflictResult(ConflictResult conflictResult) {
@@ -2885,5 +2906,23 @@ public class SVNClientImpl implements ISVNClient {
 
     public byte[] propertyGet(String path, String name, Revision revision, Revision pegRevision, Collection<String> changelists) throws ClientException {
         return null;
+    }
+
+    public void merge(String path1, Revision revision1, String path2, Revision revision2, String localPath, boolean force, Depth depth, boolean ignoreMergeinfo, boolean diffIgnoreAncestry, boolean dryRun, boolean recordOnly)
+            throws ClientException {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void merge(String path, Revision pegRevision, List<RevisionRange> revisions, String localPath, boolean force, Depth depth, boolean ignoreMergeinfo, boolean diffIgnoreAncestry, boolean dryRun, boolean recordOnly)
+            throws ClientException {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void getMergeinfoLog(LogKind kind, String pathOrUrl, Revision pegRevision, String mergeSourceUrl, Revision srcPegRevision, Revision srcStartRevision, Revision srcEndRevision, boolean discoverChangedPaths, Depth depth,
+            Set<String> revProps, LogMessageCallback callback) throws ClientException {
+        // TODO Auto-generated method stub
+        
     }
 }
