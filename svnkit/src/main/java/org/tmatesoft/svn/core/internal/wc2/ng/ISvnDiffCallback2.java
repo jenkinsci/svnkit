@@ -74,7 +74,8 @@ public interface ISvnDiffCallback2 {
     public void dirClosed(SvnDiffCallbackResult result,
                           File relPath,
                           SvnDiffSource leftSource,
-                          SvnDiffSource rightSource) throws SVNException;
+                          SvnDiffSource rightSource,
+                          boolean reallyClose) throws SVNException;
 
     public void nodeAbsent(SvnDiffCallbackResult result, File relPath) throws SVNException;
 }

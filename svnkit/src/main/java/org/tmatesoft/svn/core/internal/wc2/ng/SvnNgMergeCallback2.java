@@ -71,6 +71,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
                 currentFile.shadowed = true;
                 currentFile.treeConflictReason = SVNConflictReason.SKIP;
                 currentFile.skipReason = obstructionState;
+                return;
             }
 
             if (isDeleted) {
@@ -397,8 +398,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
                 db.shadowed = true;
 
                 if (obstructionState == SVNStatusType.OBSTRUCTED) {
-                    SVNWCContext.CheckWCRootInfo checkWCRootInfo = context.checkWCRoot(localAbsPath, false);
-                    if (checkWCRootInfo.wcRoot) {
+                    if (context.getDb().isWCRoot(localAbsPath)) {
                         db.treeConflictReason = SVNConflictReason.WC_SKIP;
                         return;
                     }
@@ -724,8 +724,10 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
     public void dirPropsChanged(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, SVNProperties leftProps, SVNProperties rightProps, SVNProperties propChanges) throws SVNException {
     }
 
-    public void dirClosed(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource) throws SVNException {
-        handlePendingNotifications(currentDirectory);
+    public void dirClosed(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, boolean reallyClose) throws SVNException {
+        if (reallyClose) {
+            handlePendingNotifications(currentDirectory);
+        }
         currentDirectory = currentDirectory.parentBaton;
     }
 
@@ -1416,6 +1418,9 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
                     eventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
                 }
                 if (mergeDriver.mergeSource.ancestral || mergeDriver.reintegrateMerge) {
+                    if (mergeDriver.skippedPaths == null) {
+                        mergeDriver.skippedPaths = new HashSet<File>();
+                    }
                     mergeDriver.skippedPaths.add(localAbsPath);
                 }
             } else if (treeConflictReason != null) {

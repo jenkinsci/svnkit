@@ -779,8 +779,10 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         MergePath item = new MergePath(targetPath);
         SVNMergeRange itemRange = new SVNMergeRange(source.rev1, source.rev2, true);
         item.remainingRanges = new SVNMergeRangeList(itemRange);
-        
-        childrenWithMergeInfo = new TreeMap<File, MergePath>();
+
+        if (childrenWithMergeInfo == null) {
+            childrenWithMergeInfo = new TreeMap<File, MergePath>();
+        }
         childrenWithMergeInfo.put(targetPath, item);
 
         SvnNgMergeCallback2 mergeCallback = new SvnNgMergeCallback2(context, this);

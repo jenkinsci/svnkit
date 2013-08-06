@@ -235,7 +235,9 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         }
         if (!db.skip && !sendChanged) {
             mergeResult.reset();
-            processor.dirClosed(mergeResult, SVNFileUtil.createFilePath(db.path), db.leftSource, db.rightSource);
+            processor.dirClosed(mergeResult, SVNFileUtil.createFilePath(db.path), db.leftSource, db.rightSource, true);
+        } else {
+            processor.dirClosed(mergeResult, SVNFileUtil.createFilePath(db.path), db.leftSource, db.rightSource, false);
         }
         currentDirectory = currentDirectory.parentBaton;
     }
