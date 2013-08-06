@@ -8,7 +8,7 @@ public class SvnSingleRangeConflictReport {
     private final SvnNgMergeDriver.MergeSource conflictedRange;
     private final SvnNgMergeDriver.MergeSource remainingSource;
 
-    public SvnSingleRangeConflictReport(SvnNgMergeDriver.MergeSource remainingSource, SvnNgMergeDriver.MergeSource conflictedRange) {
+    public SvnSingleRangeConflictReport(SvnNgMergeDriver.MergeSource conflictedRange, SvnNgMergeDriver.MergeSource remainingSource) {
         this.remainingSource = remainingSource;
         this.conflictedRange = conflictedRange;
     }

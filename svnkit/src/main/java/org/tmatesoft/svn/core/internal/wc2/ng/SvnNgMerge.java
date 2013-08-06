@@ -16,7 +16,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SvnConflictReport;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
-import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RevisionsPair;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgMergeDriver.MergeSource;
@@ -56,24 +55,8 @@ public class SvnNgMerge extends SvnNgOperationRunner<Void, SvnMerge> {
             }
             
         }
-        makeMergeConflictError(conflictReport);
+        SvnNgMergeDriver.makeMergeConflictError(conflictReport);
         return null;
-    }
-
-    private void makeMergeConflictError(SvnConflictReport report) throws SVNException {
-        assert report == null || SVNFileUtil.isAbsolute(report.getTargetAbsPath());
-
-        if (report != null && report.wasLastRange()) {
-            assert report.getConflictedRange().rev1 != report.getConflictedRange().rev2;
-            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, "One or more conflicts were produced while merging r{0}:{1} into\n" +
-                    "''{2}'' --\n" +
-                    "resolve all conflicts and rerun the merge to apply the remaining\n" +
-                    "unmerged revisions",
-                    report.getConflictedRange().rev1,
-                    report.getConflictedRange().rev2,
-                    report.getTargetAbsPath());
-            SVNErrorManager.error(errorMessage, SVNLogType.WC);
-        }
     }
 
     private File getLockPath(File firstTarget) throws SVNException {

@@ -798,7 +798,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
             boolean treeConflicted = conflictInfo.treeConflicted;
 
             if (textConflicted || propConflicted || treeConflicted) {
-                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Can't merge into conflicted node ''{0}''", targetAbsPath);
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Can''t merge into conflicted node ''{0}''", targetAbsPath);
                 SVNErrorManager.error(errorMessage, SVNLogType.WC);
             }
 

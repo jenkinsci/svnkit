@@ -102,6 +102,22 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         return nearestAncestor;
     }
 
+    public static void makeMergeConflictError(SvnConflictReport report) throws SVNException {
+        assert report == null || SVNFileUtil.isAbsolute(report.getTargetAbsPath());
+
+        if (report != null && !report.wasLastRange()) {
+            assert report.getConflictedRange().rev1 != report.getConflictedRange().rev2;
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, "One or more conflicts were produced while merging r{0}:{1} into\n" +
+                    "''{2}'' --\n" +
+                    "resolve all conflicts and rerun the merge to apply the remaining\n" +
+                    "unmerged revisions",
+                    report.getConflictedRange().rev1,
+                    report.getConflictedRange().rev2,
+                    report.getTargetAbsPath());
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
+        }
+    }
+
     public static class NotifyBeginState {
         public File lastAbsPath;
         public Map<File, MergePath> nodesWithMergeInfo;
@@ -611,7 +627,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                     if (src1Kind != SVNNodeKind.DIR) {
                         conflictedRangeReport = doFileMerge(targetAbsPath, resultCatalog, mergeSource, mergeProcessor, sourcesRelated, squelcheMergeInfoNotifications);
                     } else {
-                        doDirectoryMerge(resultCatalog, mergeSource, targetAbsPath, this.reposRootUrl, mergeProcessor, depth, squelcheMergeInfoNotifications);
+                        conflictedRangeReport = doDirectoryMerge(resultCatalog, mergeSource, targetAbsPath, this.reposRootUrl, mergeProcessor, depth, squelcheMergeInfoNotifications);
                     }
                     if (conflictedRangeReport != null && context.getOptions().getConflictResolver() != null && !dryRun) {
                         boolean conflictsRemain = resolveConflicts(conflictedPaths);
