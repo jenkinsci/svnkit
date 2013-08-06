@@ -388,11 +388,13 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
 
             OutputStream outputStream = SVNFileUtil.openFileForWriting(fileBaton.pathStartRevision);
             try {
+                fileBaton.pristineProps = new SVNProperties();
                 repository.getFile(fileBaton.path, fileBaton.baseRevision, fileBaton.pristineProps, outputStream);
             } finally {
                 SVNFileUtil.closeFile(outputStream);
             }
         } else {
+            fileBaton.pristineProps = new SVNProperties();
             repository.getFile(fileBaton.path, fileBaton.baseRevision, fileBaton.pristineProps, null);
         }
     }
