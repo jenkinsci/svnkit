@@ -280,22 +280,23 @@ public class SvnWcDbRevert extends SvnWcDbShared {
         result.set(RevertInfo.reverted, false);
         result.set(RevertInfo.copiedHere, false);
         
-        RevertListRow actual = root.getSDb().getRevertList().getActualRow(SVNFileUtil.getFilePath(localRelpath));
-        RevertListRow row = root.getSDb().getRevertList().getRow(SVNFileUtil.getFilePath(localRelpath));
-        if (actual != null) {
-            result.set(RevertInfo.reverted, actual.notify != 0);
-            if (actual.conflictOld != null) {
-                result.set(RevertInfo.conflictOld, SVNFileUtil.createFilePath(root.getAbsPath(), actual.conflictOld));
+        RevertListRow row = root.getSDb().getRevertList().getActualRow(SVNFileUtil.getFilePath(localRelpath));
+        row = row == null ? root.getSDb().getRevertList().getRow(SVNFileUtil.getFilePath(localRelpath)) : null;
+        if (row.actual != 0) {
+            result.set(RevertInfo.reverted, row.notify != 0);
+            if (row.conflictOld != null) {
+                result.set(RevertInfo.conflictOld, SVNFileUtil.createFilePath(root.getAbsPath(), row.conflictOld));
             }
-            if (actual.conflictNew != null) {
-                result.set(RevertInfo.conflictNew, SVNFileUtil.createFilePath(root.getAbsPath(), actual.conflictNew));
+            if (row.conflictNew != null) {
+                result.set(RevertInfo.conflictNew, SVNFileUtil.createFilePath(root.getAbsPath(), row.conflictNew));
             }
-            if (actual.conflictWorking != null) {
-                result.set(RevertInfo.conflictWorking, SVNFileUtil.createFilePath(root.getAbsPath(), actual.conflictWorking));
+            if (row.conflictWorking != null) {
+                result.set(RevertInfo.conflictWorking, SVNFileUtil.createFilePath(root.getAbsPath(), row.conflictWorking));
             }
-            if (actual.propReject != null) {
-                result.set(RevertInfo.propReject, SVNFileUtil.createFilePath(root.getAbsPath(), actual.propReject));
+            if (row.propReject != null) {
+                result.set(RevertInfo.propReject, SVNFileUtil.createFilePath(root.getAbsPath(), row.propReject));
             }
+            row = root.getSDb().getRevertList().getRow(SVNFileUtil.getFilePath(localRelpath));
         }
         if (row != null) {
             result.set(RevertInfo.reverted, true);
