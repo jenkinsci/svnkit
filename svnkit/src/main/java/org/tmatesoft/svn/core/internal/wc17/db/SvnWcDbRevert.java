@@ -281,7 +281,7 @@ public class SvnWcDbRevert extends SvnWcDbShared {
         result.set(RevertInfo.copiedHere, false);
         
         RevertListRow row = root.getSDb().getRevertList().getActualRow(SVNFileUtil.getFilePath(localRelpath));
-        row = row == null ? root.getSDb().getRevertList().getRow(SVNFileUtil.getFilePath(localRelpath)) : null;
+        row = row == null ? root.getSDb().getRevertList().getRow(SVNFileUtil.getFilePath(localRelpath)) : row;
         if (row != null) {
             if (row.actual != 0) {
                 result.set(RevertInfo.reverted, row.notify != 0);
