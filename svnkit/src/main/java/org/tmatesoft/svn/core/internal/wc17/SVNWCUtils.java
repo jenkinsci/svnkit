@@ -164,11 +164,14 @@ public class SVNWCUtils {
         }
         childPath = childPath.replace(File.separatorChar, '/');
         parentPath = parentPath.replace(File.separatorChar, '/');
-        if (!childPath.startsWith(parentPath + '/')) {
+        if (!parentPath.endsWith("/")) {
+            parentPath += '/';
+        }
+        if (!childPath.startsWith(parentPath)) {
             return null;
         }
 
-        return childPath.substring(parentPath.length() + 1);
+        return childPath.substring(parentPath.length());
     }
 
     public static boolean isAncestor(File parent, File child) {
