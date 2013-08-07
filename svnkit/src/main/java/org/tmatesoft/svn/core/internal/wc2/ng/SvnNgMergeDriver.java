@@ -546,7 +546,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             if (dryRun) {
-                return null;
+                return result;
             }
         }
         
