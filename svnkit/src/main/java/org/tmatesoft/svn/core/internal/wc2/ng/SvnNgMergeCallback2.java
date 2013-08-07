@@ -304,6 +304,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
                     newStream = SVNFileUtil.openFileForReading(rightFile);
 
                     pristineProps = new SVNProperties();
+                    newProps = new SVNProperties();
                     SvnNgPropertiesManager.categorizeProperties(rightProps, newProps, null, null);
 
                     newProps.remove(SVNProperty.MERGE_INFO);
@@ -1024,7 +1025,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         }
 
         if (props.size() > 0) {
-            if (mergeDriver.sameRepos) {
+            if (!mergeDriver.sameRepos) {
                 props = SvnNgMergeCallback.omitMergeInfoChanges(props);
             }
             if (mergeDriver.mergeSource.rev1 < mergeDriver.mergeSource.rev2 || !mergeDriver.mergeSource.ancestral) {
