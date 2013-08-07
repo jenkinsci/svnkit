@@ -402,6 +402,16 @@ public class SvnWcDbRevert extends SvnWcDbShared {
                     }
                     return null;
                 }
+
+                @Override
+                protected boolean isFilterPassed() throws SVNException {
+                    return getBind(1).equals(getColumnString(REVERT_LIST__Fields.local_relpath));
+                }
+
+                @Override
+                protected Object[] getWhere() throws SVNException {
+                    return new Object[]{};
+                }
             };
             stmt.bindf("s", localRelpath);
             boolean haveRow = stmt.next();
@@ -413,9 +423,9 @@ public class SvnWcDbRevert extends SvnWcDbShared {
                     if (conflictData != null) {
                         SVNSkel conflicts = SVNSkel.parse(conflictData);
                         result.set(RevertInfo.markerFiles, SvnWcDbConflicts.readConflictMarkers((SVNWCDb) context.getDb(), root.getAbsPath(), conflicts));
-                        if (!isColumnNull(stmt, REVERT_LIST__Fields.notify)) {
-                            result.set(RevertInfo.reverted, true);
-                        }
+                    }
+                    if (!isColumnNull(stmt, REVERT_LIST__Fields.notify)) {
+                        result.set(RevertInfo.reverted, true);
                     }
 
                     anotherRow = stmt.next();
@@ -431,7 +441,17 @@ public class SvnWcDbRevert extends SvnWcDbShared {
             }
             reset(stmt);
             if (haveRow) {
-                stmt = new SVNSqlJetDeleteStatement(root.getSDb().getTemporaryDb(), SVNWCDbSchema.REVERT_LIST);
+                stmt = new SVNSqlJetDeleteStatement(root.getSDb().getTemporaryDb(), SVNWCDbSchema.REVERT_LIST) {
+                    @Override
+                    protected boolean isFilterPassed() throws SVNException {
+                        return getBind(1).equals(getColumnString(REVERT_LIST__Fields.local_relpath));
+                    }
+
+                    @Override
+                    protected Object[] getWhere() throws SVNException {
+                        return new Object[]{};
+                    }
+                };
                 try {
                     stmt.bindf("s", localRelpath);
                     stmt.done();
