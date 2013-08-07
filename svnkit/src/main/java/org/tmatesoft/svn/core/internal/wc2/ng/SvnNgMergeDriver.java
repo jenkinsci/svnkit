@@ -1477,10 +1477,12 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         File parentPath = SVNFileUtil.getParentFile(child.absPath);
         MergePath parentMp = getChildWithMergeinfo(childrenWithMergeInfo, parentPath);
         if (parentMp != null) {
-            parentMp.missingChild = true;
+            parentMp.missingChild = child.absent;
+            parentMp.switchedChild = child.switched;
         } else {
             parentMp = new MergePath(parentPath);
-            parentMp.missingChild = true;
+            parentMp.missingChild = child.absent;
+            parentMp.switchedChild = child.switched;
             childrenWithMergeInfo.put(parentPath, parentMp);
         }
         List<File> files = context.getNodeChildren(parentPath, false);
@@ -2305,25 +2307,25 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                     }
                 }
 
-                if (child.recordMergeInfo ) {
-                    SVNNodeKind pathKind = context.readKind(child.absPath, false);
-                    if (pathKind == SVNNodeKind.DIR) {
-                        child.recordNonInheritable = child.missingChild || child.switchedChild;
+            }
+            if (child.recordMergeInfo ) {
+                SVNNodeKind pathKind = context.readKind(child.absPath, false);
+                if (pathKind == SVNNodeKind.DIR) {
+                    child.recordNonInheritable = child.missingChild || child.switchedChild;
 
-                        if (i == 0) {
-                            if (depth.compareTo(SVNDepth.IMMEDIATES) < 0 && operativeImmediateChildren != null && operativeImmediateChildren.size() > 0) {
-                                child.recordNonInheritable = true;
-                            }
-                        } else if (depth == SVNDepth.IMMEDIATES) {
-                            if (operativeImmediateChildren.containsKey(child.absPath)) {
-                                child.recordNonInheritable = true;
-                            }
+                    if (i == 0) {
+                        if (depth.compareTo(SVNDepth.IMMEDIATES) < 0 && operativeImmediateChildren != null && operativeImmediateChildren.size() > 0) {
+                            child.recordNonInheritable = true;
+                        }
+                    } else if (depth == SVNDepth.IMMEDIATES) {
+                        if (operativeImmediateChildren.containsKey(child.absPath)) {
+                            child.recordNonInheritable = true;
                         }
                     }
-                } else {
-                    if (child.childOfNonInheritable) {
-                        recordMergeinfo(child.absPath, null, false);
-                    }
+                }
+            } else {
+                if (child.childOfNonInheritable) {
+                    recordMergeinfo(child.absPath, null, false);
                 }
             }
         }
