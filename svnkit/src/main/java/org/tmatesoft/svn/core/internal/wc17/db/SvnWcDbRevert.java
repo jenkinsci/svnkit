@@ -256,6 +256,9 @@ public class SvnWcDbRevert extends SvnWcDbShared {
         final String selectPath = SVNFileUtil.getFilePath(localRelpath);
         for(Iterator<RevertListRow> rows = revertList.rows(); rows.hasNext();) {
             final RevertListRow row = rows.next();
+            if (row.reposId == 0) {
+                continue;
+            }
             if ("".equals(row.localRelpath)) {
                 continue;
             }
