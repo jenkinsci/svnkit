@@ -58,7 +58,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             final Map.Entry<File, MergePath> entry = entries.get(i);
             MergePath child = entry.getValue();
 
-            if (SVNPathUtil.isAncestor(SVNFileUtil.getFilePath(child.absPath), SVNFileUtil.getFilePath(localAbsPath)) && (pathIsOwnAncestor || child.absPath.equals(localAbsPath))) {
+            if (SVNPathUtil.isAncestor(SVNFileUtil.getFilePath(child.absPath), SVNFileUtil.getFilePath(localAbsPath)) && (pathIsOwnAncestor || !child.absPath.equals(localAbsPath))) {
                 if (nearestAncestor == null) {
                     nearestAncestor = child;
                     if (child.remainingRanges != null && child.remainingRanges.getSize() > 0) {

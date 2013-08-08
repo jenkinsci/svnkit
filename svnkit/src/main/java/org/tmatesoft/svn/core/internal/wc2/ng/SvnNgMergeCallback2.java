@@ -357,7 +357,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
             }
             mergeDriver.pathsWithDeletedMergeInfo.add(localAbsPath);
 
-            recordUpdateDelete(localAbsPath, SVNNodeKind.FILE);
+            recordUpdateDelete(localAbsPath, SVNNodeKind.FILE, currentFile.parentBaton);
         } else {
             recordTreeConflict(localAbsPath, currentFile.parentBaton, SVNNodeKind.FILE, SVNConflictAction.DELETE, SVNConflictReason.EDITED, null, true);
         }
@@ -660,7 +660,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
                 mergeDriver.pathsWithDeletedMergeInfo.add(localAbsPath);
             }
 
-            recordUpdateDelete(localAbsPath, SVNNodeKind.DIR);
+            recordUpdateDelete(localAbsPath, SVNNodeKind.DIR, currentDirectory);
         }
     }
 
@@ -914,7 +914,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         }
     }
 
-    private void recordUpdateDelete(File localAbsPath, SVNNodeKind kind) throws SVNException {
+    private void recordUpdateDelete(File localAbsPath, SVNNodeKind kind, DirectoryBaton parentBaton) throws SVNException {
         if (mergeDriver.mergeSource.ancestral || mergeDriver.reintegrateMerge) {
             if (mergeDriver.addedPaths != null) {
                 mergeDriver.addedPaths.remove(localAbsPath);
@@ -925,11 +925,11 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
             mergeDriver.mergedPaths.add(localAbsPath);
         }
         notifyMergeBegin(localAbsPath, true);
-        if (currentFile.parentBaton != null) {
-            if (currentFile.parentBaton.pendingDeletes == null) {
-                currentFile.parentBaton.pendingDeletes = new HashMap<File, SVNNodeKind>();
+        if (parentBaton != null) {
+            if (parentBaton.pendingDeletes == null) {
+                parentBaton.pendingDeletes = new HashMap<File, SVNNodeKind>();
             }
-            currentFile.parentBaton.pendingDeletes.put(localAbsPath, kind);
+            parentBaton.pendingDeletes.put(localAbsPath, kind);
         }
     }
 
