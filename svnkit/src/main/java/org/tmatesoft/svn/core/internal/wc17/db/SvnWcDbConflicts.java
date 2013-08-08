@@ -617,9 +617,9 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
             propConflict.first().next().prependPath(markerRelPath);
 
             Structure<PropertyConflictInfo> propertyConflictInfoStructure = readPropertyConflict(db, localAbsPath, conflictSkel);
-            SVNProperties mineProps = propertyConflictInfoStructure.get(PropertyConflictInfo.mineProps);
-            SVNProperties theirOriginalProps = propertyConflictInfoStructure.get(PropertyConflictInfo.theirOldProps);
-            SVNProperties theirProps = propertyConflictInfoStructure.get(PropertyConflictInfo.theirProps);
+            SVNProperties mineProps = SVNProperties.wrap((Map)propertyConflictInfoStructure.get(PropertyConflictInfo.mineProps));
+            SVNProperties theirOriginalProps = SVNProperties.wrap((Map)propertyConflictInfoStructure.get(PropertyConflictInfo.theirOldProps));
+            SVNProperties theirProps = SVNProperties.wrap((Map)propertyConflictInfoStructure.get(PropertyConflictInfo.theirProps));
             Collection<String> conflictedPropNames = propertyConflictInfoStructure.get(PropertyConflictInfo.conflictedPropNames);
 
 
