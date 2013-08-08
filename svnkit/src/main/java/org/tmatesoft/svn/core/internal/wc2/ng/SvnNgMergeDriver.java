@@ -914,7 +914,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 SvnDiffCallbackResult result = new SvnDiffCallbackResult();
                 if (!(diffIgnoreAncestry || sourcesRelated)) {
                     boolean skip = false;
-                    mergeProcessor.fileOpened(result, targetRelPath, leftSource, rightSource, null);
+                    mergeProcessor.fileOpened(result, targetRelPath, leftSource, rightSource, null, true);
                     skip = result.skip;
                     result.reset();
                     if (!skip) {
@@ -923,7 +923,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                         result.reset();
                     }
 
-                    mergeProcessor.fileOpened(result, targetRelPath, null, rightSource, null);
+                    mergeProcessor.fileOpened(result, targetRelPath, null, rightSource, null, true);
                     skip = result.skip;
                     result.reset();
                     if (!skip) {
@@ -933,7 +933,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                     }
                 } else {
                     SVNProperties propChanges = rightProperties.compareTo(leftProperties);
-                    mergeProcessor.fileOpened(result, targetRelPath, leftSource, rightSource, null);
+                    mergeProcessor.fileOpened(result, targetRelPath, leftSource, rightSource, null, false);
                     boolean skip = result.skip;
                     result.reset();
                     if (!skip) {

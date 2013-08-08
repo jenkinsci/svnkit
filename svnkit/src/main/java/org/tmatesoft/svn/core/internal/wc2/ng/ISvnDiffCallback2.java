@@ -11,7 +11,8 @@ public interface ISvnDiffCallback2 {
                            File relPath,
                            SvnDiffSource leftSource,
                            SvnDiffSource rightSource,
-                           SvnDiffSource copyFromSource) throws SVNException;
+                           SvnDiffSource copyFromSource,
+                           boolean createDirBaton) throws SVNException;
 
     public void fileChanged(SvnDiffCallbackResult result,
                             File relPath,

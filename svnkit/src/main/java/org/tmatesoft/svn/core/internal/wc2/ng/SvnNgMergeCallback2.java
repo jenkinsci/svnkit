@@ -39,7 +39,13 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         this.mergeDriver = mergeDriver;
     }
 
-    public void fileOpened(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, SvnDiffSource copyFromSource) throws SVNException {
+    public void fileOpened(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, SvnDiffSource copyFromSource, boolean createDirBaton) throws SVNException {
+        if (createDirBaton && currentDirectory == null) {
+            currentDirectory = new DirectoryBaton();
+            currentDirectory.treeConflictReason = null;
+            currentDirectory.treeConflictAction = SVNConflictAction.EDIT;
+            currentDirectory.skipReason = SVNStatusType.UNKNOWN;
+        }
         File localAbsPath = SVNFileUtil.createFilePath(mergeDriver.targetAbsPath, relPath);
 
         currentFile = new FileBaton();

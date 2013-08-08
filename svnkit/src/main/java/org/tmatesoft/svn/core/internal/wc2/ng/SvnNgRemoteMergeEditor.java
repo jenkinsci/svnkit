@@ -79,7 +79,7 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         checkCancelled();
 
         mergeResult.reset();
-        processor.fileOpened(mergeResult, SVNFileUtil.createFilePath(path), leftSource, null, null);
+        processor.fileOpened(mergeResult, SVNFileUtil.createFilePath(path), leftSource, null, null, false);
         skip = mergeResult.skip;
 
         checkCancelled();
@@ -254,7 +254,7 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         fb.pristineProps = new SVNProperties();
         fb.rightSource = new SvnDiffSource(this.targetRevision);
         mergeResult.reset();
-        processor.fileOpened(mergeResult, SVNFileUtil.createFilePath(path), null, fb.rightSource, null);
+        processor.fileOpened(mergeResult, SVNFileUtil.createFilePath(path), null, fb.rightSource, null, false);
         fb.skip = mergeResult.skip;
     }
 
@@ -272,7 +272,7 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         fb.rightSource = new SvnDiffSource(this.targetRevision);
 
         mergeResult.reset();
-        processor.fileOpened(mergeResult, SVNFileUtil.createFilePath(path), fb.leftSource, fb.rightSource, null);
+        processor.fileOpened(mergeResult, SVNFileUtil.createFilePath(path), fb.leftSource, fb.rightSource, null, false);
         fb.skip = mergeResult.skip;
     }
 
