@@ -1403,7 +1403,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
             if (edited) {
                 return;
             }
-            if (parentBaton != null && parentBaton.edited) {
+            if (parentBaton != null && !parentBaton.edited) {
                 File dirAbsPath = SVNFileUtil.getFileDir(localAbsPath);
                 parentBaton.markDirectoryEdited(dirAbsPath);
             }
