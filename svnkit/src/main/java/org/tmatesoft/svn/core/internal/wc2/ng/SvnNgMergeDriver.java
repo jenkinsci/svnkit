@@ -198,7 +198,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
     SVNRepository repos2;
     
     SvnMerge operation;
-    SvnRepositoryAccess repositoryAccess; 
+    SvnNgRepositoryAccess repositoryAccess;
     
     private Map<File, MergePath> childrenWithMergeInfo;
 
@@ -206,7 +206,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
     private boolean singleFileMerge;
     public NotifyBeginState notifyBegin;
 
-    public SvnNgMergeDriver(SVNWCContext context, SvnMerge operation, SvnRepositoryAccess repositoryAccess, SVNDiffOptions diffOptions) {
+    public SvnNgMergeDriver(SVNWCContext context, SvnMerge operation, SvnNgRepositoryAccess repositoryAccess, SVNDiffOptions diffOptions) {
         this.context = context;
         this.operation = operation;
         this.repositoryAccess = repositoryAccess;
@@ -580,7 +580,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         this.childrenWithMergeInfo = null;
         this.currentAncestorIndex = -1;
 
-        ISvnDiffCallback2 mergeProcessor = new SvnNgMergeCallback2(context, this);
+        ISvnDiffCallback2 mergeProcessor = new SvnNgMergeCallback2(context, this, repositoryAccess);
 
         SVNRepository repository1 = null;
         SVNRepository repository2 = null;
@@ -801,7 +801,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         }
         childrenWithMergeInfo.put(targetPath, item);
 
-        SvnNgMergeCallback2 mergeCallback = new SvnNgMergeCallback2(context, this);
+        SvnNgMergeCallback2 mergeCallback = new SvnNgMergeCallback2(context, this, repositoryAccess);
         driveMergeReportEditor(targetPath, source.url1, source.rev1, source.url2, source.rev2, childrenWithMergeInfo, depth, mergeCallback);
         if (conflictedPaths != null && conflictedPaths.size() > 0) {
             return new SvnSingleRangeConflictReport(source, null);

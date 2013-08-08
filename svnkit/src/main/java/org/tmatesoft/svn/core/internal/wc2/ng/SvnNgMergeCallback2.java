@@ -34,9 +34,10 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
     private SVNWCContext context;
     private SvnNgRepositoryAccess repositoryAccess;
 
-    public SvnNgMergeCallback2(SVNWCContext context, SvnNgMergeDriver mergeDriver) {
+    public SvnNgMergeCallback2(SVNWCContext context, SvnNgMergeDriver mergeDriver, SvnNgRepositoryAccess repositoryAccess) {
         this.context = context;
         this.mergeDriver = mergeDriver;
+        this.repositoryAccess = repositoryAccess;
     }
 
     public void fileOpened(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, SvnDiffSource copyFromSource, boolean createDirBaton) throws SVNException {
@@ -1200,7 +1201,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
             }
             Map<String, SVNMergeRangeList> mergeInfo;
             try {
-                mergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(), null);
+                mergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(SVNPropertyValue.getPropertyAsString(propertyValue)), null);
             } catch (SVNException e) {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.MERGE_INFO_PARSE_ERROR) {
                     adjustedProps.put(propName, propertyValue);
@@ -1251,6 +1252,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
 
             Map<String, SVNMergeRangeList> filteredMergeInfo = null;
             if (mergeInfo != null) {
+                svnRepository.setLocation(url, false);
                 Map<String, SVNMergeRangeList> implicitMergeInfo = repositoryAccess.getHistoryAsMergeInfo(svnRepository, SvnTarget.fromURL(url), revision, -1);
                 filteredMergeInfo = SVNMergeInfoUtil.removeMergeInfo(implicitMergeInfo, mergeInfo, true);
             }
