@@ -2269,7 +2269,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             if (child.absent) {
                 continue;
             }
-            assert((i == 0) || pathsWithDeletedMergeInfo == null || pathsWithDeletedMergeInfo.contains(child.absPath));
+            assert((i == 0) || pathsWithDeletedMergeInfo == null || !pathsWithDeletedMergeInfo.contains(child.absPath));
 
             if (skippedPaths != null && skippedPaths.contains(child.absPath)) {
                 continue;
