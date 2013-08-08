@@ -1125,10 +1125,12 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             }
         }
 
+        SVNURL oldURL1 = ensureSessionURL(repos1, url1);
+
 //        SvnNgRemoteDiffEditor editor = SvnNgRemoteDiffEditor.createEditor(context, targetAbsPath, depth, repos2, revision1, false, dryRun, false, mergeCallback, this);
         SvnNgRemoteMergeEditor editor = new SvnNgRemoteMergeEditor(targetWCPath, context, repos2, revision1, mergeCallback, true);
 
-        SVNURL oldURL = ensureSessionURL(repos2, url1);
+        SVNURL oldURL2 = ensureSessionURL(repos2, url1);
         try {
             final SVNDepth reportDepth = depth;
             final long reportStart = targetStart;
@@ -1194,8 +1196,11 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             }, 
             SVNCancellableEditor.newInstance(editor, operation.getCanceller(), SVNDebugLog.getDefaultLog()));
         } finally {
-            if (oldURL != null) {
-                repos2.setLocation(oldURL, false);
+            if (oldURL1 != null) {
+                repos1.setLocation(oldURL1, false);
+            }
+            if (oldURL2 != null) {
+                repos2.setLocation(oldURL2, false);
             }
             editor.cleanup();
         }
