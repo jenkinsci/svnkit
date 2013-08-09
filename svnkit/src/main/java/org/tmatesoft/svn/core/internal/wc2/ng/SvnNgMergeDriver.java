@@ -895,7 +895,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 notifyBegin.lastAbsPath = null;
 
                 MergeSource realSource;
-                if (sourcesAncestral) {
+                if (source.ancestral) {
                     realSource = source.subrange(r.getStartRevision(), r.getEndRevision());
                 } else {
                     realSource = source;
@@ -2635,6 +2635,10 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             if (!SVNRevision.isValidRevisionNumber(oldestRev) || minRev < oldestRev) {
                 oldestRev = minRev;
             }
+        }
+
+        if (SVNRevision.isValidRevisionNumber(oldestRev)) {
+            oldestRev++;
         }
         
         final List changedRevs = new LinkedList();
