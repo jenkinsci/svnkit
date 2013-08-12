@@ -12,7 +12,8 @@ public interface ISvnDiffCallback2 {
                            SvnDiffSource leftSource,
                            SvnDiffSource rightSource,
                            SvnDiffSource copyFromSource,
-                           boolean createDirBaton) throws SVNException;
+                           boolean createDirBaton,
+                           Object dirBaton) throws SVNException;
 
     public void fileChanged(SvnDiffCallbackResult result,
                             File relPath,
@@ -42,7 +43,8 @@ public interface ISvnDiffCallback2 {
                           File relPath,
                           SvnDiffSource leftSource,
                           SvnDiffSource rightSource,
-                          SvnDiffSource copyFromSource) throws SVNException;
+                          SvnDiffSource copyFromSource,
+                          Object dirBaton) throws SVNException;
 
     public void dirChanged(SvnDiffCallbackResult result,
                            File relPath,
@@ -50,19 +52,22 @@ public interface ISvnDiffCallback2 {
                            SvnDiffSource rightSource,
                            SVNProperties leftProps,
                            SVNProperties rightProps,
-                           SVNProperties propChanges) throws SVNException;
+                           SVNProperties propChanges,
+                           Object dirBaton) throws SVNException;
 
     public void dirDeleted(SvnDiffCallbackResult result,
                            File relPath,
                            SvnDiffSource leftSource,
-                           SVNProperties leftProps) throws SVNException;
+                           SVNProperties leftProps,
+                           Object dirBaton) throws SVNException;
 
     public void dirAdded(SvnDiffCallbackResult result,
                          File relPath,
                          SvnDiffSource copyFromSource,
                          SvnDiffSource rightSource,
                          SVNProperties copyFromProps,
-                         SVNProperties rightProps) throws SVNException;
+                         SVNProperties rightProps,
+                         Object dirBaton) throws SVNException;
 
     public void dirPropsChanged(SvnDiffCallbackResult result,
                                 File relPath,
@@ -76,7 +81,7 @@ public interface ISvnDiffCallback2 {
                           File relPath,
                           SvnDiffSource leftSource,
                           SvnDiffSource rightSource,
-                          boolean reallyClose) throws SVNException;
+                          Object dirBaton) throws SVNException;
 
-    public void nodeAbsent(SvnDiffCallbackResult result, File relPath) throws SVNException;
+    public void nodeAbsent(SvnDiffCallbackResult result, File relPath, Object dirBaton) throws SVNException;
 }

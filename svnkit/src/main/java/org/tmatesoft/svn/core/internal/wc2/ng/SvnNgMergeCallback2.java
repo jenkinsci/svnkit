@@ -30,7 +30,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
 
     private final SvnNgMergeDriver mergeDriver;
     private FileBaton currentFile;
-    private DirectoryBaton currentDirectory;
+//    private DirectoryBaton currentDirectory;
     private SVNWCContext context;
     private SvnNgRepositoryAccess repositoryAccess;
 
@@ -40,12 +40,14 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         this.repositoryAccess = repositoryAccess;
     }
 
-    public void fileOpened(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, SvnDiffSource copyFromSource, boolean createDirBaton) throws SVNException {
+    public void fileOpened(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, SvnDiffSource copyFromSource, boolean createDirBaton, Object dirBaton) throws SVNException {
+        DirectoryBaton currentDirectory = (DirectoryBaton) dirBaton;
         if (createDirBaton && currentDirectory == null) {
             currentDirectory = new DirectoryBaton();
             currentDirectory.treeConflictReason = null;
             currentDirectory.treeConflictAction = SVNConflictAction.EDIT;
             currentDirectory.skipReason = SVNStatusType.UNKNOWN;
+            result.newBaton = currentDirectory;
         }
         File localAbsPath = SVNFileUtil.createFilePath(mergeDriver.targetAbsPath, relPath);
 
@@ -370,7 +372,9 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         }
     }
 
-    public void dirOpened(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, SvnDiffSource copyFromSource) throws SVNException {
+    public void dirOpened(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, SvnDiffSource copyFromSource, Object dirBaton) throws SVNException {
+        DirectoryBaton currentDirectory = (DirectoryBaton) dirBaton;
+
         File localAbsPath = SVNFileUtil.createFilePath(mergeDriver.targetAbsPath, relPath);
         DirectoryBaton db = new DirectoryBaton();
         db.treeConflictReason = null;
@@ -378,7 +382,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         db.skipReason = SVNStatusType.UNKNOWN;
 
         DirectoryBaton pdb = currentDirectory;
-        currentDirectory = db;
+        result.newBaton = db;
 
         if (pdb != null) {
             db.parentBaton = pdb;
@@ -495,6 +499,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
                     result.skipChildren = true;
 
                     recordTreeConflict(localAbsPath, pdb, SVNNodeKind.DIR, db.treeConflictAction, db.treeConflictReason, oldTc, false);
+                    return;
                 }
             }
 
@@ -559,7 +564,9 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         }
     }
 
-    public void dirChanged(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, SVNProperties leftProps, SVNProperties rightProps, SVNProperties propChanges) throws SVNException {
+    public void dirChanged(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, SVNProperties leftProps, SVNProperties rightProps, SVNProperties propChanges, Object dirBaton) throws SVNException {
+        DirectoryBaton currentDirectory = (DirectoryBaton) dirBaton;
+
         File localAbsPath = SVNFileUtil.createFilePath(mergeDriver.targetAbsPath, relPath);
 
         DirectoryBaton db = currentDirectory;
@@ -597,7 +604,9 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         }
     }
 
-    public void dirDeleted(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SVNProperties leftProps) throws SVNException {
+    public void dirDeleted(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SVNProperties leftProps, Object dirBaton) throws SVNException {
+        DirectoryBaton currentDirectory = (DirectoryBaton) dirBaton;
+
         File localAbsPath = SVNFileUtil.createFilePath(mergeDriver.targetAbsPath, relPath);
         DirectoryBaton db = currentDirectory;
         handlePendingNotifications(db);
@@ -667,11 +676,13 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
                 mergeDriver.pathsWithDeletedMergeInfo.add(localAbsPath);
             }
 
-            recordUpdateDelete(localAbsPath, SVNNodeKind.DIR, currentDirectory);
+            recordUpdateDelete(localAbsPath, SVNNodeKind.DIR, db.parentBaton);
         }
     }
 
-    public void dirAdded(SvnDiffCallbackResult result, File relPath, SvnDiffSource copyFromSource, SvnDiffSource rightSource, SVNProperties copyFromProps, SVNProperties rightProps) throws SVNException {
+    public void dirAdded(SvnDiffCallbackResult result, File relPath, SvnDiffSource copyFromSource, SvnDiffSource rightSource, SVNProperties copyFromProps, SVNProperties rightProps, Object dirBaton) throws SVNException {
+        DirectoryBaton currentDirectory = (DirectoryBaton) dirBaton;
+
         File localAbsPath = SVNFileUtil.createFilePath(mergeDriver.targetAbsPath, relPath);
 
         DirectoryBaton db = currentDirectory;
@@ -732,14 +743,12 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
     public void dirPropsChanged(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, SVNProperties leftProps, SVNProperties rightProps, SVNProperties propChanges) throws SVNException {
     }
 
-    public void dirClosed(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, boolean reallyClose) throws SVNException {
-        if (reallyClose) {
-            handlePendingNotifications(currentDirectory);
-        }
-        currentDirectory = currentDirectory.parentBaton;
+    public void dirClosed(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, Object dirBaton) throws SVNException {
+        DirectoryBaton currentDirectory = (DirectoryBaton) dirBaton;
+        handlePendingNotifications(currentDirectory);
     }
 
-    public void nodeAbsent(SvnDiffCallbackResult result, File relPath) throws SVNException {
+    public void nodeAbsent(SvnDiffCallbackResult result, File relPath, Object dirBaton) throws SVNException {
         File localAbsPath = SVNFileUtil.createFilePath(mergeDriver.targetAbsPath, relPath);
         recordSkip(localAbsPath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP, SVNStatusType.MISSING);
     }

@@ -64,22 +64,23 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         db.rightSource = new SvnDiffSource(this.targetRevision);
 
         mergeResult.reset();
-        processor.dirOpened(mergeResult, SVNFileUtil.createFilePath(""), db.leftSource, db.rightSource, null);
+        processor.dirOpened(mergeResult, SVNFileUtil.createFilePath(""), db.leftSource, db.rightSource, null, null);
         db.skip = mergeResult.skip;
         db.skipChildren = mergeResult.skipChildren;
+        db.pdb = mergeResult.newBaton;
 
         this.currentDirectory = db;
     }
 
-    private void diffDeletedFile(String path, DirectoryBaton parentBaton) throws SVNException {
-        FileBaton fb = new FileBaton(path, parentBaton, false);
+    private void diffDeletedFile(String path, DirectoryBaton db) throws SVNException {
+        FileBaton fb = new FileBaton(path, db, false);
         boolean skip = false;
         SvnDiffSource leftSource = new SvnDiffSource(this.revision);
 
         checkCancelled();
 
         mergeResult.reset();
-        processor.fileOpened(mergeResult, SVNFileUtil.createFilePath(path), leftSource, null, null, false);
+        processor.fileOpened(mergeResult, SVNFileUtil.createFilePath(path), leftSource, null, null, false, db.pdb);
         skip = mergeResult.skip;
 
         checkCancelled();
@@ -101,9 +102,10 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         checkCancelled();
 
         mergeResult.reset();
-        processor.dirOpened(mergeResult, SVNFileUtil.createFilePath(path), leftSource, null, null);
+        processor.dirOpened(mergeResult, SVNFileUtil.createFilePath(path), leftSource, null, null, parentBaton.pdb);
         boolean skip = mergeResult.skip;
         boolean skipChildren = mergeResult.skipChildren;
+        db.pdb = mergeResult.newBaton;
         SVNProperties leftProps = null;
         List<SVNDirEntry> dirEntries = null;
         if (!skip || !skipChildren) {
@@ -124,7 +126,7 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         }
         if (!skip) {
             mergeResult.reset();
-            processor.dirDeleted(mergeResult, SVNFileUtil.createFilePath(path), leftSource, leftProps);
+            processor.dirDeleted(mergeResult, SVNFileUtil.createFilePath(path), leftSource, leftProps, db.pdb);
         }
     }
 
@@ -150,12 +152,12 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
 
     public void absentDir(String path) throws SVNException {
         mergeResult.reset();
-        processor.nodeAbsent(mergeResult, SVNFileUtil.createFilePath(path));
+        processor.nodeAbsent(mergeResult, SVNFileUtil.createFilePath(path), currentDirectory.pdb);
     }
 
     public void absentFile(String path) throws SVNException {
         mergeResult.reset();
-        processor.nodeAbsent(mergeResult, SVNFileUtil.createFilePath(path));
+        processor.nodeAbsent(mergeResult, SVNFileUtil.createFilePath(path), currentDirectory.pdb);
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
@@ -170,7 +172,10 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         }
         db.rightSource = new SvnDiffSource(this.targetRevision);
         mergeResult.reset();
-        processor.dirOpened(mergeResult, SVNFileUtil.createFilePath(db.path), null, db.rightSource, null);
+        processor.dirOpened(mergeResult, SVNFileUtil.createFilePath(db.path), null, db.rightSource, null, pb.pdb);
+        db.skip = mergeResult.skip;
+        db.skipChildren = mergeResult.skipChildren;
+        db.pdb = mergeResult.newBaton;
     }
 
     public void openDir(String path, long revision) throws SVNException {
@@ -187,7 +192,10 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         db.rightSource = new SvnDiffSource(this.targetRevision);
 
         mergeResult.reset();
-        processor.dirOpened(mergeResult, SVNFileUtil.createFilePath(path), db.leftSource, db.rightSource, null);
+        processor.dirOpened(mergeResult, SVNFileUtil.createFilePath(path), db.leftSource, db.rightSource, null, pb != null ? pb.pdb : null);
+        db.skip = mergeResult.skip;
+        db.skipChildren = mergeResult.skipChildren;
+        db.pdb = mergeResult.newBaton;
     }
 
     public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
@@ -225,19 +233,17 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
                 rightProps.putAll(db.propChanges);
                 if (db.added) {
                     mergeResult.reset();
-                    processor.dirAdded(mergeResult, SVNFileUtil.createFilePath(db.path), null, db.rightSource, null, rightProps);
+                    processor.dirAdded(mergeResult, SVNFileUtil.createFilePath(db.path), null, db.rightSource, null, rightProps, db.pdb);
                 } else {
                     mergeResult.reset();
-                    processor.dirChanged(mergeResult, SVNFileUtil.createFilePath(db.path), db.leftSource, db.rightSource, pristineProps, rightProps, db.propChanges);
+                    processor.dirChanged(mergeResult, SVNFileUtil.createFilePath(db.path), db.leftSource, db.rightSource, pristineProps, rightProps, db.propChanges, db.pdb);
                 }
                 sendChanged = true;
             }
         }
         if (!db.skip && !sendChanged) {
             mergeResult.reset();
-            processor.dirClosed(mergeResult, SVNFileUtil.createFilePath(db.path), db.leftSource, db.rightSource, true);
-        } else {
-            processor.dirClosed(mergeResult, SVNFileUtil.createFilePath(db.path), db.leftSource, db.rightSource, false);
+            processor.dirClosed(mergeResult, SVNFileUtil.createFilePath(db.path), db.leftSource, db.rightSource, db.pdb);
         }
         currentDirectory = currentDirectory.parentBaton;
     }
@@ -254,7 +260,7 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         fb.pristineProps = new SVNProperties();
         fb.rightSource = new SvnDiffSource(this.targetRevision);
         mergeResult.reset();
-        processor.fileOpened(mergeResult, SVNFileUtil.createFilePath(path), null, fb.rightSource, null, false);
+        processor.fileOpened(mergeResult, SVNFileUtil.createFilePath(path), null, fb.rightSource, null, false, pb.pdb);
         fb.skip = mergeResult.skip;
     }
 
@@ -272,7 +278,7 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         fb.rightSource = new SvnDiffSource(this.targetRevision);
 
         mergeResult.reset();
-        processor.fileOpened(mergeResult, SVNFileUtil.createFilePath(path), fb.leftSource, fb.rightSource, null, false);
+        processor.fileOpened(mergeResult, SVNFileUtil.createFilePath(path), fb.leftSource, fb.rightSource, null, false, pb.pdb);
         fb.skip = mergeResult.skip;
     }
 
@@ -438,6 +444,7 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         private SvnDiffSource rightSource;
 
         private long baseRevision;
+        private Object pdb;
 
         private DirectoryBaton(String path, DirectoryBaton parentBaton, boolean added, long baseRevision) {
             this.path = path;

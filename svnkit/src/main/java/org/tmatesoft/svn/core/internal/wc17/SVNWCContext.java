@@ -5530,6 +5530,9 @@ public class SVNWCContext {
                     }
 
                     SVNConflictResult result = conflictHandler.handleConflict(conflictDescription);
+                    if (result == null) {
+                        result = new SVNConflictResult(SVNConflictChoice.POSTPONE, null);
+                    }
 
                     myChoice = result.getConflictChoice();
                     mergeFile = result.getMergedFile();
