@@ -53,12 +53,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
-import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
-import org.tmatesoft.svn.core.wc.SVNCommitItem;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNRevisionRange;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -147,6 +142,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
 
     private int myStripCount;
     private boolean myIsShowInhertiedProps;
+
+    private SVNConflictStats myConflictStats;
     
     public SVNCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
         super(programName, out, err, in);
@@ -160,8 +157,9 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         myShowRevsType = SVNShowRevisionType.MERGED;
         myRevisionRanges = new LinkedList();
         myChangelists = new SVNHashSet();
+        myConflictStats = new SVNConflictStats();
     }
-    
+
     public void initClientManager() throws SVNException {
         super.initClientManager();
         getClientManager().setIgnoreExternals(myIsIgnoreExternals);
@@ -970,6 +968,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     
     public boolean isShowInheritedProps() {
         return myIsShowInhertiedProps;
+    }
+
+    public SVNConflictStats getConflictStats() {
+        return myConflictStats;
     }
 
     public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {

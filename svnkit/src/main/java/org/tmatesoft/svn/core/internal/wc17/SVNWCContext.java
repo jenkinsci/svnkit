@@ -2418,12 +2418,23 @@ public class SVNWCContext {
             if (workingVal.equals(toVal)) {
                 state = setPropMergeState(state, SVNStatusType.MERGED);
             } else {
+                boolean mergedProp = false;
+
                 if (SVNProperty.MERGE_INFO.equals(propname)) {
-                    String mergedVal = SVNMergeInfoUtil.combineMergeInfoProperties(workingVal.getString(), toVal.getString());
-                    workingProps.put(propname, mergedVal);
-                    state = setPropMergeState(state, SVNStatusType.MERGED);
-                } else {
-                    conflictRemains = maybeGeneratePropConflict(localAbspath, leftVersion, rightVersion, isDir, propname, workingProps, null, toVal, baseVal, workingVal, conflictResolver, dryRun);
+                    try {
+                        String mergedVal = SVNMergeInfoUtil.combineMergeInfoProperties(workingVal.getString(), toVal.getString());
+                        workingProps.put(propname, mergedVal);
+                        state = setPropMergeState(state, SVNStatusType.MERGED);
+                        mergedProp = true;
+                    } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() != SVNErrorCode.MERGE_INFO_PARSE_ERROR) {
+                            throw e;
+                        }
+                    }
+                }
+
+                if (!mergedProp) {
+                    conflictRemains = true;
                 }
             }
         } else if (baseVal != null) {
@@ -5743,9 +5754,9 @@ public class SVNWCContext {
 
         Structure<SvnWcDbConflicts.PropertyConflictInfo> propertyConflictInfoStructure = SvnWcDbConflicts.readPropertyConflict(getDb(), localAbsPath, conflicts);
         File propRejectFile = propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.markerAbspath);
-        SVNProperties mineProps = SVNProperties.wrap((SVNHashMap)propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.mineProps));
-        SVNProperties theirOldProps = SVNProperties.wrap((SVNHashMap)propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.theirOldProps));
-        SVNProperties theirProps = SVNProperties.wrap((SVNHashMap) propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.theirProps));
+        SVNProperties mineProps = SVNProperties.wrap((Map)propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.mineProps));
+        SVNProperties theirOldProps = SVNProperties.wrap((Map)propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.theirOldProps));
+        SVNProperties theirProps = SVNProperties.wrap((Map) propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.theirProps));
         Set<String> conflictedPropNames = propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.conflictedPropNames);
 
         SVNProperties oldProps;

@@ -14,6 +14,7 @@ package org.tmatesoft.svn.cli.svn;
 import org.tmatesoft.svn.cli.SVNCommandUtil;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchHunk;
 import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchHunkInfo;
 import org.tmatesoft.svn.core.wc.*;
@@ -39,11 +40,6 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
     private boolean myIsCheckout;
     private boolean myIsExport;
     private boolean myIsSuppressLastLine;
-
-    private int myTextConflicts = 0;
-    private int myPropConflicts = 0;
-    private int myTreeConflicts = 0;
-    private int mySkippedPaths = 0;
 
     private boolean myHasExternalErrors;
     private boolean myHasLockingError;
@@ -99,7 +95,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
                 myEnvironment.getErr().println(event.getErrorMessage());
             }
 
-            mySkippedPaths++;
+            getConflictStats().incrementSkippedPaths();
 
             if (event.getContentsStatus() == SVNStatusType.MISSING) {
                 buffer.append("Skipped missing target: '" + path + "'\n");
@@ -107,16 +103,16 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
                 buffer.append("Skipped '" + path + "'\n");
             }
         } else if (event.getAction() == SVNEventAction.UPDATE_SKIP_OBSTRUCTION) {
-            mySkippedPaths++;
+            getConflictStats().incrementSkippedPaths();
             buffer.append("Skipped '" + path + "' -- An obstructing working copy was found\n");
         } else if (event.getAction() == SVNEventAction.UPDATE_SKIP_WORKING_ONLY) {
-            mySkippedPaths++;
+            getConflictStats().incrementSkippedPaths();
             buffer.append("Skipped '" + path + "' -- Has no versioned parent\n");
         } else if (event.getAction() == SVNEventAction.UPDATE_SKIP_ACCESS_DENINED) {
-            mySkippedPaths++;
+            getConflictStats().incrementSkippedPaths();
             buffer.append("Skipped '" + path + "' -- Access denied\n");
         } else if (event.getAction() == SVNEventAction.SKIP_CONFLICTED) {
-            mySkippedPaths++;
+            getConflictStats().incrementSkippedPaths();
             buffer.append("Skipped '" + path + "' -- Node remains in conflict\n");
         } else if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
             myIsChangesReceived = true;
@@ -127,7 +123,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
         } else if (event.getAction() == SVNEventAction.UPDATE_ADD) {
             myIsChangesReceived = true;
             if (event.getContentsStatus() == SVNStatusType.CONFLICTED) {
-                myTextConflicts++;
+                getConflictStats().storeTextConflict(file.getAbsolutePath());
 
                 buffer.append("C    " + path + "\n");
             } else {
@@ -136,13 +132,13 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
         } else if (event.getAction() == SVNEventAction.UPDATE_EXISTS) {
             myIsChangesReceived = true;
             if (event.getContentsStatus() == SVNStatusType.CONFLICTED) {
-                myTextConflicts++;
+                getConflictStats().storeTextConflict(file.getAbsolutePath());
                 buffer.append('C');
             } else {
                 buffer.append('E');
             }
             if (event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
-                myPropConflicts++;
+                getConflictStats().storePropConflict(file.getAbsolutePath());
                 buffer.append('C');
             } else if (event.getPropertiesStatus() == SVNStatusType.MERGED) {
                 buffer.append('G');
@@ -158,7 +154,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             }
             if (event.getNodeKind() == SVNNodeKind.FILE) {
                 if (event.getContentsStatus() == SVNStatusType.CONFLICTED) {
-                    myTextConflicts++;
+                    getConflictStats().storeTextConflict(file.getAbsolutePath());
                     buffer.append('C');
                 } else if (event.getContentsStatus() == SVNStatusType.MERGED){
                     buffer.append('G');
@@ -171,7 +167,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
                 buffer.append(' ');
             }
             if (event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
-                myPropConflicts++;
+                getConflictStats().storePropConflict(file.getAbsolutePath());
                 buffer.append('C');
             } else if (event.getPropertiesStatus() == SVNStatusType.MERGED){
                 buffer.append('G');
@@ -246,7 +242,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
         } else if (event.getAction() == SVNEventAction.MERGE_ELIDE_INFO) {
             buffer.append("--- Eliding mergeinfo from '" + path + "':\n");
         } else if (event.getAction() == SVNEventAction.TREE_CONFLICT) {
-            myTreeConflicts++;
+            getConflictStats().storeTreeConflict(file.getAbsolutePath());
             buffer.append("   C ");
             buffer.append(path);
             buffer.append("\n");
@@ -379,7 +375,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             myIsChangesReceived = true;
 
             if (event.getContentsStatus() == SVNStatusType.CONFLICTED) {
-                myTextConflicts++;
+                getConflictStats().storeTextConflict(file.getAbsolutePath());
                 buffer.append('C');
             } else if (event.getNodeKind() == SVNNodeKind.FILE) {
                 if (event.getContentsStatus() == SVNStatusType.MERGED) {
@@ -387,6 +383,13 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
                 } else if (event.getContentsStatus() == SVNStatusType.CHANGED) {
                     buffer.append('U');
                 }
+            }
+
+            if (event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
+                getConflictStats().storePropConflict(file.getAbsolutePath());
+                buffer.append('C');
+            } else if (event.getPropertiesStatus() == SVNStatusType.CHANGED) {
+                buffer.append('U');
             }
 
             if (buffer.length() > 0) {
@@ -493,37 +496,68 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
     }
 
     public void printConflictStatus(StringBuffer buffer) {
+        SVNConflictStats conflictStats = getConflictStats();
+
         int textConflicts = 0;
         int propConflicts = 0;
         int treeConflicts = 0;
         int skippedPaths = 0;
         String header = null;
         header = "Summary of conflicts:\n";
-        textConflicts = myTextConflicts;
-        propConflicts = myPropConflicts;
-        treeConflicts = myTreeConflicts;
-        skippedPaths = mySkippedPaths;
+        textConflicts = conflictStats.getTextConflictsCount();
+        propConflicts = conflictStats.getPropConflictsCount();
+        treeConflicts = conflictStats.getTreeConflictsCount();
+        skippedPaths = conflictStats.getSkippedPathsCount();
 
         if (textConflicts > 0 || propConflicts > 0 || treeConflicts > 0 || skippedPaths > 0) {
             buffer.append(header);
         }
 
-        if (textConflicts > 0) {
-            buffer.append("  Text conflicts: ");
-            buffer.append(textConflicts);
-            buffer.append("\n");
-        }
+        if (conflictStats.getResolvedTextConflictsCount() == 0 &&
+                conflictStats.getResolvedPropConflictsCount() == 0 &&
+                conflictStats.getResolvedTreeConflictsCount() == 0) {
+            if (textConflicts > 0) {
+                buffer.append("  Text conflicts: ");
+                buffer.append(textConflicts);
+                buffer.append("\n");
+            }
 
-        if (propConflicts > 0) {
-            buffer.append("  Property conflicts: ");
-            buffer.append(propConflicts);
-            buffer.append("\n");
-        }
+            if (propConflicts > 0) {
+                buffer.append("  Property conflicts: ");
+                buffer.append(propConflicts);
+                buffer.append("\n");
+            }
 
-        if (treeConflicts > 0) {
-            buffer.append("  Tree conflicts: ");
-            buffer.append(treeConflicts);
-            buffer.append("\n");
+            if (treeConflicts > 0) {
+                buffer.append("  Tree conflicts: ");
+                buffer.append(treeConflicts);
+                buffer.append("\n");
+            }
+        } else {
+            if (textConflicts > 0 || conflictStats.getResolvedTextConflictsCount() > 0) {
+                buffer.append("  Text conflicts: ");
+                appendRemaining(buffer, textConflicts);
+                buffer.append(" (");
+                appendResolved(buffer, conflictStats.getResolvedTextConflictsCount());
+                buffer.append(")");
+                buffer.append("\n");
+            }
+            if (propConflicts > 0 || conflictStats.getResolvedPropConflictsCount() > 0) {
+                buffer.append("  Property conflicts: ");
+                appendRemaining(buffer, propConflicts);
+                buffer.append(" (");
+                appendResolved(buffer, conflictStats.getResolvedPropConflictsCount());
+                buffer.append(")");
+                buffer.append("\n");
+            }
+            if (treeConflicts > 0 || conflictStats.getResolvedTreeConflictsCount() > 0) {
+                buffer.append("  Tree conflicts: ");
+                appendRemaining(buffer, treeConflicts);
+                buffer.append(" (");
+                appendResolved(buffer, conflictStats.getResolvedTreeConflictsCount());
+                buffer.append(")");
+                buffer.append("\n");
+            }
         }
 
         if (skippedPaths > 0) {
@@ -531,5 +565,18 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             buffer.append(skippedPaths);
             buffer.append("\n");
         }
+
+    }
+
+    private void appendRemaining(StringBuffer buffer, int conflictsCount) {
+        buffer.append(conflictsCount).append(" remaining");
+    }
+
+    private void appendResolved(StringBuffer buffer, int resolvedTreeConflictsCount) {
+        buffer.append("and ").append(resolvedTreeConflictsCount).append(" already resolved");
+    }
+
+    private SVNConflictStats getConflictStats() {
+        return myEnvironment.getConflictStats();
     }
 }
