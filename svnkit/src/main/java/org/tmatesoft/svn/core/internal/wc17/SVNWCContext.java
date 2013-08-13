@@ -2504,7 +2504,7 @@ public class SVNWCContext {
                 mimePropval = workingProps.getStringValue(SVNProperty.MIME_TYPE);
             }
             cdesc.setMimeType(mimePropval);
-            cdesc.setBinary(mimePropval != null ? mimeTypeIsBinary(mimePropval) : false);
+            cdesc.setBinary(mimePropval != null ? SVNProperty.mimeTypeIsBinary(mimePropval) : false);
             if (oldVal == null && newVal != null) {
                 cdesc.setAction(SVNConflictAction.ADD);
             } else if (oldVal != null && newVal == null) {
@@ -2559,14 +2559,6 @@ public class SVNWCContext {
             SVNFileUtil.deleteFile(cdesc.getTheirFile());
             SVNFileUtil.deleteFile(cdesc.getMergedFile());
         }
-    }
-
-    private boolean mimeTypeIsBinary(String mimeType) {
-        int len = mimeType.indexOf(';');
-        if (len == -1) {
-            len = mimeType.indexOf(' ');
-        }
-        return ((!"text/".equals(mimeType.substring(0, 5))) && (len != 15 || "image/x-xbitmap".equals(mimeType.substring(0, len))));
     }
 
     private File writeUnique(File path, byte[] value) throws SVNException {
@@ -3054,10 +3046,10 @@ public class SVNWCContext {
         boolean isBinary = false;
         SVNPropertyValue mimeprop = propDiff.getSVNPropertyValue(SVNProperty.MIME_TYPE);
         if (mimeprop != null && mimeprop.isString()) {
-            isBinary = mimeTypeIsBinary(mimeprop.getString());
+            isBinary = SVNProperty.mimeTypeIsBinary(mimeprop.getString());
         } else {
             SVNPropertyValue value = oldActualProps.getSVNPropertyValue(SVNProperty.MIME_TYPE);
-            isBinary = value != null && mimeTypeIsBinary(value.getString());
+            isBinary = value != null && SVNProperty.mimeTypeIsBinary(value.getString());
         }
         
         File detranslatedTargetAbspath = detranslateWCFile(targetAbspath, !isBinary, propDiff, targetAbspath);
@@ -3179,7 +3171,7 @@ public class SVNWCContext {
 
     private boolean isMarkedAsBinary(File localAbsPath) throws SVNException {
         String value = getProperty(localAbsPath, SVNProperty.MIME_TYPE);
-        if (value != null && mimeTypeIsBinary(value)) {
+        if (value != null && SVNProperty.mimeTypeIsBinary(value)) {
             return true;
         }
         return false;
@@ -3199,13 +3191,13 @@ public class SVNWCContext {
         String charset;
         Map<String, byte[]> keywords;
         boolean special;
-        if (isBinary && (((prop = propDiff.getSVNPropertyValue(SVNProperty.MIME_TYPE)) != null && prop.isString() && mimeTypeIsBinary(prop.getString())) || prop == null)) {
+        if (isBinary && (((prop = propDiff.getSVNPropertyValue(SVNProperty.MIME_TYPE)) != null && prop.isString() && SVNProperty.mimeTypeIsBinary(prop.getString())) || prop == null)) {
             keywords = null;
             special = false;
             eol = null;
             charset = null;
             style = SVNEolStyle.None;
-        } else if ((!isBinary) && (prop = propDiff.getSVNPropertyValue(SVNProperty.MIME_TYPE)) != null && prop.isString() && mimeTypeIsBinary(prop.getString())) {
+        } else if ((!isBinary) && (prop = propDiff.getSVNPropertyValue(SVNProperty.MIME_TYPE)) != null && prop.isString() && SVNProperty.mimeTypeIsBinary(prop.getString())) {
             if (kind == SVNWCDbKind.File) {
                 TranslateInfo translateInfo = getTranslateInfo(targetAbspath, true, true, true, true);
                 style = translateInfo.eolStyleInfo.eolStyle;

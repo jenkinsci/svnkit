@@ -633,7 +633,15 @@ public class SVNProperty {
             }
         }
     }
-    
+
+    public static boolean mimeTypeIsBinary(String mimeType) {
+        int len = mimeType.indexOf(';');
+        if (len == -1) {
+            len = mimeType.indexOf(' ');
+        }
+        return ((!"text/".equals(mimeType.substring(0, 5))) && (len != 15 || "image/x-xbitmap".equals(mimeType.substring(0, len))));
+    }
+
     /**
      * Returns custom mime-types previously added.
      */

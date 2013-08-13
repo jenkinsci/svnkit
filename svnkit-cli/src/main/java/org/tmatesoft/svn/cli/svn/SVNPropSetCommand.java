@@ -20,15 +20,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 import org.tmatesoft.svn.cli.SVNCommandUtil;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
-import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -157,6 +150,8 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
                     SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
             }
+
+            printBinaryMimeTypeWarning(targets, propertyName, propertyValue);
             
             Collection changeLists = getSVNEnvironment().getChangelistsCollection();
             SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
@@ -205,5 +200,28 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
         }
     }
 
-
+    private void printBinaryMimeTypeWarning(Collection targets, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
+        if (SVNProperty.MIME_TYPE.equals(propertyName)) {
+            for (Object target : targets) {
+                String path = (String) target;
+                File localAbsPath = SVNFileUtil.createFilePath(path).getAbsoluteFile();
+                if (SVNFileType.getNodeKind(SVNFileType.getType(localAbsPath)) != SVNNodeKind.FILE) {
+                    continue;
+                }
+                SVNPropertyValue canonicalPropertyValue = SVNPropertiesManager.validatePropertyValue(localAbsPath, SVNNodeKind.FILE, propertyName, propertyValue, false, null, null);
+                if (SVNProperty.isBinaryMimeType(SVNPropertyValue.getPropertyAsString(canonicalPropertyValue))) {
+                    String detectedMimeType = SVNFileUtil.detectMimeType(localAbsPath, null);
+                    if (detectedMimeType == null || !SVNProperty.isBinaryMimeType(detectedMimeType)) {
+                        getEnvironment().getErr().println("svn: warning: '" +
+                                SVNPropertyValue.getPropertyAsString(canonicalPropertyValue) +
+                                "' is a binary mime-type but file '" +
+                                localAbsPath +
+                                "' " +
+                                "looks like text; diff, merge, blame, and other " +
+                                "operations will stop working on this file");
+                    }
+                }
+            }
+        }
+    }
 }
