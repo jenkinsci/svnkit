@@ -184,7 +184,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
 
         KeyManager[] result = null;
         KeyStore keyStore = null;
-        if (clientCertFile != null && clientCertPath.startsWith(SVNSSLAuthentication.MSCAPI)) {
+        if (clientCertPath != null && clientCertPath.startsWith(SVNSSLAuthentication.MSCAPI)) {
             SVNDebugLog.getDefaultLog().logError(SVNLogType.CLIENT,"using mscapi");
             try {
                 keyStore = KeyStore.getInstance("Windows-MY");
