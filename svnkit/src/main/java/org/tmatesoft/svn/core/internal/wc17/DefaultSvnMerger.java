@@ -55,10 +55,10 @@ public class DefaultSvnMerger implements ISvnMerger {
     }
     
     public SvnMergeResult mergeText(ISvnMerger baseMerger, File resultFile,
-            File targetAbspath,
-            File detranslatedTargetAbspath, File leftAbspath,
-            File rightAbspath, String targetLabel, String leftLabel,
-            String rightLabel, SVNDiffOptions options) throws SVNException {
+                                    File targetAbspath,
+                                    File detranslatedTargetAbspath, File leftAbspath,
+                                    File rightAbspath, String targetLabel, String leftLabel,
+                                    String rightLabel, SVNDiffOptions options, SVNDiffConflictChoiceStyle style) throws SVNException {
         
         ConflictMarkersInfo markersInfo = context.initConflictMarkers(targetLabel, leftLabel, rightLabel);
         String targetMarker = markersInfo.targetMarker;
@@ -79,7 +79,7 @@ public class DefaultSvnMerger implements ISvnMerger {
             QSequenceLineRAData baseData = new QSequenceLineRAFileData(baseIS);
             QSequenceLineRAData localData = new QSequenceLineRAFileData(localIS);
             QSequenceLineRAData latestData = new QSequenceLineRAFileData(latestIS);
-            mergeResult = merger.merge(baseData, localData, latestData, options, result, SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST);
+            mergeResult = merger.merge(baseData, localData, latestData, options, result, style);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e, SVNLogType.WC);

@@ -3307,7 +3307,7 @@ public class SVNWCContext {
         File resultTarget = SVNFileUtil.createUniqueFile(tempDir, baseName, ".tmp", false);
 
         //TODO: external merger
-        boolean containsConflicts = doTextMerge(customMerger, resultTarget, targetAbspath, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options);
+        boolean containsConflicts = doTextMerge(customMerger, resultTarget, targetAbspath, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options, SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST);
         if (containsConflicts && !dryRun) {
             info.mergeOutcome = SVNStatusType.CONFLICTED;
 
@@ -3343,13 +3343,13 @@ public class SVNWCContext {
         return info;
     }
 
-    private boolean doTextMerge(ISvnMerger customMerger, File resultFile, File targetAbsPath, File detranslatedTargetAbspath, File leftAbspath, File rightAbspath, String targetLabel, String leftLabel, String rightLabel, SVNDiffOptions options) throws SVNException {
+    private boolean doTextMerge(ISvnMerger customMerger, File resultFile, File targetAbsPath, File detranslatedTargetAbspath, File leftAbspath, File rightAbspath, String targetLabel, String leftLabel, String rightLabel, SVNDiffOptions options, SVNDiffConflictChoiceStyle style) throws SVNException {
         ISvnMerger defaultMerger = createDefaultMerger();
         SvnMergeResult mergeResult;
         if (customMerger != null) {
-            mergeResult = customMerger.mergeText(defaultMerger, resultFile, targetAbsPath, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options);
+            mergeResult = customMerger.mergeText(defaultMerger, resultFile, targetAbsPath, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options, style);
         } else {
-            mergeResult = defaultMerger.mergeText(null, resultFile, targetAbsPath, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options);
+            mergeResult = defaultMerger.mergeText(null, resultFile, targetAbsPath, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options, style);
         }
         if (mergeResult.getMergeOutcome() == SVNStatusType.CONFLICTED) {
             return true;
@@ -5694,8 +5694,8 @@ public class SVNWCContext {
                 UniqueFileInfo uniqueFileInfo = openUniqueFile(tempDir, false);
                 autoResolveSrc = uniqueFileInfo.path;
 
-                //TODO: style!
-                doTextMerge(null, autoResolveSrc, null, conflictWorkingAbsPath, conflictOldAbsPath, conflictNewAbsPath, null, null, null, null);
+                SVNDiffConflictChoiceStyle style = conflictChoice == SVNConflictChoice.THEIRS_CONFLICT ? SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST : SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED;
+                doTextMerge(null, autoResolveSrc, null, conflictWorkingAbsPath, conflictOldAbsPath, conflictNewAbsPath, null, null, null, null, style);
             } else {
                 autoResolveSrc = null;
             }

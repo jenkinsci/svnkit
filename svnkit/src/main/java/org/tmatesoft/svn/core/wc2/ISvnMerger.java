@@ -6,6 +6,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
+import org.tmatesoft.svn.core.internal.wc.SVNDiffConflictChoiceStyle;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
@@ -36,20 +37,21 @@ public interface ISvnMerger extends ISVNMerger {
 	 * @param leftLabel
 	 * @param rightLabel
 	 * @param options merge options to take into account
-	 * @return result of merging
+	 * @param style
+     * @return result of merging
 	 * @throws SVNException
 	 */
     public SvnMergeResult mergeText(
             ISvnMerger baseMerger,
-            File resultFile, 
-            File targetAbspath, 
-            File detranslatedTargetAbspath, 
-            File leftAbspath, 
-            File rightAbspath, 
-            String targetLabel, 
-            String leftLabel, 
-            String rightLabel, 
-            SVNDiffOptions options) throws SVNException;
+            File resultFile,
+            File targetAbspath,
+            File detranslatedTargetAbspath,
+            File leftAbspath,
+            File rightAbspath,
+            String targetLabel,
+            String leftLabel,
+            String rightLabel,
+            SVNDiffOptions options, SVNDiffConflictChoiceStyle style) throws SVNException;
     
     /**
      * Merges the property changes <code>propChanges</code> based on <code>serverBaseProperties</code> 
