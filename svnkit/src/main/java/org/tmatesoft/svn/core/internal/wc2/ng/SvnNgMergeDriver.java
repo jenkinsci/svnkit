@@ -2164,7 +2164,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                     SVNEvent mergeBeginEvent = SVNEventFactory.createSVNEvent(child.absPath,
                             SVNNodeKind.NONE,
                             null, -1, SVNEventAction.MERGE_RECORD_INFO_BEGIN,
-                            null, null, mergeRange);
+                            null, null, range);
                     if (context.getEventHandler() != null) {
                         context.getEventHandler().handleEvent(mergeBeginEvent, -1);
                     }

@@ -1011,7 +1011,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
             SVNMergeRange gapRange = implicitSrcGap.getRanges()[0];
             if (range.getStartRevision() < range.getEndRevision()) {
                 if (gapRange.getStartRevision() == range.getStartRevision()) {
-                    range.setStartRevision(gapRange.getStartRevision());
+                    range.setStartRevision(gapRange.getEndRevision());
                 }
             } else {
                 if (gapRange.getStartRevision() == range.getEndRevision()) {
