@@ -5694,7 +5694,7 @@ public class SVNWCContext {
                 UniqueFileInfo uniqueFileInfo = openUniqueFile(tempDir, false);
                 autoResolveSrc = uniqueFileInfo.path;
 
-                SVNDiffConflictChoiceStyle style = conflictChoice == SVNConflictChoice.THEIRS_CONFLICT ? SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST : SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED;
+                SVNDiffConflictChoiceStyle style = conflictChoice == SVNConflictChoice.THEIRS_CONFLICT ? SVNDiffConflictChoiceStyle.CHOOSE_LATEST : SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED;
                 doTextMerge(null, autoResolveSrc, null, conflictWorkingAbsPath, conflictOldAbsPath, conflictNewAbsPath, null, null, null, null, style);
             } else {
                 autoResolveSrc = null;
@@ -5819,7 +5819,7 @@ public class SVNWCContext {
             SVNNodeKind nodeKind = SVNFileType.getNodeKind(SVNFileType.getType(artifactFileAbsPath));
 
             if (nodeKind == SVNNodeKind.FILE) {
-                wqBuildFileRemove(wriAbsPath, artifactFileAbsPath);
+                removeArtifactInfo.workItem = wqBuildFileRemove(wriAbsPath, artifactFileAbsPath);
                 removeArtifactInfo.fileFound = true;
             }
         }
