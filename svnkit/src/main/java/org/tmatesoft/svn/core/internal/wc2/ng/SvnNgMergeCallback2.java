@@ -1261,9 +1261,16 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
 
             Map<String, SVNMergeRangeList> filteredMergeInfo = null;
             if (mergeInfo != null) {
-                svnRepository.setLocation(url, false);
-                Map<String, SVNMergeRangeList> implicitMergeInfo = repositoryAccess.getHistoryAsMergeInfo(svnRepository, SvnTarget.fromURL(url), revision, -1);
-                filteredMergeInfo = SVNMergeInfoUtil.removeMergeInfo(implicitMergeInfo, mergeInfo, true);
+                SVNURL oldUrl = svnRepository.getLocation();
+                try {
+                    svnRepository.setLocation(url, false);
+                    Map<String, SVNMergeRangeList> implicitMergeInfo = repositoryAccess.getHistoryAsMergeInfo(svnRepository, SvnTarget.fromURL(url), revision, -1);
+                    filteredMergeInfo = SVNMergeInfoUtil.removeMergeInfo(implicitMergeInfo, mergeInfo, true);
+                } finally {
+                    if (oldUrl != null) {
+                        svnRepository.setLocation(oldUrl, false);
+                    }
+                }
             }
             if (filteredMergeInfo != null && filteredYoungerMergeInfo != null) {
                 filteredMergeInfo = SVNMergeInfoUtil.mergeMergeInfos(filteredMergeInfo, filteredYoungerMergeInfo);
