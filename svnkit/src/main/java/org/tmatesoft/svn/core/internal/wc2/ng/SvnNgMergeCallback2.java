@@ -378,7 +378,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         File localAbsPath = SVNFileUtil.createFilePath(mergeDriver.targetAbsPath, relPath);
         DirectoryBaton db = new DirectoryBaton();
         db.treeConflictReason = null;
-        db.treeConflictAction = null;
+        db.treeConflictAction = SVNConflictAction.EDIT;
         db.skipReason = SVNStatusType.UNKNOWN;
 
         DirectoryBaton pdb = currentDirectory;
