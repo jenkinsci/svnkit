@@ -1028,6 +1028,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
     protected SvnSingleRangeConflictReport doDirectoryMerge(Map<File, Map<String, SVNMergeRangeList>> resultCatalog, MergeSource source, File targetAbsPath, SVNURL sourceRootUrl, ISvnDiffCallback2 processor, SVNDepth depth, boolean squelchMergeinfoNotifications) throws SVNException {
         Map<File, MergePath> childrenWithMergeInfo = new TreeMap<File, MergePath>(PATH_COMPARATOR);
         notifyBegin.nodesWithMergeInfo = childrenWithMergeInfo;
+        this.childrenWithMergeInfo = childrenWithMergeInfo;
         SvnSingleRangeConflictReport svnSingleRangeConflictReport;
         if (isHonorMergeInfo()) {
             svnSingleRangeConflictReport = doMergeInfoAwareDirectoryMerge(resultCatalog, source, targetAbsPath, sourceRootUrl, childrenWithMergeInfo, depth, squelchMergeinfoNotifications, processor);
