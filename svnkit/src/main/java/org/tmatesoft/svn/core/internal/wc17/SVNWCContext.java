@@ -3052,7 +3052,7 @@ public class SVNWCContext {
             isBinary = value != null && SVNProperty.mimeTypeIsBinary(value.getString());
         }
         
-        File detranslatedTargetAbspath = detranslateWCFile(targetAbspath, !isBinary, propDiff, targetAbspath);
+        File detranslatedTargetAbspath = detranslateWCFile(targetAbspath, !isBinary, oldActualProps, propDiff, targetAbspath);
         leftAbspath = maybeUpdateTargetEols(leftAbspath, propDiff);
         info.mergeOutcome = SVNStatusType.NO_MERGE;
         ISvnMerger customMerger = createCustomMerger();
@@ -3177,88 +3177,55 @@ public class SVNWCContext {
         return false;
     }
 
-    private File detranslateWCFile(File targetAbspath, boolean forceCopy, SVNProperties propDiff, File sourceAbspath) throws SVNException {
-        boolean isBinary;
-        SVNPropertyValue prop;
-        SVNWCDbKind kind = db.readKind(targetAbspath, true);
-        if (kind == SVNWCDbKind.File) {
-            isBinary = isMarkedAsBinary(targetAbspath);
+    private File detranslateWCFile(File targetAbspath, boolean forceCopy, SVNProperties oldActualProps, SVNProperties propDiff, File sourceAbspath) throws SVNException {
+        String oldMimeValue = oldActualProps.getStringValue(SVNProperty.MIME_TYPE);
+        String newMimeValue = propDiff.containsName(SVNProperty.MIME_TYPE) ? propDiff.getStringValue(SVNProperty.MIME_TYPE) : oldMimeValue;
+
+        boolean oldIsBinary = oldMimeValue != null && SVNProperty.isBinaryMimeType(oldMimeValue);
+        boolean newIsBinary = newMimeValue != null && SVNProperty.isBinaryMimeType(newMimeValue);
+
+
+        TranslateInfo translateInfo;
+        if (oldIsBinary && newIsBinary) {
+            translateInfo = getTranslateInfo(sourceAbspath, oldActualProps, true, false, false, true, false);
+            translateInfo.special = false;
+            translateInfo.eolStyleInfo = null;
+        } else if (!oldIsBinary && newIsBinary) {
+            translateInfo = getTranslateInfo(sourceAbspath, oldActualProps, true, true, true, true, true);
         } else {
-            isBinary = false;
-        }
-        SVNEolStyle style;
-        byte[] eol;
-        String charset;
-        Map<String, byte[]> keywords;
-        boolean special;
-        if (isBinary && (((prop = propDiff.getSVNPropertyValue(SVNProperty.MIME_TYPE)) != null && prop.isString() && SVNProperty.mimeTypeIsBinary(prop.getString())) || prop == null)) {
-            keywords = null;
-            special = false;
-            eol = null;
-            charset = null;
-            style = SVNEolStyle.None;
-        } else if ((!isBinary) && (prop = propDiff.getSVNPropertyValue(SVNProperty.MIME_TYPE)) != null && prop.isString() && SVNProperty.mimeTypeIsBinary(prop.getString())) {
-            if (kind == SVNWCDbKind.File) {
-                TranslateInfo translateInfo = getTranslateInfo(targetAbspath, true, true, true, true);
-                style = translateInfo.eolStyleInfo.eolStyle;
-                eol = translateInfo.eolStyleInfo.eolStr;
-                charset = translateInfo.charset;
-                special = translateInfo.special;
-                keywords = translateInfo.keywords;
+            translateInfo = getTranslateInfo(sourceAbspath, oldActualProps, true, true, true, true, true);
+            if (translateInfo.special) {
+                translateInfo.keywords = null;
+                translateInfo.eolStyleInfo = null;
             } else {
-                special = false;
-                keywords = null;
-                eol = null;
-                charset = null;
-                style = SVNEolStyle.None;
-            }
-        } else {
-            if (kind == SVNWCDbKind.File) {
-                TranslateInfo translateInfo = getTranslateInfo(targetAbspath, true, true, true, true);
-                style = translateInfo.eolStyleInfo.eolStyle;
-                eol = translateInfo.eolStyleInfo.eolStr;
-                charset = translateInfo.charset;
-                special = translateInfo.special;
-                keywords = translateInfo.keywords;
-            } else {
-                special = false;
-                keywords = null;
-                eol = null;
-                charset = null;
-                style = SVNEolStyle.None;
-            }
-            if (special) {
-                keywords = null;
-                eol = null;
-                charset = null;
-                style = SVNEolStyle.None;
-            } else {
-                if ((prop = propDiff.getSVNPropertyValue(SVNProperty.EOL_STYLE)) != null && prop.isString()) {
-                    SVNEolStyleInfo propEolStyle = SVNEolStyleInfo.fromValue(prop.getString());
-                    style = propEolStyle.eolStyle;
-                    eol = propEolStyle.eolStr;
-                } else if (!isBinary) {
+                String eolStyle = propDiff.getStringValue(SVNProperty.EOL_STYLE);
+                if (eolStyle != null) {
+                    translateInfo.eolStyleInfo = SVNEolStyleInfo.fromValue(eolStyle);
+                } else if (!oldIsBinary) {
+
                 } else {
-                    eol = null;
-                    style = SVNEolStyle.None;
-                }
-                if (isBinary) {
-                    keywords = null;
+                    translateInfo.eolStyleInfo = null;
                 }
             }
         }
-        if (forceCopy || keywords != null || eol != null || charset != null || special) {
+
+        if (translateInfo.eolStyleInfo == null) {
+            translateInfo.eolStyleInfo = new SVNEolStyleInfo(SVNEolStyle.None, null);
+        }
+
+        if (forceCopy || translateInfo.keywords != null || translateInfo.eolStyleInfo.eolStr != null || translateInfo.special || translateInfo.charset != null) {
             File detranslated = openUniqueFile(getDb().getWCRootTempDir(targetAbspath), false).path;
-            if (style == SVNEolStyle.Native) {
-                eol = SVNEolStyleInfo.LF_EOL_STR;
-            } else if (style != SVNEolStyle.Fixed && style != SVNEolStyle.None) {
+            if (translateInfo.eolStyleInfo.eolStyle == SVNEolStyle.Native) {
+                translateInfo.eolStyleInfo.eolStr = SVNEolStyleInfo.LF_EOL_STR;
+            } else if (translateInfo.eolStyleInfo.eolStyle != SVNEolStyle.Fixed && translateInfo.eolStyleInfo.eolStyle != SVNEolStyle.None) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNKNOWN_EOL);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
-            SVNTranslator.copyAndTranslate(sourceAbspath, detranslated, charset, eol, keywords, special, false, true);
+            SVNTranslator.copyAndTranslate(sourceAbspath, detranslated, translateInfo.charset, translateInfo.eolStyleInfo.eolStr, translateInfo.keywords, translateInfo.special, false, true);
             return detranslated.getAbsoluteFile();
+        } else {
+            return sourceAbspath;
         }
-        return sourceAbspath;
     }
 
     public static class UniqueFileInfo {
