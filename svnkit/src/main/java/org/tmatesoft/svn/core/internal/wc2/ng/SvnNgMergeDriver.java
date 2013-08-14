@@ -870,6 +870,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         if (!recordOnly) {
             SVNMergeRangeList rangesToMerge = remainingRanges;
             File targetRelPath = SVNFileUtil.createFilePath("");
+            MergePath targetInfo = null;
 
             if (source.ancestral) {
                 if (remainingRanges.getSize() > 1) {
@@ -881,7 +882,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 }
 
                 Map<File, MergePath> childWithMergeInfo = new TreeMap<File, MergePath>();
-                MergePath targetInfo = new MergePath(mergeTarget.absPath);
+                targetInfo = new MergePath(mergeTarget.absPath);
                 targetInfo.remainingRanges = rangesToMerge;
                 childWithMergeInfo.put(mergeTarget.absPath, targetInfo);
 
@@ -953,6 +954,11 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 }
 
                 iterator.remove();
+                if (targetInfo != null && targetInfo.absPath == mergeTarget.absPath && targetInfo.remainingRanges != null) {
+                    SVNMergeRange[] resultingRanges = new SVNMergeRange[targetInfo.remainingRanges.getSize() - 1];
+                    System.arraycopy(targetInfo.remainingRanges.getRanges(), 1, resultingRanges, 0, resultingRanges.length);
+                    targetInfo.remainingRanges = new SVNMergeRangeList(resultingRanges);
+                }
             }
             notifyBegin.lastAbsPath = null;
         }
