@@ -563,7 +563,7 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
             }
             SVNException err = null;
             try {
-                mergeOutcome = getContext().mergeProperties(localAbsPath, null, null, originalProperties, props, isDryRun());
+                mergeOutcome = getContext().mergeProperties(localAbsPath, null, null, originalProperties, props, isDryRun(), getContext().getOptions().getConflictResolver());
             } catch (SVNException e) {
                 err = e;
             }

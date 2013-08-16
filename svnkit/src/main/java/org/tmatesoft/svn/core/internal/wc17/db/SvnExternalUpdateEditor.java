@@ -250,7 +250,7 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
 
             mergeInfo = context.mergeProperties2(mergeInfo, localAbsPath, SVNWCDbKind.File, 
                     null, null, null, baseProperties, actualProperties, regularPropChanges, 
-                    true, false);
+                    true, false, context.getOptions().getConflictResolver());
             if (mergeInfo.workItems != null) {
                 allWorkItems = context.wqMerge(allWorkItems, mergeInfo.workItems);
             }

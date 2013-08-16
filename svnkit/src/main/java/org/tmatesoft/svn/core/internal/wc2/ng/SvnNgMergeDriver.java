@@ -135,6 +135,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             boolean sameUrls = url1.equals(url2);
 
             MergeSource mergeSource = new MergeSource();
+            mergeSource.ancestral = this.ancestral;
             mergeSource.url1 = this.url1;
             mergeSource.url2 = this.url2;
             mergeSource.rev1 = startRevision;
@@ -934,7 +935,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                         result.reset();
                     }
                 } else {
-                    SVNProperties propChanges = rightProperties.compareTo(leftProperties);
+                    SVNProperties propChanges = leftProperties.compareTo(rightProperties);
                     mergeProcessor.fileOpened(result, targetRelPath, leftSource, rightSource, null, false, null);
                     boolean skip = result.skip;
                     result.reset();

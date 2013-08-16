@@ -2115,7 +2115,7 @@ public class SVNWCContext {
     }
     
     public MergePropertiesInfo mergeProperties(File localAbsPath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion,
-            SVNProperties baseProperties, SVNProperties propChanges, boolean dryRun) throws SVNException {
+                                               SVNProperties baseProperties, SVNProperties propChanges, boolean dryRun, ISVNConflictHandler conflictResolver) throws SVNException {
         Structure<NodeInfo> info = getDb().readInfo(localAbsPath, NodeInfo.status, NodeInfo.kind, NodeInfo.hadProps, NodeInfo.propsMod, NodeInfo.haveBase);
         SVNWCDbStatus status = info.get(NodeInfo.status);
         
@@ -2154,7 +2154,7 @@ public class SVNWCContext {
         }
         SVNWCDbKind kind = info.get(NodeInfo.kind);
         info.release();
-        MergePropertiesInfo result = mergeProperties2(null, localAbsPath, kind, leftVersion, rightVersion, baseProperties, pristineProps, actualProps, propChanges, false, dryRun);
+        MergePropertiesInfo result = mergeProperties2(null, localAbsPath, kind, leftVersion, rightVersion, baseProperties, pristineProps, actualProps, propChanges, false, dryRun, conflictResolver);
         if (dryRun) {
             return result;
         }
@@ -2172,8 +2172,8 @@ public class SVNWCContext {
     }
     
     public MergePropertiesInfo mergeProperties2(MergePropertiesInfo mergeInfo, File localAbsPath, SVNWCDbKind kind, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion,
-            SVNProperties serverBaseProperties, SVNProperties pristineProperties, SVNProperties actualProperties, SVNProperties propChanges, 
-            boolean baseMerge, boolean dryRun) throws SVNException {
+                                                SVNProperties serverBaseProperties, SVNProperties pristineProperties, SVNProperties actualProperties, SVNProperties propChanges,
+                                                boolean baseMerge, boolean dryRun, ISVNConflictHandler conflictResolver) throws SVNException {
         if (serverBaseProperties == null) {
             serverBaseProperties = pristineProperties;
         }
@@ -2198,7 +2198,7 @@ public class SVNWCContext {
                     actualProperties, 
                     propChanges, 
                     baseMerge, 
-                    dryRun);
+                    dryRun, conflictResolver);
         } else {
             result = defaultMerger.mergeProperties(
                     null,
@@ -2211,7 +2211,7 @@ public class SVNWCContext {
                     actualProperties, 
                     propChanges, 
                     baseMerge, 
-                    dryRun);
+                    dryRun, conflictResolver);
         }        
         mergeInfo.mergeOutcome = result.getMergeOutcome();
         mergeInfo.newActualProperties = result.getActualProperties();
@@ -2714,7 +2714,7 @@ public class SVNWCContext {
         if (workingVal != null && oldVal != null && workingVal.equals(oldVal)) {
             workingProps.put(propname, newVal);
         } else {
-            conflictRemains = maybeGeneratePropConflict(localAbspath, leftVersion, rightVersion, isDir, propname, workingProps, oldVal, newVal, baseVal, workingVal, conflictResolver, dryRun);
+            conflictRemains = conflictResolver == null ? true : maybeGeneratePropConflict(localAbspath, leftVersion, rightVersion, isDir, propname, workingProps, oldVal, newVal, baseVal, workingVal, conflictResolver, dryRun);
         }
         return new MergePropStatusInfo(state, conflictRemains);
     }

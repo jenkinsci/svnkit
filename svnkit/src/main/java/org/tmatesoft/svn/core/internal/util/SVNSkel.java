@@ -637,4 +637,8 @@ public class SVNSkel {
             skel.myNext = i < myList.size() - 1  ? myList.get(i + 1) : null;
         }
     }
+
+    public void removeAllChildren() {
+        myList.clear();
+    }
 }

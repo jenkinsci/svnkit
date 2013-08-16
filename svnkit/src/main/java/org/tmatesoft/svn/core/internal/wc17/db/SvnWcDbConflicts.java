@@ -630,7 +630,8 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
                 oldProps = theirOriginalProps;
             }
 
-            SVNSkel propData = createConflictSkel();
+            SVNSkel propData = SVNSkel.createEmptyList();
+            propData.prepend(SVNSkel.createEmptyList());
             for (String propName : conflictedPropNames) {
                 addPropConflict(propData, propName,
                         oldProps != null ? oldProps.getSVNPropertyValue(propName) : null,
@@ -718,7 +719,7 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
                 SVNSkel props = c.next().next();
                 SVNSkel propnames = props.first();
                 if (resolveProp.length() == 0) {
-                    props.removeChildren(props.getList());
+                    props.removeAllChildren();
                     propnames = null;
                 } else {
                     Set<SVNSkel> propsToRemove = new HashSet<SVNSkel>();

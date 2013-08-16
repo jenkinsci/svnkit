@@ -7,6 +7,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNDiffConflictChoiceStyle;
+import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
@@ -68,19 +69,20 @@ public interface ISvnMerger extends ISVNMerger {
      * @param propChanges property changes that come from the repository
      * @param baseMerge if <code>false</code>, then changes only working properties; otherwise, changes both the base and working properties
      * @param dryRun if <code>true</code>, merge is simulated only, no real changes are done
-     * @return result of merging 
+     * @param conflictResolver
+     * @return result of merging
      * @throws SVNException
      */
     public SvnMergeResult mergeProperties(
             ISvnMerger baseMerger,
-            File localAbsPath, 
-            SVNNodeKind kind, 
-            SVNConflictVersion leftVersion, 
+            File localAbsPath,
+            SVNNodeKind kind,
+            SVNConflictVersion leftVersion,
             SVNConflictVersion rightVersion,
-            SVNProperties serverBaseProperties, 
-            SVNProperties pristineProperties, 
-            SVNProperties actualProperties, 
+            SVNProperties serverBaseProperties,
+            SVNProperties pristineProperties,
+            SVNProperties actualProperties,
             SVNProperties propChanges,
-            boolean baseMerge, 
-            boolean dryRun) throws SVNException;
+            boolean baseMerge,
+            boolean dryRun, ISVNConflictHandler conflictResolver) throws SVNException;
 }

@@ -97,17 +97,16 @@ public class DefaultSvnMerger implements ISvnMerger {
     }
 
     public SvnMergeResult mergeProperties(ISvnMerger baseMerger,
-            File localAbsPath, SVNNodeKind kind,
-            SVNConflictVersion leftVersion, SVNConflictVersion rightVersion,
-            SVNProperties serverBaseProperties,
-            SVNProperties pristineProperties, SVNProperties actualProperties,
-            SVNProperties propChanges, boolean baseMerge, boolean dryRun) throws SVNException {
+                                          File localAbsPath, SVNNodeKind kind,
+                                          SVNConflictVersion leftVersion, SVNConflictVersion rightVersion,
+                                          SVNProperties serverBaseProperties,
+                                          SVNProperties pristineProperties, SVNProperties actualProperties,
+                                          SVNProperties propChanges, boolean baseMerge, boolean dryRun, ISVNConflictHandler conflictResolver) throws SVNException {
         
         this.workItems = null;
         SVNSkel conflictSkel = null;
         boolean isDir = (kind == SVNNodeKind.DIR);
-        ISVNConflictHandler conflictResolver = context.getOptions().getConflictResolver();
-        
+
         SVNStatusType mergeOutcome = SVNStatusType.UNCHANGED;
         
         if (propChanges != null) {

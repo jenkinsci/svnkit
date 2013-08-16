@@ -196,7 +196,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         SVNConflictVersion right = conflictVersions[1];
 
         if ((mergeDriver.recordOnly || leftFile == null) && propChanges.size() > 0) {
-            SVNWCContext.MergePropertiesInfo mergePropertiesInfo = context.mergeProperties(localAbsPath, left, right, leftProps, propChanges, mergeDriver.dryRun);
+            SVNWCContext.MergePropertiesInfo mergePropertiesInfo = context.mergeProperties(localAbsPath, left, right, leftProps, propChanges, mergeDriver.dryRun, null);
             propertyState = mergePropertiesInfo.mergeOutcome;
 
             if (propertyState == SVNStatusType.CONFLICTED) {
@@ -224,7 +224,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
                     mergeDriver.dryRun, mergeDriver.diff3Cmd,
                     mergeDriver.diffOptions,
                     leftProps, propChanges,
-                    true, true);
+                    true, true, null);
             contentOutcome = mergeOutcome.mergeContentOutcome;
             propertyState = mergeOutcome.mergePropsOutcome;
 
@@ -588,7 +588,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
             SVNConflictVersion left = conflictVersions[0];
             SVNConflictVersion right = conflictVersions[1];
 
-            SVNWCContext.MergePropertiesInfo mergePropertiesInfo = context.mergeProperties(localAbsPath, left, right, leftProps, props, mergeDriver.dryRun);
+            SVNWCContext.MergePropertiesInfo mergePropertiesInfo = context.mergeProperties(localAbsPath, left, right, leftProps, props, mergeDriver.dryRun, null);
             SVNStatusType propState = mergePropertiesInfo.mergeOutcome;
 
             if (propState == SVNStatusType.CONFLICTED) {
@@ -730,7 +730,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
             SvnNgPropertiesManager.categorizeProperties(rightProps, newProps, null, null);
             newProps.remove(SVNProperty.MERGE_INFO);
 
-            SVNWCContext.MergePropertiesInfo mergePropertiesInfo = context.mergeProperties(localAbsPath, null, null, new SVNProperties(), newProps, mergeDriver.dryRun);
+            SVNWCContext.MergePropertiesInfo mergePropertiesInfo = context.mergeProperties(localAbsPath, null, null, new SVNProperties(), newProps, mergeDriver.dryRun, null);
             if (mergePropertiesInfo.mergeOutcome == SVNStatusType.CONFLICTED) {
                 if (mergeDriver.conflictedPaths == null) {
                     mergeDriver.conflictedPaths = new HashSet<File>();
@@ -776,7 +776,7 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
                                boolean dryRun, String diff3Cmd, SVNDiffOptions mergeOptions,
                                SVNProperties originalProps,
                                SVNProperties propChanges,
-                               boolean mergeContentNeeded, boolean mergePropsNeeded) throws SVNException {
+                               boolean mergeContentNeeded, boolean mergePropsNeeded, ISVNConflictHandler conflictResolver) throws SVNException {
         assert SVNFileUtil.isAbsolute(leftAbsPath);
         assert SVNFileUtil.isAbsolute(rightAbsPath);
         assert SVNFileUtil.isAbsolute(targetAbsPath);
@@ -876,7 +876,6 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
             if (workItems != null) {
                 context.wqRun(targetAbsPath);
             }
-            ISVNConflictHandler conflictResolver = context.getOptions().getConflictResolver();
             if (conflictSkel != null && conflictResolver != null) {
                 context.invokeConflictResolver(targetAbsPath, conflictSkel, conflictResolver, context.getEventHandler());
             }

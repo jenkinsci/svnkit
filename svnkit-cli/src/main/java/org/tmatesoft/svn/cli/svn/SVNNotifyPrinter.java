@@ -509,7 +509,8 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
         treeConflicts = conflictStats.getTreeConflictsCount();
         skippedPaths = conflictStats.getSkippedPathsCount();
 
-        if (textConflicts > 0 || propConflicts > 0 || treeConflicts > 0 || skippedPaths > 0) {
+        if (textConflicts > 0 || propConflicts > 0 || treeConflicts > 0 || skippedPaths > 0 ||
+                conflictStats.getResolvedTextConflictsCount() > 0 || conflictStats.getResolvedPropConflictsCount() > 0 || conflictStats.getResolvedTreeConflictsCount() > 0) {
             buffer.append(header);
         }
 
