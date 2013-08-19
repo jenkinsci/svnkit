@@ -60,6 +60,7 @@ public class SVNWCDbSelectDeletionInfo extends SVNSqlJetSelectFieldsStatement<SV
         super.reset();
         if (internalStatement != null) {
             internalStatement.reset();
+            internalStatement = null;
         }
     }
 
