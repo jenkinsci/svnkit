@@ -37,7 +37,7 @@ import org.tmatesoft.svn.core.wc2.*;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnNgMergeDriver implements ISVNEventHandler {
+public class SvnNgMergeDriver {
 
     private static final Comparator<? super File> PATH_COMPARATOR = new Comparator<File>() {
         public int compare(File file1, File file2) {
@@ -201,8 +201,6 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
     SvnMerge operation;
     SvnNgRepositoryAccess repositoryAccess;
     
-    private Map<File, MergePath> childrenWithMergeInfo;
-
     private int currentAncestorIndex;
     private boolean singleFileMerge;
     public NotifyBeginState notifyBegin;
@@ -578,7 +576,6 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         this.addedPaths = null;
         this.treeConflictedPaths = null;
         this.singleFileMerge = false;
-        this.childrenWithMergeInfo = null;
         this.currentAncestorIndex = -1;
 
         ISvnDiffCallback2 mergeProcessor = new SvnNgMergeCallback2(context, this, repositoryAccess);
@@ -724,8 +721,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             if (!isRollback) {
                 removeNoOpSubtreeRanges(source.url1, source.rev1, source.url2, source.rev2, targetAbsPath, repository, childrenWithMergeInfo);
             }
-            this.childrenWithMergeInfo = childrenWithMergeInfo;//TODO: remove the field, use local variable instead?
-            fixDeletedSubtreeRanges(source.url1, source.rev1, source.url2, source.rev2, repository);
+            fixDeletedSubtreeRanges(source.url1, source.rev1, source.url2, source.rev2, repository, childrenWithMergeInfo);
             long startRev = getMostInclusiveStartRevision(childrenWithMergeInfo, isRollback);
             if (SVNRevision.isValidRevisionNumber(startRev)) {
                 long endRev = getMostInclusiveEndRevision(childrenWithMergeInfo, isRollback);
@@ -781,9 +777,9 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             SVNURL primarySrcUrl = isRollback ? source.url1 : source.url2;
             long primarySrcRev = isRollback ? source.rev1 : source.rev2;
             String mergeInfoPath = getPathRelativeToRoot(primaryURL, reposRootUrl, null);
-            recordMergeInfoForDirectoryMerge(resultCatalog, range, mergeInfoPath, depth, squelchMergeinfoNotifications);
+            recordMergeInfoForDirectoryMerge(resultCatalog, range, mergeInfoPath, depth, squelchMergeinfoNotifications, childrenWithMergeInfo);
             if (range.getStartRevision() < range.getEndRevision()) {
-                recordMergeInfoForAddedSubtrees(range, mergeInfoPath, depth, squelchMergeinfoNotifications);
+                recordMergeInfoForAddedSubtrees(range, mergeInfoPath, depth, squelchMergeinfoNotifications, childrenWithMergeInfo);
             }
         }
 
@@ -1016,26 +1012,10 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             }
         }
     }
-    
-    private boolean singleFileMergeNotify(File path, SVNEventAction action, SVNStatusType contents, SVNStatusType props, SVNEvent header, boolean headerSent) throws SVNException {
-        SVNEventAction expectedAction = SVNEventAction.SKIP;
-        if (contents == SVNStatusType.MISSING) {
-            expectedAction = action;
-            action = SVNEventAction.SKIP;
-        }
-        SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.FILE, null, -1, contents, props,SVNStatusType.LOCK_INAPPLICABLE, action, expectedAction, null, null, null);
-        if (isOperativeNotification(event) && header != null && !headerSent) {
-            handleEvent(header, -1);
-            headerSent = true;
-        }
-        handleEvent(event, -1);
-        return headerSent;
-    }
 
     protected SvnSingleRangeConflictReport doDirectoryMerge(Map<File, Map<String, SVNMergeRangeList>> resultCatalog, MergeSource source, File targetAbsPath, SVNURL sourceRootUrl, ISvnDiffCallback2 processor, SVNDepth depth, boolean squelchMergeinfoNotifications) throws SVNException {
         Map<File, MergePath> childrenWithMergeInfo = new TreeMap<File, MergePath>(PATH_COMPARATOR);
         notifyBegin.nodesWithMergeInfo = childrenWithMergeInfo;
-        this.childrenWithMergeInfo = childrenWithMergeInfo;
         SvnSingleRangeConflictReport svnSingleRangeConflictReport;
         if (isHonorMergeInfo()) {
             svnSingleRangeConflictReport = doMergeInfoAwareDirectoryMerge(resultCatalog, source, targetAbsPath, sourceRootUrl, childrenWithMergeInfo, depth, squelchMergeinfoNotifications, processor);
@@ -1080,12 +1060,11 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         SVNMergeRange youngestRev = subtreeGapRanges.getRanges()[subtreeGapRanges.getSize() - 1];
         SVNURL reposRootURL = context.getNodeReposInfo(targetAbsPath).reposRootUrl;
 
-        this.childrenWithMergeInfo = childrenWithMergeInfo;
-
         NoopLogHandler logHandler = new NoopLogHandler();
         logHandler.sourceReposAbsPath = getPathRelativeToRoot(url2, reposRootURL, null);
         logHandler.mergedRanges = new SVNMergeRangeList(new SVNMergeRange[0]);
         logHandler.operativeRanges = new SVNMergeRangeList(new SVNMergeRange[0]);
+        logHandler.childrenWithMergeInfo = childrenWithMergeInfo;
         
         repository.log(new String[] {""}, oldestGapRev.getStartRevision() + 1, youngestRev.getEndRevision(), true, true, -1, false, null, logHandler);
         
@@ -2139,7 +2118,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         }
     }
 
-    protected void recordMergeInfoForDirectoryMerge(Map<File, Map<String, SVNMergeRangeList>> resultCatalog, SVNMergeRange mergeRange, String mergeInfoPath, SVNDepth depth, boolean squelchMergeinfoNotifications) throws SVNException {
+    protected void recordMergeInfoForDirectoryMerge(Map<File, Map<String, SVNMergeRangeList>> resultCatalog, SVNMergeRange mergeRange, String mergeInfoPath, SVNDepth depth, boolean squelchMergeinfoNotifications, Map<File, MergePath> childrenWithMergeInfo) throws SVNException {
         boolean isRollBack = mergeRange.getStartRevision() > mergeRange.getEndRevision();
         boolean operativeMerge = isSubtreeTouchedByMerge(targetAbsPath);
         
@@ -2150,7 +2129,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         removeAbsentChildren(targetAbsPath, childrenWithMergeInfo);
 
         flagSubTreesNeedingMergeInfo(operativeMerge, range, childrenWithMergeInfo, SVNFileUtil.createFilePath(mergeInfoPath), depth);
-        List<Map.Entry<File, MergePath>> entries = new ArrayList<Map.Entry<File, MergePath>>(this.childrenWithMergeInfo.entrySet());
+        List<Map.Entry<File, MergePath>> entries = new ArrayList<Map.Entry<File, MergePath>>(childrenWithMergeInfo.entrySet());
         for (int i = 0; i < entries.size(); i++) {
             final Map.Entry<File, MergePath> entry = entries.get(i);
             MergePath child = entry.getValue();
@@ -2546,7 +2525,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
     }
 
 
-    private Map<File, String> getInoperativeImmediateChildrent(String mergeSourceReposAbsPath, long oldestRev, long youngestRev, File targetAbsPath, SVNRepository repos) throws SVNException {
+    private Map<File, String> getInoperativeImmediateChildrent(String mergeSourceReposAbsPath, long oldestRev, long youngestRev, File targetAbsPath, SVNRepository repos, Map<File, MergePath> childrenWithMergeInfo) throws SVNException {
         final Map<File, String> result = new TreeMap<File, String>();
         for (File childPath : childrenWithMergeInfo.keySet()) {
             MergePath child = childrenWithMergeInfo.get(childPath);
@@ -2581,7 +2560,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         return result;
     }
 
-    private void recordMergeInfoForAddedSubtrees(SVNMergeRange range, String mergeInfoPath, SVNDepth depth, boolean squelchMergeinfoNotifications) throws SVNException {
+    private void recordMergeInfoForAddedSubtrees(SVNMergeRange range, String mergeInfoPath, SVNDepth depth, boolean squelchMergeinfoNotifications, Map<File, MergePath> childrenWithMergeInfo) throws SVNException {
         if (addedPaths == null) {
             return;
         }
@@ -2684,7 +2663,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         return SVNMergeRangeList.fromCollection(operativeRanges);
     }
     
-    private void fixDeletedSubtreeRanges(SVNURL url1, long revision1, SVNURL url2, long revision2, SVNRepository repository) throws SVNException {
+    private void fixDeletedSubtreeRanges(SVNURL url1, long revision1, SVNURL url2, long revision2, SVNRepository repository, Map<File, MergePath> childrenWithMergeInfo) throws SVNException {
         boolean isRollback = revision2 < revision1;
         SVNURL sourceRootUrl = repository.getRepositoryRoot(true);
         Object[] array= childrenWithMergeInfo.values().toArray();
@@ -2768,6 +2747,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         private SVNMergeRangeList mergedRanges;
 
         private String sourceReposAbsPath;
+        private Map<File, MergePath> childrenWithMergeInfo;
 
         public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
             operativeRanges = operativeRanges.mergeRevision(logEntry.getRevision());
@@ -2829,94 +2809,6 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         }
         return false;
                 
-    }
-
-    public void handleEvent(SVNEvent event, double progress) throws SVNException {
-        if (recordOnly &&
-                (event.getAction() != SVNEventAction.UPDATE_UPDATE && event.getAction() != SVNEventAction.MERGE_RECORD_INFO_BEGIN)) {
-            return;
-        }
-        boolean operative = false;
-        if (isOperativeNotification(event)) {
-            operativeNotifications++;
-            operative = true;
-        }
-        if (sourcesAncestral || reintegrateMerge) {
-            if (event.getContentsStatus() == SVNStatusType.MERGED ||
-                    event.getContentsStatus() == SVNStatusType.CHANGED ||
-                    event.getPropertiesStatus() == SVNStatusType.MERGED ||
-                    event.getPropertiesStatus() == SVNStatusType.CHANGED ||
-                    event.getAction() == SVNEventAction.UPDATE_ADD) {
-                if (mergedPaths == null) {
-                    mergedPaths = new HashSet<File>();
-                }
-                mergedPaths.add(event.getFile());
-            }
-            if (event.getAction() == SVNEventAction.SKIP) {
-                if (skippedPaths == null) {
-                    skippedPaths = new HashSet<File>();
-                }
-                skippedPaths.add(event.getFile());
-            }
-            if (event.getAction() == SVNEventAction.TREE_CONFLICT) {
-                if (treeConflictedPaths == null) {
-                    treeConflictedPaths = new HashSet<File>();
-                }
-                treeConflictedPaths.add(event.getFile());
-            }
-            if (event.getAction() == SVNEventAction.UPDATE_ADD) {
-                boolean subtreeRoot = true;
-                if (addedPaths == null) {
-                    addedPaths = new HashSet<File>();
-                } else {
-                    File addedPathParent = SVNFileUtil.getFileDir(event.getFile());
-                    while (!targetAbsPath.equals(addedPathParent)) {
-                        if (addedPaths.contains(addedPathParent)) {
-                            subtreeRoot = false;
-                            break;
-                        }
-                        addedPathParent = SVNFileUtil.getFileDir(addedPathParent);
-                    }
-                }
-                if (subtreeRoot) {
-                    addedPaths.add(event.getFile());
-                }
-            }
-            if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
-                if (addedPaths != null) {
-                    addedPaths.remove(event.getFile());
-                }
-            }
-        }
-        
-        if (sourcesAncestral) {
-            notifications++;
-            if (!singleFileMerge && operative) {
-                Object[] array = childrenWithMergeInfo.values().toArray();
-                int index = findNearestAncestor(array, event.getAction() != SVNEventAction.UPDATE_DELETE, event.getFile());
-                if (index != currentAncestorIndex) {
-                    MergePath child = (MergePath) array[index];
-                    currentAncestorIndex = index;
-                    if (context.getEventHandler() != null && !child.absent && !child.remainingRanges.isEmpty() && !(index == 0 && child.remainingRanges == null)) {
-                        SVNEvent mergeBeginEvent = SVNEventFactory.createSVNEvent(child.absPath, 
-                                SVNNodeKind.NONE, 
-                                null, -1, sameRepos ? SVNEventAction.MERGE_BEGIN : SVNEventAction.FOREIGN_MERGE_BEGIN, 
-                                        null, null, child.remainingRanges.getRanges()[0]);
-                        context.getEventHandler().handleEvent(mergeBeginEvent, -1);
-                    }
-                }
-            }
-        } else if (context.getEventHandler() != null && !singleFileMerge && operativeNotifications == 1 && operative) {
-            SVNEvent mergeBeginEvent = SVNEventFactory.createSVNEvent(targetAbsPath, 
-                    SVNNodeKind.NONE, 
-                    null, -1, sameRepos ? SVNEventAction.MERGE_BEGIN : SVNEventAction.FOREIGN_MERGE_BEGIN, 
-                            null, null, null);
-            context.getEventHandler().handleEvent(mergeBeginEvent, -1);
-            
-        }
-        if (context.getEventHandler() != null) {
-            context.getEventHandler().handleEvent(event, -1);
-        }
     }
 
     protected SVNRepository ensureRepository(SVNRepository repository, SVNURL url) throws SVNException {
