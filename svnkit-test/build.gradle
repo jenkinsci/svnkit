@@ -56,7 +56,7 @@ test.doFirst {
     // create wc.h file at build/libsvn_wc/wc.h
     File wcHeader = new File(buildDir, "libsvn_wc/wc.h");
     wcHeader.getParentFile().mkdirs();
-    wcHeader << "\n#define SVN_WC__VERSION 29\n";
+    wcHeader << "\n#define SVN_WC__VERSION 31\n";
 
     try {
         runPythonTests()
