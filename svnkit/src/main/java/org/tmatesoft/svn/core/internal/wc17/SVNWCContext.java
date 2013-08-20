@@ -3595,8 +3595,8 @@ public class SVNWCContext {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' not found", srcAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-        File srcRelPath = getDb().toRelPath(srcAbspath);
-        File dstRelPath = getDb().toRelPath(dstAbspath);
+        File srcRelPath = getDb().toRelPath(anchorPath, srcAbspath);
+        File dstRelPath = getDb().toRelPath(anchorPath, dstAbspath);
 
         SVNSkel workItem = SVNSkel.createEmptyList();
         workItem.prependPath(dstRelPath);

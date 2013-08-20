@@ -450,6 +450,7 @@ public interface ISVNWCDb {
      * the basename. it gets interesting in single-db mode
      */
     File toRelPath(File localAbsPath) throws SVNException;
+    File toRelPath(File wriAbsPath, File localAbsPath) throws SVNException;
 
     /**
      * Compute the local abs path for a localRelPath located within the working

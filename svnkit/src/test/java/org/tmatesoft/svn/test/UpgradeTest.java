@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.Map;
 
@@ -194,6 +195,46 @@ public class UpgradeTest {
             upgrade.run();
 
             assertFilesRecordsHaveUknownDepth(workingCopy);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testBasics() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+        Assume.assumeTrue(!TestUtil.isNewWorkingCopyOnly());
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testBasics", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file", "contents".getBytes());
+            commitBuilder.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+            final File file = new File(workingCopyDirectory, "file");
+
+            checkout(svnOperationFactory, url, workingCopyDirectory, SvnWcGeneration.V16);
+
+            final SvnUpgrade upgrade = svnOperationFactory.createUpgrade();
+            upgrade.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            upgrade.run();
+
+            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+            final SvnCat cat = svnOperationFactory.createCat();
+            cat.setSingleTarget(SvnTarget.fromFile(file, SVNRevision.BASE));
+            cat.setOutput(byteArrayOutputStream);
+            cat.run();
+
+            Assert.assertEquals("contents", byteArrayOutputStream.toString());
 
         } finally {
             svnOperationFactory.dispose();
