@@ -13,6 +13,7 @@ import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.reset
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -519,8 +520,11 @@ public class SvnWcDbProperties extends SvnWcDbShared {
                 }
                 
                 if (opDepth == 0 && !isColumnNull(stmt, NODES__Fields.inherited_props)) {
-                    cachedProperties = getColumnInheritedProperties(stmt, NODES__Fields.inherited_props);
-                    parentRelPath = null;
+                    final byte[] inheritedPropsBlob = getColumnBlob(stmt, NODES__Fields.inherited_props);
+                    if (inheritedPropsBlob != null && !Arrays.equals(SvnWcDbShared.EMPTY_PROPS_BLOB, inheritedPropsBlob)) {
+                        cachedProperties = getColumnInheritedProperties(stmt, NODES__Fields.inherited_props);
+                        parentRelPath = null;
+                    }
                 }
                 
                 nodeProps = getColumnProperties(stmt, NODES__Fields.properties);

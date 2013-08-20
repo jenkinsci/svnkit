@@ -58,7 +58,6 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbInsertTarget;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.LOCK__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectDeletionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -66,6 +65,8 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnWcDbShared {
     
+    public static final byte[] EMPTY_PROPS_BLOB = {40, 41};
+
     public static void begingReadTransaction(SVNWCDbRoot root) throws SVNException {
         root.getSDb().beginTransaction(SqlJetTransactionMode.READ_ONLY);
     }

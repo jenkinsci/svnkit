@@ -1,9 +1,12 @@
 package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
+import java.util.Arrays;
+
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 
 /**
@@ -15,7 +18,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fi
  *
  */
 public class SVNWCDbSelectIPropsNode extends SVNSqlJetSelectStatement {
-
+    
     private SVNDepth depth;
 
     public SVNWCDbSelectIPropsNode(SVNSqlJetDb sDb) throws SVNException {
@@ -51,7 +54,8 @@ public class SVNWCDbSelectIPropsNode extends SVNSqlJetSelectStatement {
         if (getColumnLong(NODES__Fields.op_depth) != 0) {
             return false;
         }
-        return getColumnBlob(SVNWCDbSchema.NODES__Fields.inherited_props) != null;
+        final byte[] blob = getColumnBlob(SVNWCDbSchema.NODES__Fields.inherited_props);
+        return blob != null && !Arrays.equals(SvnWcDbShared.EMPTY_PROPS_BLOB, blob);
     }
 
     @Override
