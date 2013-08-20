@@ -70,7 +70,7 @@ public class UpdateTest {
             final SVNEvent updateCompletedEvent = events.get(2);
 
             Assert.assertEquals(SVNEventAction.UPDATE_STARTED, updateStartedEvent.getAction());
-            Assert.assertEquals(SVNEventAction.UPDATE_UPDATE, unlockedEvent.getAction());
+            Assert.assertEquals(SVNEventAction.UPDATE_BROKEN_LOCK, unlockedEvent.getAction());
             Assert.assertEquals(SVNEventAction.UPDATE_COMPLETED, updateCompletedEvent.getAction());
 
             Assert.assertEquals(workingCopyDirectory, updateStartedEvent.getFile());
