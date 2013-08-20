@@ -251,9 +251,7 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         result.set(ConflictInfo.locations, locations);
         for(int i = 0; i < c.getListSize(); i++) {
             final SVNConflictVersion location = SvnWcDbConflicts.readConflictLocation(c.getChild(i));
-            if (location != null) {
-                locations.add(location);
-            }
+            locations.add(location);
         }
         result.set(ConflictInfo.textConflicted, SvnWcDbConflicts.hasConflictKind(conflictSkel, ConflictKind.text));
         result.set(ConflictInfo.propConflicted, SvnWcDbConflicts.hasConflictKind(conflictSkel, ConflictKind.prop));
