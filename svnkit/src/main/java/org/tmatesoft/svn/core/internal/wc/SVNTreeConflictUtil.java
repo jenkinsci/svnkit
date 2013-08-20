@@ -278,6 +278,8 @@ public class SVNTreeConflictUtil {
             return "edit";
         } else if (action == SVNConflictAction.DELETE) {
             return "delete";
+        } else if (action == SVNConflictAction.REPLACE) {
+            return "replace";
         }
         return null;
     }
