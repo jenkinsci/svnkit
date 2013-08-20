@@ -91,8 +91,7 @@ public class SVNWCDbRoot {
             });
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-
-        /* If this working copy is from a future version, then bail out. */
+        
         if (format > ISVNWCDb.WC_FORMAT_18) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "This client is too old to work with the working copy at\n" + "''{0}'' (format ''{1}'').", new Object[] {
                     absPath, format
@@ -100,10 +99,17 @@ public class SVNWCDbRoot {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
 
-        /* Auto-upgrade the SDB if possible. */
-        if (format < ISVNWCDb.WC_FORMAT_18 && autoUpgrade) {
-          format = SvnNgUpgradeSDb.upgrade(absPath, db, sDb, format);
-        } 
+        /* If this working copy is from a future version, then bail out. */
+	    if (format < ISVNWCDb.WC_FORMAT_18) {
+		    if (autoUpgrade) {
+			    format = SvnNgUpgradeSDb.upgrade(absPath, db, sDb, format);
+		    } else {
+			    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "Working copy format of ''{0}'' is too old ''{1}''", new Object[] {
+					    absPath, format
+			    });
+			    SVNErrorManager.error(err, SVNLogType.WC);
+		    }
+	    }
 
         /*
          * Verify that no work items exists. If they do, then our integrity is
