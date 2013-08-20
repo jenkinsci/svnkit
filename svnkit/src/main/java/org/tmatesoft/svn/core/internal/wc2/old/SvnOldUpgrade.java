@@ -165,7 +165,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			readEntries(wcAccess, localAbsPath);
 		} catch (SVNException e) {
 			SVNErrorMessage err = SVNErrorMessage.create(
-					SVNErrorCode.WC_INVALID_OP_ON_CWD, "Can''t upgrade ''{0}'' as it is not a pre-1.7 working copy directory", localAbsPath);
+					SVNErrorCode.WC_INVALID_OP_ON_CWD, "Can''t upgrade ''{0}'' as it is not a working copy directory", localAbsPath);
 			SVNErrorManager.error(err, SVNLogType.WC);
 		} 
 		
@@ -210,7 +210,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			}
 		}
 		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OP_ON_CWD,
-						"Can''t upgrade ''{0}'' as it is not a pre-1.7 working copy root, the root is ''{1}''", localAbsPath, parentAbsPath);
+						"Can''t upgrade ''{0}'' as it is not a working copy root, the root is ''{1}''", localAbsPath, parentAbsPath);
 		SVNErrorManager.error(err, SVNLogType.WC);
 	}
 
