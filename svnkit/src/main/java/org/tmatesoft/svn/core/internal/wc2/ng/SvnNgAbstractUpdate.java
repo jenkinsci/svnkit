@@ -718,7 +718,8 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                 false, serverSupportsDepth, false, dirFetcher, externalsStore, preservedExts, getOperation().getOptions().getConflictResolver());
         
         try {
-            repository.update(switchRevUrl, revnum, target, depthIsSticky ? depth : SVNDepth.UNKNOWN, reporter, editor);
+            //update() method in SVNKit doesn't allow to use ignoreAncestry=false, so we use diff() method
+            repository.diff(switchRevUrl, revnum, revnum, target, ignoreAncestry, depthIsSticky ? depth : SVNDepth.UNKNOWN, true, reporter, editor);
         } catch (SVNException e) {
             sleepForTimestamp();
             throw e;
