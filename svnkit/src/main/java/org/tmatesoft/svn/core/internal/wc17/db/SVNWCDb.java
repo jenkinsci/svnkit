@@ -189,7 +189,7 @@ public class SVNWCDb implements ISVNWCDb {
         SVNWCDbDir pdh = new SVNWCDbDir(localAbsPath);
 
         /* Create the WCROOT for this directory. */
-        pdh.setWCRoot(new SVNWCDbRoot(this, localAbsPath, createDb.sDb, createDb.wcId, FORMAT_FROM_SDB, false, false));
+        pdh.setWCRoot(new SVNWCDbRoot(this, localAbsPath, createDb.sDb, createDb.wcId, FORMAT_FROM_SDB, false, true, false));
 
         /* The PDH is complete. Stash it into DB. */
         dirData.put(localAbsPath.getAbsolutePath(), pdh);
@@ -1832,11 +1832,11 @@ public class SVNWCDb implements ISVNWCDb {
                 }
     
                 info.wcDbDir = new SVNWCDbDir(localAbspath);
-                info.wcDbDir.setWCRoot(new SVNWCDbRoot(this, localAbspath, sDb, wcId, FORMAT_FROM_SDB, autoUpgrade, enforceEmptyWQ));
+                info.wcDbDir.setWCRoot(new SVNWCDbRoot(this, localAbspath, sDb, wcId, FORMAT_FROM_SDB, autoUpgrade, true, enforceEmptyWQ));
     
             } else {
                 info.wcDbDir = new SVNWCDbDir(localAbspath);
-                info.wcDbDir.setWCRoot(new SVNWCDbRoot(this, localAbspath, null, UNKNOWN_WC_ID, wc_format, autoUpgrade, enforceEmptyWQ));
+                info.wcDbDir.setWCRoot(new SVNWCDbRoot(this, localAbspath, null, UNKNOWN_WC_ID, wc_format, autoUpgrade, false, enforceEmptyWQ));
     
                 isOldFormat = true;
             }
@@ -5722,7 +5722,7 @@ public class SVNWCDb implements ISVNWCDb {
     	upgradeData.workingCopyId = dbInfo.wcId;
     	    	
     	SVNWCDbDir pdh = new SVNWCDbDir(localAbspath);
-    	SVNWCDbRoot root = new SVNWCDbRoot(this, localAbspath, dbInfo.sDb, dbInfo.wcId, FORMAT_FROM_SDB, false, false);     	
+    	SVNWCDbRoot root = new SVNWCDbRoot(this, localAbspath, dbInfo.sDb, dbInfo.wcId, FORMAT_FROM_SDB, true, false, false);
         pdh.setWCRoot(root);
         upgradeData.root = root;
         dirData.put(upgradeData.rootAbsPath.getAbsolutePath(), pdh);

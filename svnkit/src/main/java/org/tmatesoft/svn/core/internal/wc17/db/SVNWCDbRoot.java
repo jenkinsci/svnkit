@@ -68,7 +68,7 @@ public class SVNWCDbRoot {
      */
     private List<WCLock> ownedLocks = new ArrayList<WCLock>();
 
-    public SVNWCDbRoot(SVNWCDb db, File absPath, SVNSqlJetDb sDb, long wcId, int format, boolean autoUpgrade, boolean enforceEmptyWQ) throws SVNException {
+    public SVNWCDbRoot(SVNWCDb db, File absPath, SVNSqlJetDb sDb, long wcId, int format, boolean autoUpgrade, boolean failOnVersionsMismatch, boolean enforceEmptyWQ) throws SVNException {
         if (sDb != null) {
             try {
                 format = sDb.getDb().getOptions().getUserVersion();
@@ -91,25 +91,27 @@ public class SVNWCDbRoot {
             });
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-        
-        if (format > ISVNWCDb.WC_FORMAT_18) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "This client is too old to work with the working copy at\n" + "''{0}'' (format ''{1}'').", new Object[] {
-                    absPath, format
-            });
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }
 
-        /* If this working copy is from a future version, then bail out. */
-	    if (format < ISVNWCDb.WC_FORMAT_18) {
-		    if (autoUpgrade) {
-			    format = SvnNgUpgradeSDb.upgrade(absPath, db, sDb, format);
-		    } else {
-			    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "Working copy format of ''{0}'' is too old ''{1}''", new Object[] {
-					    absPath, format
-			    });
-			    SVNErrorManager.error(err, SVNLogType.WC);
-		    }
-	    }
+        if (failOnVersionsMismatch) {
+            if (format > ISVNWCDb.WC_FORMAT_18) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "This client is too old to work with the working copy at\n" + "''{0}'' (format ''{1}'').", new Object[] {
+                        absPath, format
+                });
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
+            /* If this working copy is from a future version, then bail out. */
+            if (format < ISVNWCDb.WC_FORMAT_18) {
+                if (autoUpgrade) {
+                    format = SvnNgUpgradeSDb.upgrade(absPath, db, sDb, format);
+                } else {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "Working copy format of ''{0}'' is too old ''{1}''", new Object[] {
+                            absPath, format
+                    });
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+            }
+        }
 
         /*
          * Verify that no work items exists. If they do, then our integrity is
