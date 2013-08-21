@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade.TextBaseInfo;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
@@ -94,6 +95,7 @@ public class SvnOldUpgradeEntries {
 		SVNDate lastModTime;
 		SVNProperties properties;
 		boolean isFileExternal;
+        SVNProperties inheritedProperties;
 	};
 	
 	private static class DbActualNode {
@@ -284,6 +286,11 @@ public class SvnOldUpgradeEntries {
 				workingNode.reposRelPath = SVNPathUtil.append(parentNode.work.reposRelPath, SVNFileUtil.getFileName(localRelPath));
 				workingNode.revision = parentNode.work.revision;
 				workingNode.opDepth = parentNode.work.opDepth;
+			} else if (parentNode.belowWork != null && parentNode.belowWork.reposRelPath != null) {
+                workingNode.reposId = upgradeData.repositoryId;
+                workingNode.reposRelPath = SVNFileUtil.getFilePath(SVNFileUtil.createFilePath(parentNode.belowWork.reposRelPath, SVNFileUtil.getFileName(localRelPath)));
+                workingNode.revision = parentNode.belowWork.revision;
+                workingNode.opDepth = parentNode.belowWork.opDepth;
 			} else {
 				SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "No copyfrom URL for ''{0}''", localRelPath);
 	            SVNErrorManager.error(err, SVNLogType.WC);
@@ -464,6 +471,10 @@ public class SvnOldUpgradeEntries {
 			if (entry.getExternalFilePath() != null) {
 				baseNode.isFileExternal = true;
 			}
+
+            if (parentNode != null && isSwitched(parentNode.base, baseNode)) {
+                baseNode.inheritedProperties = new SVNProperties();
+            }
 			
 			insertNode(upgradeData.root.getSDb(), baseNode);
 			
@@ -517,6 +528,22 @@ public class SvnOldUpgradeEntries {
 			belowWorkingNode.depth = SVNDepth.INFINITY;
 			belowWorkingNode.lastModTime = null;
 			belowWorkingNode.properties = null;
+
+            if (workingNode != null
+                    && entry.isScheduledForDeletion()
+                    && workingNode.reposRelPath != null) {
+                belowWorkingNode.reposRelPath = workingNode.reposRelPath;
+                belowWorkingNode.reposId = workingNode.reposId;
+                belowWorkingNode.revision = workingNode.revision;
+
+                belowWorkingNode.changedRev = entry.getCommittedRevision();
+                belowWorkingNode.changedDate = SVNDate.parseDate(entry.getCommittedDate());
+                belowWorkingNode.changedAuthor = entry.getAuthor();
+
+                workingNode.reposRelPath = null;
+                workingNode.reposId = 0;
+                workingNode.revision = SVNRepository.INVALID_REVISION;
+            }
 			
 			insertNode(upgradeData.root.getSDb(), belowWorkingNode);
 		}
@@ -540,6 +567,7 @@ public class SvnOldUpgradeEntries {
 			if (entry.isDirectory()) {
 				workingNode.checksum = null;
 			} else {
+                workingNode.checksum = null;
 				/* text_base_info is NULL for files scheduled to be added. */
 				if (textBaseInfo != null) {
 					workingNode.checksum = textBaseInfo.normalBase.sha1Checksum;
@@ -621,6 +649,22 @@ public class SvnOldUpgradeEntries {
 		}
 		return entryNode;
 	}
+
+    private static boolean isSwitched(DbNode parent, DbNode child) {
+        if (parent != null && child != null) {
+            if (parent.reposId != child.reposId) {
+                return true;
+            }
+
+            if (parent.reposRelPath != null && child.reposRelPath != null) {
+                File unswitched = SVNFileUtil.createFilePath(parent.reposRelPath, SVNPathUtil.tail(child.localRelPath));
+                if (unswitched.equals(child.reposRelPath)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 	
 	/* No transaction required: called from write_entry which is itself transaction-wrapped. */
 	private static void insertNode(SVNSqlJetDb sDb, DbNode node) throws SVNException {
@@ -633,7 +677,7 @@ public class SvnOldUpgradeEntries {
                     node.opDepth,
                     node.parentRelPath,
                     /* Setting depth for files? */
-                    (node.kind == SVNNodeKind.DIR) ? SVNDepth.asString(node.depth) : null,
+                    SVNDepth.asString(node.depth),
                     node.changedRev,
                     node.changedDate != null ? node.changedDate : null,
                     node.changedAuthor,
@@ -664,6 +708,10 @@ public class SvnOldUpgradeEntries {
 
             if (node.isFileExternal)
                 stmt.bindLong(20, 1);
+
+            if (node.inheritedProperties != null) {
+                stmt.bindProperties(23, node.inheritedProperties);
+            }
 
             stmt.done();
         } finally {
