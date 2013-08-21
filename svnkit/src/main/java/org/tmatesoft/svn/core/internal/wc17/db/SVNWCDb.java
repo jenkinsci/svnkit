@@ -1942,13 +1942,22 @@ public class SVNWCDb implements ISVNWCDb {
             int formatVersion = 0;
             File adminDir = new File(localAbsPath, SVNFileUtil.getAdminDirectoryName());
             File entriesFile = new File(adminDir, "entries");
-            if (entriesFile.exists()) {
+            if (!entriesFile.exists()) {
+                return 0;
+            }
+
+            try {
                 formatVersion = readFormatVersion(entriesFile);
-            } else {
-                File formatFile = new File(adminDir, "format");
-                if (formatFile.exists()) {
-                    formatVersion = readFormatVersion(formatFile);
+                return formatVersion;
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.BAD_VERSION_FILE_FORMAT &&
+                        (e.getErrorMessage().getChildErrorMessage() == null || e.getErrorMessage().getChildErrorMessage().getErrorCode() != SVNErrorCode.BAD_VERSION_FILE_FORMAT)) {
+                    throw e;
                 }
+            }
+            File formatFile = new File(adminDir, "format");
+            if (formatFile.exists()) {
+                formatVersion = readFormatVersion(formatFile);
             }
             return formatVersion;
         } catch (SVNException e) {
