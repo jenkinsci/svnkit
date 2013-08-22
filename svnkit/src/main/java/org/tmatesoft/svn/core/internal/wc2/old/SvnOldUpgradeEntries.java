@@ -3,10 +3,7 @@ package org.tmatesoft.svn.core.internal.wc2.old;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
+import org.tmatesoft.svn.core.internal.util.*;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
@@ -17,6 +14,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbUpgradeData;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbConflicts;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade.TextBaseInfo;
@@ -28,6 +26,7 @@ import org.tmatesoft.svn.core.wc2.SvnChecksum.Kind;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -70,7 +69,7 @@ public class SvnOldUpgradeEntries {
 		}
 		
 		if (dirNode.treeConflicts != null) {
-			writeActualOnlyEntries(dirNode.treeConflicts, upgradeData.root.getSDb(), upgradeData.workingCopyId, SVNFileUtil.getFilePath(dirRelPath));
+			writeActualOnlyEntries(dirNode.treeConflicts, upgradeData.root.getSDb(), upgradeData.root.getDb(), upgradeData.rootAbsPath, upgradeData.workingCopyId, SVNFileUtil.getFilePath(dirRelPath));
 		}
 	
 		return dirNode;
@@ -630,7 +629,7 @@ public class SvnOldUpgradeEntries {
 			actualNode.wcId = upgradeData.workingCopyId;
 			actualNode.localRelPath = SVNFileUtil.getFilePath(localRelPath);
 			actualNode.parentRelPath = parentRelPath;
-			insertActualNode(upgradeData.root.getSDb(), actualNode);
+			insertActualNode(upgradeData.root.getSDb(), upgradeData.root.getDb(), upgradeData.rootAbsPath, actualNode);
 		}
 		
 		WriteBaton entryNode = null;
@@ -719,32 +718,48 @@ public class SvnOldUpgradeEntries {
         }
 	}
 	
-	private static void insertActualNode(SVNSqlJetDb sDb, DbActualNode actualNode) throws SVNException {
+	private static void insertActualNode(SVNSqlJetDb sDb, ISVNWCDb db, File wriAbsPath, DbActualNode actualNode) throws SVNException {
 		SVNSqlJetStatement stmt = sDb.getStatement(SVNWCDbStatements.INSERT_ACTUAL_NODE);
         try {
             stmt.bindLong(1, actualNode.wcId);
             stmt.bindString(2, actualNode.localRelPath);
             stmt.bindString(3, actualNode.parentRelPath);
-            if (actualNode.properties != null)
+            if (actualNode.properties != null) {
                 stmt.bindProperties(4, actualNode.properties);
-            if (actualNode.conflictOld != null) {
-                stmt.bindString(5, actualNode.conflictOld);
-                stmt.bindString(6, actualNode.conflictNew);
-                stmt.bindString(7, actualNode.conflictWorking);
             }
-            if (actualNode.propReject != null)
-                stmt.bindString(8, actualNode.propReject);
-            if (actualNode.changelist != null)
-                stmt.bindString(9, actualNode.changelist);
-            if (actualNode.treeConflictData != null)
-                stmt.bindString(10, actualNode.treeConflictData);
+            if (actualNode.changelist != null) {
+                stmt.bindString(5, actualNode.changelist);
+            }
+
+            byte[] treeConflictDataBytes = null;
+            if (actualNode.treeConflictData != null) {
+                try {
+                    treeConflictDataBytes = actualNode.treeConflictData.getBytes("UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    treeConflictDataBytes = actualNode.treeConflictData.getBytes();
+                }
+            }
+
+
+            SVNSkel conflictData = SvnWcDbConflicts.upgradeConflictSkelFromRaw(db, wriAbsPath,
+                    SVNFileUtil.createFilePath(actualNode.localRelPath),
+                    actualNode.conflictOld,
+                    actualNode.conflictWorking,
+                    actualNode.conflictNew,
+                    SVNFileUtil.createFilePath(actualNode.propReject),
+                    SVNSkel.parse(treeConflictDataBytes));
+
+            if (conflictData != null) {
+                byte[] conflictDataBytes = conflictData.unparse();
+                stmt.bindBlob(6, conflictDataBytes);
+            }
             stmt.done();
         } finally {
             stmt.reset();
         }
 	}
 	
-	private static void writeActualOnlyEntries(Map<String, String> treeConflicts, SVNSqlJetDb sDb, long wcId, String dirRelPath) throws SVNException {
+	private static void writeActualOnlyEntries(Map<String, String> treeConflicts, SVNSqlJetDb sDb, ISVNWCDb db, File wriAbsPath, long wcId, String dirRelPath) throws SVNException {
 		for (Iterator<String> items = treeConflicts.keySet().iterator(); items.hasNext();) {
 			String path = items.next();
 			DbActualNode actualNode = new DbActualNode();
@@ -752,7 +767,7 @@ public class SvnOldUpgradeEntries {
 			actualNode.localRelPath = path;
 			actualNode.parentRelPath = dirRelPath;
 			actualNode.treeConflictData = treeConflicts.get(path);
-			insertActualNode(sDb, actualNode);
+			insertActualNode(sDb, db, wriAbsPath, actualNode);
 		}
 	}
 	

@@ -770,4 +770,63 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         }
         return list;
     }
+
+    public static SVNSkel upgradeConflictSkelFromRaw(ISVNWCDb db, File wriAbsPath, File localRelPath,
+                                                     String conflictOld,
+                                                     String conflictWork,
+                                                     String conflictNew,
+                                                     File prejFile,
+                                                     SVNSkel oldTreeConflictData) throws SVNException {
+        File wcRootAbsPath = db.getWCRoot(wriAbsPath);
+        SVNSkel conflictData = null;
+        if (conflictOld != null || conflictNew != null || conflictWork != null) {
+            conflictData = SvnWcDbConflicts.createConflictSkel();
+            File oldAbsPath = null;
+            if (conflictOld != null) {
+                oldAbsPath = SVNFileUtil.createFilePath(wcRootAbsPath, conflictOld);
+            }
+            File newAbsPath = null;
+            if (conflictNew != null) {
+                newAbsPath = SVNFileUtil.createFilePath(wcRootAbsPath, conflictNew);
+            }
+            File workAbsPath = null;
+            if (conflictWork != null) {
+                workAbsPath = SVNFileUtil.createFilePath(wcRootAbsPath, conflictWork);
+            }
+            SvnWcDbConflicts.addTextConflict(conflictData, db, wriAbsPath, workAbsPath, oldAbsPath, newAbsPath);
+        }
+
+        if (prejFile != null) {
+            if (conflictData == null) {
+                conflictData = SvnWcDbConflicts.createConflictSkel();
+            }
+            addPropConflict(conflictData, db, wriAbsPath, prejFile, null, null, null, new HashSet<String>());
+        }
+
+        if (oldTreeConflictData != null) {
+            if (conflictData == null) {
+                conflictData = SvnWcDbConflicts.createConflictSkel();
+            }
+            File localAbsPath = SVNFileUtil.createFilePath(wcRootAbsPath, localRelPath);
+            SVNTreeConflictDescription treeConflictDescription = SVNTreeConflictUtil.readSingleTreeConflict(oldTreeConflictData, SVNFileUtil.getFileDir(localAbsPath));
+            addTreeConflict(conflictData, db, wriAbsPath, treeConflictDescription.getConflictReason(), treeConflictDescription.getConflictAction(), null);
+
+            final SVNOperation operation = treeConflictDescription.getOperation();
+            if (operation == SVNOperation.UPDATE) {
+                conflictSkelOpUpdate(conflictData, treeConflictDescription.getSourceLeftVersion(), treeConflictDescription.getSourceRightVersion());
+            } else if (operation == SVNOperation.SWITCH) {
+                conflictSkelOpSwitch(conflictData, treeConflictDescription.getSourceLeftVersion(), treeConflictDescription.getSourceRightVersion());
+            } else if (operation == SVNOperation.MERGE) {
+                conflictSkelOpMerge(conflictData, treeConflictDescription.getSourceLeftVersion(), treeConflictDescription.getSourceRightVersion());
+            } else {
+                conflictSkelOpUpdate(conflictData, treeConflictDescription.getSourceLeftVersion(), treeConflictDescription.getSourceRightVersion());
+            }
+
+
+        } else if (conflictData != null) {
+            conflictSkelOpUpdate(conflictData, null, null);
+        }
+
+        return conflictData;
+    }
 }

@@ -42,13 +42,8 @@ public class SVNWCDbInsertActualNode extends SVNSqlJetInsertStatement {
         values.put(SVNWCDbSchema.ACTUAL_NODE__Fields.local_relpath.toString(), getBind(2));
         values.put(SVNWCDbSchema.ACTUAL_NODE__Fields.parent_relpath.toString(), getBind(3));
         values.put(SVNWCDbSchema.ACTUAL_NODE__Fields.properties.toString(), getBind(4));
-        values.put(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old.toString(), getBind(5));
-        values.put(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_new.toString(), getBind(6));
-        values.put(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working.toString(), getBind(7));
-        values.put(SVNWCDbSchema.ACTUAL_NODE__Fields.prop_reject.toString(), getBind(8));
-        values.put(SVNWCDbSchema.ACTUAL_NODE__Fields.changelist.toString(), getBind(9));
-        values.put(SVNWCDbSchema.ACTUAL_NODE__Fields.text_mod.toString(), null);
-        values.put(SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data.toString(), getBind(10));
+        values.put(SVNWCDbSchema.ACTUAL_NODE__Fields.changelist.toString(), getBind(5));
+        values.put(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data.toString(), getBind(6));
         return values;
     }
 
