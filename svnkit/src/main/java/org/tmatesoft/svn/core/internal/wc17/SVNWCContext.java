@@ -3128,7 +3128,7 @@ public class SVNWCContext {
                     boolean deleteSrc = false;
                     File wcRootAbsPath = getDb().getWCRoot(targetAbspath);
 
-                    if (SVNPathUtil.isAncestor(wcRootAbsPath.getAbsolutePath(), rightAbspath.getAbsolutePath())) {
+                    if (!SVNPathUtil.isAncestor(wcRootAbsPath.getAbsolutePath(), rightAbspath.getAbsolutePath())) {
                         InputStream tmpSrc = null;
                         OutputStream tmpDst = null;
                         try {
