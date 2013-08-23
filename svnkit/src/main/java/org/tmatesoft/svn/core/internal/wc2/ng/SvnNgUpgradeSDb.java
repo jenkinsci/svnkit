@@ -799,7 +799,11 @@ public class SvnNgUpgradeSDb {
     private static class bumpTo30 implements Bumpable {
 
         public void bumpTo(SVNWCDb db, SVNSqlJetDb sDb, File wcRootAbsPath) throws SVNException {
+            SVNWCDb readOnlyDb = null;
             try {
+                readOnlyDb = new SVNWCDb();
+                readOnlyDb.open(ISVNWCDb.SVNWCDbOpenMode.ReadOnly, null, false, false);
+
                 sDb.getDb().createIndex("CREATE UNIQUE INDEX IF NOT EXISTS I_NODES_MOVED ON NODES (wc_id, moved_to, op_depth);");
                 sDb.getDb().createIndex("CREATE INDEX IF NOT EXISTS I_PRISTINE_MD5 ON PRISTINE (md5_checksum);");
 
@@ -816,7 +820,7 @@ public class SvnNgUpgradeSDb {
                         continue;
                     }
                     final String localRelpath = actulaNode.getString(ACTUAL_NODE__Fields.local_relpath.toString());
-                    final SVNSkel conflictData = createConflictSkel(wcRootAbsPath, null, localRelpath, conflictOld, conflictWorking, conflictNew, propReject, treeConflictData);
+                    final SVNSkel conflictData = createConflictSkel(wcRootAbsPath, readOnlyDb, localRelpath, conflictOld, conflictWorking, conflictNew, propReject, treeConflictData);
                     
                     final Map<String, Object> newRowValues = new HashMap<String, Object>();
                     if (conflictData != null) {
@@ -834,6 +838,10 @@ public class SvnNgUpgradeSDb {
                 }
             } catch (SqlJetException e) {
                 SVNSqlJetDb.createSqlJetError(e);
+            } finally {
+                if (readOnlyDb != null) {
+                    readOnlyDb.close();
+                }
             }
             setVersion(sDb, 30);
         }

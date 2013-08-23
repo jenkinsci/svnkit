@@ -104,7 +104,7 @@ public class SVNWCDbRoot {
             if (format < ISVNWCDb.WC_FORMAT_18) {
                 if (autoUpgrade) {
                     format = SvnNgUpgradeSDb.upgrade(absPath, db, sDb, format);
-                } else {
+                } else if (format < ISVNWCDb.WC_FORMAT_17) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "Working copy format of ''{0}'' is too old ''{1}''", new Object[] {
                             absPath, format
                     });
