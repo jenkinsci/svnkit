@@ -222,9 +222,6 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
 
                 public Object run(SqlJetDb db) throws SqlJetException {
                     for (Statement stmt : statements) {
-                        
-                        SVNDebugLog.getDefaultLog().logError(SVNLogType.CLIENT, "executing statement: " + stmt.getSql());
-                        
                         switch (stmt.getType()) {
                             case TABLE:                                
                                 if (stmt.isDrop()) {
