@@ -55,7 +55,7 @@ public class SVNWCDbSelectIPropsNode extends SVNSqlJetSelectStatement {
             return false;
         }
         final byte[] blob = getColumnBlob(SVNWCDbSchema.NODES__Fields.inherited_props);
-        return blob != null && !Arrays.equals(SvnWcDbShared.EMPTY_PROPS_BLOB, blob);
+        return blob != null;// && !Arrays.equals(SvnWcDbShared.EMPTY_PROPS_BLOB, blob);
     }
 
     @Override
