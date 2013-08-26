@@ -160,7 +160,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         return (ISVNUpdateEditor) SVNCancellableEditor.newInstance(result, context.getEventHandler(), null);
     }
 
-    public static ISVNUpdateEditor createUpdateEditor(SVNWCContext wcContext, File anchorAbspath, String target, SVNURL reposRoot, SVNURL switchURL, SVNExternalsStore externalsStore,
+    public static ISVNUpdateEditor createUpdateEditor(SVNWCContext wcContext, File anchorAbspath, String target, Map<File, Map<String, SVNProperties>> inheritableProperties, SVNURL reposRoot, SVNURL switchURL, SVNExternalsStore externalsStore,
             boolean allowUnversionedObstructions, boolean depthIsSticky, SVNDepth depth, String[] preservedExts, 
             ISVNDirFetcher dirFetcher) throws SVNException {
         if (depth == SVNDepth.UNKNOWN) {
@@ -184,7 +184,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
-        return new SVNUpdateEditor17(wcContext, anchorAbspath, target, info.reposRootUrl, info.reposUuid, switchURL, externalsStore, allowUnversionedObstructions, depthIsSticky, depth, preservedExts,
+        return new SVNUpdateEditor17(wcContext, anchorAbspath, target, inheritableProperties, info.reposRootUrl, info.reposUuid, switchURL, externalsStore, allowUnversionedObstructions, depthIsSticky, depth, preservedExts,
                 dirFetcher);
     }
     
@@ -194,7 +194,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         mySkippedTrees = new HashSet<File>();
     }
 
-    public SVNUpdateEditor17(SVNWCContext wcContext, File anchorAbspath, String targetBasename, SVNURL reposRootUrl, String reposUuid, SVNURL switchURL, SVNExternalsStore externalsStore,
+    public SVNUpdateEditor17(SVNWCContext wcContext, File anchorAbspath, String targetBasename, Map<File, Map<String, SVNProperties>> inheritableProperties, SVNURL reposRootUrl, String reposUuid, SVNURL switchURL, SVNExternalsStore externalsStore,
             boolean allowUnversionedObstructions, boolean depthIsSticky, SVNDepth depth, String[] preservedExts, ISVNDirFetcher dirFetcher) throws SVNException {
         myWCContext = wcContext;
         myAnchorAbspath = anchorAbspath;
@@ -225,6 +225,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             initExcludedDirectoryEntries(dirFetcher);
         }
         myConflictHandler = myWCContext.getOptions().getConflictResolver();
+        myInheritableProperties = inheritableProperties;
     }
     
     private void initExcludedDirectoryEntries(ISVNDirFetcher dirFetcher) throws SVNException {
@@ -1724,7 +1725,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             myWCContext.getDb().opSetBaseIncompleteTemp(myAnchorAbspath, false);
         }
         if (!myIsTargetDeleted) {
-            myWCContext.getDb().opBumpRevisionPostUpdate(myTargetAbspath , myRequestedDepth, mySwitchRelpath, myReposRootURL, myReposUuid, myTargetRevision, mySkippedTrees, myInheritableProperties);
+            myWCContext.getDb().opBumpRevisionPostUpdate(myTargetAbspath , myRequestedDepth, mySwitchRelpath, myReposRootURL, myReposUuid, myTargetRevision, mySkippedTrees, myInheritableProperties, myWCContext.getEventHandler());
             if (myTargetBasename == null || "".equals(myTargetBasename)) {
                 SVNWCDbStatus status = null;
                 boolean error = false;

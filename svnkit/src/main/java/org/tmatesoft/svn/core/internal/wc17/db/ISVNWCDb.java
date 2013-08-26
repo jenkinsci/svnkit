@@ -1601,7 +1601,7 @@ public interface ISVNWCDb {
     void opSetPropertyConflictMarkerFileTemp(File localAbspath, String prejBasename) throws SVNException;
 
     void opBumpRevisionPostUpdate(File localAbsPath, SVNDepth depth, File newReposRelPath, SVNURL newReposRootURL, String newReposUUID,
-            long newRevision, Collection<File> excludedPaths, Map<File, Map<String, SVNProperties>> inheritableProperties) throws SVNException;
+            long newRevision, Collection<File> excludedPaths, Map<File, Map<String, SVNProperties>> inheritableProperties, ISVNEventHandler eventHandler) throws SVNException;
 
     Map<File, File> getExternalsDefinedBelow(File localAbsPath) throws SVNException;
 

@@ -14,6 +14,7 @@ import org.tmatesoft.svn.core.internal.wc17.SVNWCConflictDescription17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc.*;
@@ -205,8 +206,16 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         final DirParsedInfo dirInfo = db.obtainWcRoot(localAbspath);
         final SVNSqlJetDb sdb = dirInfo.wcDbDir.getWCRoot().getSDb();
         final long wcId = dirInfo.wcDbDir.getWCRoot().getWcId();
-        final String localRelPathStr = dirInfo.localRelPath.getPath().replace(File.separatorChar, '/');
-        
+        File localRelPath = dirInfo.localRelPath;
+
+        return readConflictInternal(dirInfo.wcDbDir.getWCRoot(), localRelPath);
+    }
+
+    public static SVNSkel readConflictInternal(SVNWCDbRoot wcRoot, File localRelPath) throws SVNException {
+        long wcId = wcRoot.getWcId();
+        SVNSqlJetDb sdb = wcRoot.getSDb();
+        final String localRelPathStr = localRelPath.getPath().replace(File.separatorChar, '/');
+
         final SVNSqlJetStatement stmt = sdb.getStatement(SVNWCDbStatements.SELECT_ACTUAL_NODE);
         try {
             stmt.bindf("is", wcId, localRelPathStr);
@@ -220,6 +229,7 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
                 } finally {
                     reset(stmtNode);
                 }
+                File localAbspath = SVNFileUtil.createFilePath(wcRoot.getAbsPath(), localRelPath);
                 final SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbspath);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }

@@ -356,7 +356,7 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
             if (wcIprops != null) {
                 wcIprops.put(localAbsPath, iprops);
             }
-            context.getDb().opBumpRevisionPostUpdate(localAbsPath, SVNDepth.INFINITY, null, null, null, targetRevision, null, wcIprops);
+            context.getDb().opBumpRevisionPostUpdate(localAbsPath, SVNDepth.INFINITY, null, null, null, targetRevision, null, wcIprops, context.getEventHandler());
         }
         return null;
     }

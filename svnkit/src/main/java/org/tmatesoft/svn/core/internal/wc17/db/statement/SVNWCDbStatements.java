@@ -202,7 +202,11 @@ public enum SVNWCDbStatements {
     SELECT_DELETION_INFO_SCAN(SVNWCDbSelectDeletionInfoScan.class),
     SELECT_BASE_NODE_LOCK_TOKENS_RECURSIVE(SVNWCDbSelectBaseNodeLockTokensRecursive.class),
     SELECT_COMMITTABLE_EXTERNALS_IMMEDIATELY_BELOW(SVNWCDbSelectCommittableExternalsImmediatelyBelow.class),
-    SELECT_COMMITTABLE_EXTERNALS_BELOW(SVNWCDbSelectCommittableExternalsBelow.class)
+    SELECT_COMMITTABLE_EXTERNALS_BELOW(SVNWCDbSelectCommittableExternalsBelow.class),
+    HAS_LAYER_BETWEEN(SVNWCDbHasLayerBetween.class),
+    SELECT_MOVED_PAIR3(SVNWCDbSelectMovedPair3.class),
+    SELECT_HAS_NON_FILE_CHILDREN(SVNWCDbSelectHasNonFileChildren.class),
+    SELECT_HAS_GRANDCHILDREN(SVNWCDbSelectHasGrandChildren.class);
     ;
     
 
