@@ -4035,6 +4035,10 @@ public class SVNWCDb implements ISVNWCDb {
 
         buildRelpath = reposPrefixPath;
 
+        if (f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid)) {
+            originalReposId = additionInfo.originalReposId;
+        }
+
         if (f.contains(AdditionInfoField.reposRelPath) || f.contains(AdditionInfoField.reposRootUrl) || f.contains(AdditionInfoField.reposUuid)) {
             WCDbRepositoryInfo rInfo = new WCDbRepositoryInfo();
             long reposId = scanUpwardsForRepos(rInfo, pdh.getWCRoot(), currentRelpath);
