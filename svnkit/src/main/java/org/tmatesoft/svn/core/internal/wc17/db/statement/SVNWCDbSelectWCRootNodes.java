@@ -30,7 +30,7 @@ public class SVNWCDbSelectWCRootNodes extends SVNSqlJetSelectStatement {
             }
             final long wcId = getColumnLong(NODES__Fields.wc_id);
             final String localParentRelpath = getColumnString(NODES__Fields.parent_relpath);
-            final String childName = localRelpath.substring(localParentRelpath.length() + 1);
+            final String childName = localParentRelpath.length() == 0 ? localRelpath : localRelpath.substring(localParentRelpath.length() + 1);
             final String expectedChildReposPath = SVNPathUtil.append(getNodeReposRelpath(wcId, localParentRelpath), childName);
             if (!expectedChildReposPath.equals(reposRelpath)) {
                 return true;
