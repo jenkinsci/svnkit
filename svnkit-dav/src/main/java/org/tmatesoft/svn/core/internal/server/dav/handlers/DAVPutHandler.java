@@ -48,26 +48,24 @@ public class DAVPutHandler extends ServletDAVHandler {
     }
 
     public void execute() throws SVNException {
-        DAVResource resource = getRequestedDAVResource(false, false);
+        final DAVResource resource = getRequestedDAVResource(false, false);
         
         if (resource.getType() != DAVResourceType.REGULAR && resource.getType() != DAVResourceType.WORKING) {
             String body = "Cannot create resource " + SVNEncodingUtil.xmlEncodeCDATA(getURI()) + " with PUT.";
             response(body, DAVServlet.getStatusLine(HttpServletResponse.SC_CONFLICT), HttpServletResponse.SC_CONFLICT);
             return;
-        }
-        
+        }        
         if (resource.isCollection()) {
             response("Cannot PUT to a collection.", DAVServlet.getStatusLine(HttpServletResponse.SC_CONFLICT), HttpServletResponse.SC_CONFLICT);
             return;
         }
         
-        DAVResourceState resourceState = getResourceState(resource);
-        validateRequest(resource, DAVDepth.DEPTH_ZERO, resourceState == DAVResourceState.NULL ? DAV_VALIDATE_PARENT : DAV_VALIDATE_RESOURCE, 
-                null, null, null);
+        final DAVResourceState resourceState = getResourceState(resource);
+        validateRequest(resource, DAVDepth.DEPTH_ZERO, resourceState == DAVResourceState.NULL ? DAV_VALIDATE_PARENT : DAV_VALIDATE_RESOURCE, null, null, null);
         
-        DAVAutoVersionInfo avInfo = autoCheckOut(resource, false);
+        final DAVAutoVersionInfo avInfo = autoCheckOut(resource, false);
         int mode = DAV_MODE_WRITE_TRUNC;
-        long[] range = parseRange();
+        final long[] range = parseRange();
         if (range != null) {
             mode = DAV_MODE_WRITE_SEEKABLE;
         }
@@ -87,19 +85,19 @@ public class DAVPutHandler extends ServletDAVHandler {
 
         DAVException error2 = null;
         if (error == null) {
-            String path = resource.getResourceURI().getPath();
-            FSRoot root = resource.getRoot();
-            FSFS fsfs = resource.getFSFS();
-            FSTransactionInfo txn = resource.getTxnInfo();
-            Collection lockTokens = resource.getLockTokens();
-            String userName = resource.getUserName();
-            FSCommitter committer = getCommitter(fsfs, root, txn, lockTokens, userName);
-            ISVNDeltaConsumer deltaConsumer = getDeltaConsumer(root, committer, fsfs, userName, lockTokens);
-            SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
+            final String path = resource.getResourceURI().getPath();
+            final FSRoot root = resource.getRoot();
+            final FSFS fsfs = resource.getFSFS();
+            final FSTransactionInfo txn = resource.getTxnInfo();
+            final Collection lockTokens = resource.getLockTokens();
+            final String userName = resource.getUserName();
+            final FSCommitter committer = getCommitter(fsfs, root, txn, lockTokens, userName);
+            final ISVNDeltaConsumer deltaConsumer = getDeltaConsumer(root, committer, fsfs, userName, lockTokens);
+            final SVNDeltaGenerator deltaGenerator = deltaReader != null ? new SVNDeltaGenerator() : null;
             InputStream inputStream = null;
             try {
                 inputStream = getRequestInputStream();
-                byte[] buffer = new byte[2048];
+                byte[] buffer = new byte[8192];
                 int readCount = -1;
                 while ((readCount = inputStream.read(buffer)) != -1) {
                     if (readCount == 0) {
@@ -162,9 +160,7 @@ public class DAVPutHandler extends ServletDAVHandler {
                     "The file was PUT successfully, but there was a problem opening the lock database which prevents inheriting locks from the parent resources.", 
                     null);
         }
-
         notifyCreated(resource, lockProvider, resourceState, DAVDepth.DEPTH_ZERO);
-
         handleDAVCreated(null, "Resource", resourceState == DAVResourceState.EXISTS);
     }
 

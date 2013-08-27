@@ -13,10 +13,12 @@ package org.tmatesoft.svn.core.internal.server.dav;
 
 import java.io.File;
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -25,6 +27,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVHandlerFactory;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -51,6 +54,7 @@ public class DAVRepositoryManager {
     private String myResourcePathInfo;
     private Principal myUserPrincipal;
     private File myRepositoryRootDir;
+    private HttpServletRequest myRequest;
     
     public DAVRepositoryManager(DAVConfig config, HttpServletRequest request) throws SVNException {
         if (config == null) {
@@ -58,7 +62,7 @@ public class DAVRepositoryManager {
         }
 
         myDAVConfig = config;
-
+        myRequest = request;
         myResourceRepositoryRoot = getRepositoryRoot(request.getPathInfo());
         myResourceContext = getResourceContext(request);
         myUserPrincipal = request.getUserPrincipal();
@@ -191,24 +195,21 @@ public class DAVRepositoryManager {
 
     public DAVResource getRequestedDAVResource(boolean isSVNClient, String deltaBase, String pathInfo, long version, String clientOptions,
             String baseChecksum, String resultChecksum, String label, boolean useCheckedIn, List lockTokens, Map capabilities) throws SVNException {
+        
         pathInfo = pathInfo == null ? getResourcePathInfo() : pathInfo;
-        DAVResourceURI resourceURI = new DAVResourceURI(getResourceContext(), pathInfo, label, useCheckedIn);
-        DAVConfig config = getDAVConfig();
-        String fsParentPath = config.getRepositoryParentPath();
-        String xsltURI = config.getXSLTIndex();
-        String reposName = config.getRepositoryName();
+        
+        final DAVResourceURI resourceURI = new DAVResourceURI(getResourceContext(), pathInfo, label, useCheckedIn);
+        final DAVConfig config = getDAVConfig();
+        final String fsParentPath = config.getRepositoryParentPath();
+        
         String uri = resourceURI.getURI();
-
         if (fsParentPath != null && getDAVConfig().isListParentPath()) {
             if (uri.endsWith("/")) {
                 uri = uri.substring(0, uri.length() - 1);
             }
-            //TODO: later add code for parent path resource here
         }
         
-        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "uri type - " + resourceURI.getType() + ", uri kind - " + resourceURI.getKind());
-        
-        String activitiesDB = config.getActivitiesDBPath();
+        final String activitiesDB = config.getActivitiesDBPath();
         File activitiesDBDir = null;
         if (activitiesDB == null) {
             activitiesDBDir = new File(myRepositoryRootDir, DEFAULT_ACTIVITY_DB); 
@@ -216,14 +217,15 @@ public class DAVRepositoryManager {
             activitiesDBDir = new File(activitiesDB);
         }
         
-        String userName = myUserPrincipal != null ? myUserPrincipal.getName() : null;
-        SVNAuthentication auth = new SVNUserNameAuthentication(userName, false, null, false);
-        BasicAuthenticationManager authManager = new BasicAuthenticationManager(new SVNAuthentication[] { auth });
-        SVNRepository resourceRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(getResourceRepositoryRoot()));
-        resourceRepository.setAuthenticationManager(authManager);
-        DAVResource resource = new DAVResource(resourceRepository, this, resourceURI, isSVNClient, deltaBase, version, 
+        final SVNRepository resourceRepository = getCachedFSRepository(myRequest, getResourceRepositoryRoot());
+        final String userName = myUserPrincipal != null ? myUserPrincipal.getName() : null;        
+        if (userName != null) {
+            SVNAuthentication auth = new SVNUserNameAuthentication(userName, false, null, false);
+            BasicAuthenticationManager authManager = new BasicAuthenticationManager(new SVNAuthentication[] { auth });
+            resourceRepository.setAuthenticationManager(authManager);
+        }
+        return new DAVResource(resourceRepository, this, resourceURI, isSVNClient, deltaBase, version, 
                 clientOptions, baseChecksum, resultChecksum, userName, activitiesDBDir, lockTokens, capabilities);
-        return resource;
     }
 
     private String getRepositoryRoot(String requestURI) {
@@ -305,5 +307,30 @@ public class DAVRepositoryManager {
         }
         requestContext = DAVPathUtil.append(requestContext, reposName);
         return SVNEncodingUtil.uriEncode(requestContext);
+    }
+    
+    private static FSRepository getCachedFSRepository(HttpServletRequest request, String rootPath) throws SVNException {
+        @SuppressWarnings("unchecked")
+        Map<String, FSRepository> repositoriesCache = (Map<String, FSRepository>) request.getSession().getServletContext().getAttribute("mod_dav_svn:");
+        
+        if (repositoriesCache == null) {
+            repositoriesCache = new HashMap<String, FSRepository>();
+            request.getSession().getServletContext().setAttribute("mod_dav_svn:", repositoriesCache);
+        }
+        
+        if (!repositoriesCache.containsKey(rootPath)) {
+            FSRepository resourceRepository = (FSRepository) SVNRepositoryFactory.create(SVNURL.parseURIEncoded(rootPath));
+            try {
+                resourceRepository.testConnection();
+            } catch (SVNException svne) {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, svne.getMessage());
+                SVNErrorMessage err = SVNErrorMessage.create(svne.getErrorMessage().getErrorCode(), "Could not open the requested SVN filesystem");
+                throw DAVException.convertError(err, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Could not fetch resource information.", null);
+            }
+            repositoriesCache.put(rootPath, resourceRepository);
+        }
+        return repositoriesCache.get(rootPath);
+        
+
     }
 }

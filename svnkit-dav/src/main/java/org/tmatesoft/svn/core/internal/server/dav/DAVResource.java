@@ -96,13 +96,6 @@ public class DAVResource {
             Collection lockTokens, Map clientCapabilities) throws DAVException {
         myRepositoryManager = manager;
         myRepository = (FSRepository) repository;
-        try {
-            myRepository.testConnection();//this should create an FSFS object
-        } catch (SVNException svne) {
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, svne.getMessage());
-            SVNErrorMessage err = SVNErrorMessage.create(svne.getErrorMessage().getErrorCode(), "Could not open the requested SVN filesystem");
-            throw DAVException.convertError(err, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Could not fetch resource information.", null);
-        }
         myLockTokens = lockTokens;
         myClientCapabilities = clientCapabilities;
         myFSFS = myRepository.getFSFS();
@@ -223,7 +216,7 @@ public class DAVResource {
             return DAVAutoVersion.ALWAYS;
         }
         
-        DAVConfig config = myRepositoryManager.getDAVConfig(); 
+        final DAVConfig config = myRepositoryManager.getDAVConfig(); 
         if (config.isAutoVersioning()) {
             if (getType() == DAVResourceType.REGULAR) {
                 return DAVAutoVersion.ALWAYS;

@@ -203,7 +203,6 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     private DAVRepositoryManager myRepositoryManager;
     private HttpServletRequest myRequest;
     private HttpServletResponse myResponse;
-    private FSCommitter myCommitter;
     private FSDeltaConsumer myDeltaConsumer;
     
     static {
@@ -298,9 +297,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         String deltaBase = getRequestHeader(SVN_DELTA_BASE_HEADER);
         String userAgent = getRequestHeader(USER_AGENT_HEADER);
         
-        Map clientCapabilities = new HashMap();
+        final Map clientCapabilities = new HashMap();
         clientCapabilities.put(SVNCapability.MERGE_INFO, CAPABILITY_NO);
-
         boolean isSVNClient = false;
         if (userAgent != null && (userAgent.startsWith("SVN/") || userAgent.startsWith("SVNKit"))) {
             isSVNClient = true;
@@ -315,8 +313,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             }
         }
        
-        List lockTokens = getLockTokensList();
-        DAVResource resource = getRepositoryManager().getRequestedDAVResource(isSVNClient, deltaBase, pathInfo, version, clientOptions, 
+        final List lockTokens = getLockTokensList();
+        final DAVResource resource = getRepositoryManager().getRequestedDAVResource(isSVNClient, deltaBase, pathInfo, version, clientOptions, 
                 baseChecksum, resultChecksum, label, useCheckedIn, lockTokens, clientCapabilities);
         
         setDefaultResponseHeaders();
@@ -1479,7 +1477,6 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             setResponseStatus(HttpServletResponse.SC_NO_CONTENT);
             return;
         }
-
         setResponseHeader(HTTPHeader.LOCATION_HEADER, constructURL(location));
         String body = what + " " + SVNEncodingUtil.xmlEncodeCDATA(location) + " has been created.";
         response(body, DAVServlet.getStatusLine(HttpServletResponse.SC_CREATED), HttpServletResponse.SC_CREATED);
@@ -1693,8 +1690,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     }
     
     protected FSCommitter getCommitter(FSFS fsfs, FSRoot root, FSTransactionInfo txn, Collection lockTokens, String userName) {
-        myCommitter = new FSCommitter(fsfs, (FSTransactionRoot) root, txn, lockTokens, userName);
-        return myCommitter;
+        return new FSCommitter(fsfs, (FSTransactionRoot) root, txn, lockTokens, userName);
     }
     
     protected FSDeltaConsumer getDeltaConsumer(FSRoot root, FSCommitter committer, FSFS fsfs, String userName, Collection lockTokens) {
