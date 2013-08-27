@@ -458,7 +458,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
         if (myCurrentDirectory.oldReposRelPath != null && info.reposRelPath != null) {
             String expectedName = SVNPathUtil.getRelativePath(myCurrentDirectory.oldReposRelPath.getPath(), info.reposRelPath.getPath());
-            deletingSwitched = (expectedName == null || expectedName.equals(base));
+            deletingSwitched = (expectedName == null || !expectedName.equals(base));
         } else {
             deletingSwitched = false;
         }

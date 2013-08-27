@@ -6498,7 +6498,7 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public static void updateMoveListAdd(SVNWCDbRoot wcRoot, File localRelPath, SVNEventAction eventAction, SVNNodeKind kind, SVNStatusType contentState, SVNStatusType propState) throws SVNException {
-        SVNSqlJetStatement stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_UPDATE_MOVE_LIST);
+        SVNSqlJetStatement stmt = wcRoot.getSDb().getTemporaryDb().getStatement(SVNWCDbStatements.INSERT_UPDATE_MOVE_LIST);
         try {
             stmt.bindf("siiii", localRelPath, eventAction.getID(), kind.getID(), contentState.getID(), propState.getID());
             stmt.done();
@@ -6641,6 +6641,10 @@ public class SVNWCDb implements ISVNWCDb {
         SvnChecksum dstChecksum = dstInfo.checksum;
         List<String> dstChildren = dstInfo.children;
         SVNNodeKind dstKind = dstInfo.kind;
+
+        if (srcKind == SVNNodeKind.NONE || (dstKind != SVNNodeKind.NONE && srcKind != dstKind)) {
+            treeConflictEditor.delete(SVNFileUtil.getFilePath(dstRelPath), moveRootDstRevision);
+        }
 
         if (srcKind != SVNNodeKind.NONE && srcKind != dstKind) {
             if (srcKind == SVNNodeKind.FILE) { //TODO: check for symlink ?

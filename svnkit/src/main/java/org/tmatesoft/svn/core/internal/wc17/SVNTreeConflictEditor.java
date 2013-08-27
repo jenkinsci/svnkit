@@ -332,6 +332,7 @@ public class SVNTreeConflictEditor implements ISVNEditor2 {
         } else {
             workItem = SVNWCContext.wqBuildFileRemove(db, wcRoot.getAbsPath(), localAbsPath);
         }
+        db.wqAdd(wcRoot.getAbsPath(), workItem);
 
         if (!isConflicted) {
             SVNWCDb.updateMoveListAdd(wcRoot, relPath, SVNEventAction.UPDATE_DELETE, delKind == ISVNWCDb.SVNWCDbKind.Dir ? SVNNodeKind.DIR : SVNNodeKind.FILE,
