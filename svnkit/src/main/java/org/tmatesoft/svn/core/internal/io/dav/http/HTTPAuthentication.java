@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -129,9 +130,12 @@ abstract class HTTPAuthentication {
                     continue;
                 }
             }
-            String method = source.substring(0, index);
-        
+            final String method = source.substring(0, index);        
             source = source.substring(index).trim();
+
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, 
+                    "Looking for authentication implementation for '" + method + "'");
+
             if ("Basic".equalsIgnoreCase(method)) {
                 auth = new HTTPBasicAuthentication(charset);
                 
@@ -190,14 +194,20 @@ abstract class HTTPAuthentication {
             } else if ("NTLM".equalsIgnoreCase(method)) {
                 HTTPNTLMAuthentication ntlmAuth = null;
                 if (source.length() == 0) {
+                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, 
+                            "svnkit.http.ntlm=" + System.getProperty("svnkit.http.ntlm", "java"));
                     if ("jna".equalsIgnoreCase(System.getProperty("svnkit.http.ntlm", "java"))) {
                         ntlmAuth = HTTPNativeNTLMAuthentication.newInstance(charset);
+                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, 
+                                "native NTLM implementation = " + ntlmAuth);
                     }
                     if (ntlmAuth != null) {
                         ntlmAuth.parseChallenge(null);
                     }
                     if (ntlmAuth == null) {
                         ntlmAuth = new HTTPNTLMAuthentication(charset);
+                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, 
+                                "non-native NTLM implementation = " + ntlmAuth);
                     }
                     ntlmAuth.setType1State();
                 } else {

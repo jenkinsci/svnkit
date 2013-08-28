@@ -378,7 +378,6 @@ public class HTTPConnection implements IHTTPConnection {
     public HTTPStatus request(String method, String path, HTTPHeader header, InputStream body, int ok1, int ok2, OutputStream dst, DefaultHandler handler, SVNErrorMessage context) throws SVNException {
         myLastStatus = null;
         myRequestCount++;
-        
         if ("".equals(path) || path == null) {
             path = "/";
         }
@@ -654,6 +653,7 @@ public class HTTPConnection implements IHTTPConnection {
                      * and JNA is available, we should try a native auth mechanism first without calling 
                      * auth providers. 
                      */                
+                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK,  "would skip credentials prompt: " + !ntlmAuth.allowPropmtForCredentials());
                     if (!ntlmAuth.allowPropmtForCredentials()) {
                         continue;
                     }
