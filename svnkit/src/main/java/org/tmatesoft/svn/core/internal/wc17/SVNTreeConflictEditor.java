@@ -295,6 +295,7 @@ public class SVNTreeConflictEditor implements ISVNEditor2 {
             }
         }
 
+
         ISVNWCDb.SVNWCDbKind delKind;
 
         SVNSqlJetStatement stmt;
@@ -321,22 +322,21 @@ public class SVNTreeConflictEditor implements ISVNEditor2 {
             } finally {
                 stmt.reset();
             }
-        }
+            depthInfo = SvnWcDbShared.getDepthInfo(wcRoot, relPath, opDepth, StructureFields.NodeInfo.kind);
+            delKind = depthInfo.get(StructureFields.NodeInfo.kind);
 
-        depthInfo = SvnWcDbShared.getDepthInfo(wcRoot, relPath, opDepth, StructureFields.NodeInfo.kind);
-        delKind = depthInfo.get(StructureFields.NodeInfo.kind);
+            SVNSkel workItem;
+            if (delKind == ISVNWCDb.SVNWCDbKind.Dir) {
+                workItem = SVNWCContext.wqBuildDirRemove(db, wcRoot.getAbsPath(), localAbsPath, false);
+            } else {
+                workItem = SVNWCContext.wqBuildFileRemove(db, wcRoot.getAbsPath(), localAbsPath);
+            }
+            db.wqAdd(wcRoot.getAbsPath(), workItem);
 
-        SVNSkel workItem;
-        if (delKind == ISVNWCDb.SVNWCDbKind.Dir) {
-            workItem = SVNWCContext.wqBuildDirRemove(db, wcRoot.getAbsPath(), localAbsPath, false);
-        } else {
-            workItem = SVNWCContext.wqBuildFileRemove(db, wcRoot.getAbsPath(), localAbsPath);
-        }
-        db.wqAdd(wcRoot.getAbsPath(), workItem);
-
-        if (!isConflicted) {
-            SVNWCDb.updateMoveListAdd(wcRoot, relPath, SVNEventAction.UPDATE_DELETE, delKind == ISVNWCDb.SVNWCDbKind.Dir ? SVNNodeKind.DIR : SVNNodeKind.FILE,
-                    SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE);
+            if (!isConflicted) {
+                SVNWCDb.updateMoveListAdd(wcRoot, relPath, SVNEventAction.UPDATE_DELETE, delKind == ISVNWCDb.SVNWCDbKind.Dir ? SVNNodeKind.DIR : SVNNodeKind.FILE,
+                        SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE);
+            }
         }
 
         int opDepthBelow = 0;

@@ -447,7 +447,7 @@ public class SvnWcDbShared {
     
     public static Structure<NodeInfo> getDepthInfo(SVNWCDbRoot wcroot, File localRelPath, long opDepth, NodeInfo...fields) throws SVNException {
         Structure<NodeInfo> info = Structure.obtain(NodeInfo.class, fields);
-        SVNSqlJetStatement stmt = wcroot.getSDb().getStatement(info.hasField(NodeInfo.lock) ? SVNWCDbStatements.SELECT_BASE_NODE_WITH_LOCK : SVNWCDbStatements.SELECT_BASE_NODE);
+        SVNSqlJetStatement stmt = wcroot.getSDb().getStatement(SVNWCDbStatements.SELECT_DEPTH_NODE);
         try {
             stmt.bindf("isi", wcroot.getWcId(), SVNFileUtil.getFilePath(localRelPath), opDepth);
             if (stmt.next()) {
@@ -467,11 +467,6 @@ public class SvnWcDbShared {
                 }
                 if (info.hasField(NodeInfo.reposRelPath)) {
                     info.set(NodeInfo.reposRelPath, getColumnPath(stmt, SVNWCDbSchema.NODES__Fields.repos_path));
-                }
-                if (info.hasField(NodeInfo.lock)) {
-                    final SVNSqlJetStatement lockStmt = stmt.getJoinedStatement(SVNWCDbSchema.LOCK);
-                    SVNWCDbLock lock = getLockFromColumns(lockStmt, LOCK__Fields.lock_token, LOCK__Fields.lock_owner, LOCK__Fields.lock_comment, LOCK__Fields.lock_date);
-                    info.set(NodeInfo.lock, lock);
                 }
                 
                 if (info.hasField(NodeInfo.reposRootUrl) || info.hasField(NodeInfo.reposUuid)) {
