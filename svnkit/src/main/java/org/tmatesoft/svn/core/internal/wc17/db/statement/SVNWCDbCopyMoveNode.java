@@ -50,7 +50,6 @@ public class SVNWCDbCopyMoveNode extends SVNSqlJetStatement {
             boolean haveRow1 = stmt1.next();
             boolean haveRow2 = stmt2.next();
             assert haveRow1;
-            assert haveRow2;
 
             Map<String, Object> values = new HashMap<String, Object>();
             values.put(SVNWCDbSchema.NODES__Fields.wc_id.name(), stmt1.getColumnLong(SVNWCDbSchema.NODES__Fields.wc_id));
@@ -72,7 +71,7 @@ public class SVNWCDbCopyMoveNode extends SVNSqlJetStatement {
             values.put(SVNWCDbSchema.NODES__Fields.last_mod_time.name(), stmt1.getColumnString(SVNWCDbSchema.NODES__Fields.last_mod_time));
             values.put(SVNWCDbSchema.NODES__Fields.symlink_target.name(), stmt1.getColumnString(SVNWCDbSchema.NODES__Fields.symlink_target));
             values.put(SVNWCDbSchema.NODES__Fields.moved_here.name(), 1);
-            values.put(SVNWCDbSchema.NODES__Fields.moved_to.name(), stmt2.getColumnString(SVNWCDbSchema.NODES__Fields.moved_to));
+            values.put(SVNWCDbSchema.NODES__Fields.moved_to.name(), haveRow2 ? stmt2.getColumnString(SVNWCDbSchema.NODES__Fields.moved_to) : null);
             try {
                 return table.insertByFieldNamesOr(SqlJetConflictAction.REPLACE, values);
             } catch (SqlJetException e) {
