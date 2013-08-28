@@ -252,7 +252,7 @@ public class SVNWCContext {
         SYNC_FILE_FLAGS("sync-file-flags", new RunSyncFileFlags()),
         PREJ_INSTALL("prej-install", new RunPrejInstall()),
         DIRECTORY_REMOVE("dir-remove", new RunDirRemove()),
-        DIRECTORY_INSTALL("dir-install", null/*TODO*/),
+        DIRECTORY_INSTALL("dir-install", new RunDirInstall()),
         RECORD_FILEINFO("record-fileinfo", new RunRecordFileInfo()),
         TMP_SET_TEXT_CONFLICT_MARKERS("tmp-set-text-conflict-markers", new RunSetTextConflictMarkersTemp()),
         TMP_SET_PROPERTY_CONFLICT_MARKER("tmp-set-property-conflict-marker", new RunSetPropertyConflictMarkerTemp()),
@@ -4065,6 +4065,24 @@ public class SVNWCContext {
                         throw e;
                     }
                 }
+            }
+        }
+    }
+
+    public static class RunDirInstall implements RunWorkQueueOperation {
+
+        @Override
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
+            File localRelPath = SVNFileUtil.createFilePath(workItem.first().next().getValue());
+            File localAbsPath = SVNFileUtil.createFilePath(wcRootAbspath, localRelPath);
+            SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(localAbsPath));
+            if (kind != SVNNodeKind.NONE && kind != SVNNodeKind.DIR) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a directory", localAbsPath);
+                SVNErrorManager.error(errorMessage, SVNLogType.WC);
+            } else if (kind == SVNNodeKind.NONE) {
+                SVNFileUtil.ensureDirectoryExists(localAbsPath);
+            } else {
+                SVNErrorManager.assertionFailure(kind == SVNNodeKind.DIR, null, SVNLogType.WC);
             }
         }
     }
