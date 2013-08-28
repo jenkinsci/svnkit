@@ -464,6 +464,13 @@ public class SVNTreeConflictEditor implements ISVNEditor2 {
                                                   WorkingNodeVersion oldNodeVersion, WorkingNodeVersion newNodeVersion) throws SVNException {
         UpdateWorkingProps updateWorkingProps = new UpdateWorkingProps();
 
+        if (oldNodeVersion.props == null) {
+            oldNodeVersion.props = new SVNProperties();
+        }
+        if (newNodeVersion.props == null) {
+            newNodeVersion.props = new SVNProperties();
+        }
+
         updateWorkingProps.actualProps = db.readProperties(localAbsPath);
         updateWorkingProps.propChanges = SvnDiffEditor.computePropDiff(oldNodeVersion.props, newNodeVersion.props);
 

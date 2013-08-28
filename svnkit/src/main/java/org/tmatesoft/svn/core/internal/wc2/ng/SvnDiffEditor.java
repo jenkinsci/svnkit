@@ -783,27 +783,31 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
 
     public static SVNProperties computePropDiff(SVNProperties props1, SVNProperties props2) {
         SVNProperties propsDiff = new SVNProperties();
-        for (Iterator names = props2.nameSet().iterator(); names.hasNext();) {
-            String newPropName = (String) names.next();
-            if (props1.containsName(newPropName)) {
-                // changed.
-                SVNPropertyValue oldValue = props2.getSVNPropertyValue(newPropName);
-                SVNPropertyValue value = props1.getSVNPropertyValue(newPropName);
-                if (oldValue != null && !oldValue.equals(value)) {
-                    propsDiff.put(newPropName, oldValue);
-                } else if (oldValue == null && value != null) {
-                    propsDiff.put(newPropName, oldValue);
+        if (props2 != null) {
+            for (Iterator names = props2.nameSet().iterator(); names.hasNext();) {
+                String newPropName = (String) names.next();
+                if (props1.containsName(newPropName)) {
+                    // changed.
+                    SVNPropertyValue oldValue = props2.getSVNPropertyValue(newPropName);
+                    SVNPropertyValue value = props1.getSVNPropertyValue(newPropName);
+                    if (oldValue != null && !oldValue.equals(value)) {
+                        propsDiff.put(newPropName, oldValue);
+                    } else if (oldValue == null && value != null) {
+                        propsDiff.put(newPropName, oldValue);
+                    }
+                } else {
+                    // added.
+                    propsDiff.put(newPropName, props2.getSVNPropertyValue(newPropName));
                 }
-            } else {
-                // added.
-                propsDiff.put(newPropName, props2.getSVNPropertyValue(newPropName));
             }
         }
-        for (Iterator names = props1.nameSet().iterator(); names.hasNext();) {
-            String oldPropName = (String) names.next();
-            if (!props2.containsName(oldPropName)) {
-                // deleted
-                propsDiff.put(oldPropName, (String) null);
+        if (props1 != null) {
+            for (Iterator names = props1.nameSet().iterator(); names.hasNext();) {
+                String oldPropName = (String) names.next();
+                if (!props2.containsName(oldPropName)) {
+                    // deleted
+                    propsDiff.put(oldPropName, (String) null);
+                }
             }
         }
         return propsDiff;

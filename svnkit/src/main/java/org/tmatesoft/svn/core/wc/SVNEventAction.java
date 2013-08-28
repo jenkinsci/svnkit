@@ -56,7 +56,7 @@ import java.util.Map;
  */
 public class SVNEventAction {
 
-    public static SVNEventAction getEventActionById(long id) {
+    public static SVNEventAction getEventActionById(int id) {
         synchronized (allActions) {
             return allActions.get(id);
         }
@@ -182,7 +182,7 @@ public class SVNEventAction {
      * In an update operation denotes that the item is not modified, but its children are.
      *
      */
-    public static final SVNEventAction UPDATE_NONE = createEventAction(10, "update_none");
+    public static final SVNEventAction UPDATE_NONE = createEventAction(-10, "update_none");
 
     /**
      * In an update operation denotes that the operation itself is completed

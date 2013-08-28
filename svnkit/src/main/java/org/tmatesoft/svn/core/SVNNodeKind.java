@@ -61,7 +61,7 @@ public final class SVNNodeKind implements Comparable, Serializable {
         myID = id;
     }
 
-    public static SVNNodeKind getNodeKindById(long id) {
+    public static SVNNodeKind getNodeKindById(int id) {
         if (id == FILE.getID()) {
             return FILE;
         } else if (id == DIR.getID()) {

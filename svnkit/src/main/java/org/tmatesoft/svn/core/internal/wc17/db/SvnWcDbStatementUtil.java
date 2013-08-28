@@ -220,14 +220,14 @@ public class SvnWcDbStatementUtil {
     }
 
     public static SVNEventAction getColumnEventAction(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
-        return SVNEventAction.getEventActionById(stmt.getColumnLong(f));
+        return SVNEventAction.getEventActionById((int) stmt.getColumnLong(f));
     }
 
     public static SVNStatusType getColumnStatusType(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
-        return SVNStatusType.getStatusById(stmt.getColumnLong(f));
+        return SVNStatusType.getStatusById((int) stmt.getColumnLong(f));
     }
 
     public static SVNNodeKind getColumnNodeKind(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
-        return SVNNodeKind.getNodeKindById(stmt.getColumnLong(f));
+        return SVNNodeKind.getNodeKindById((int) stmt.getColumnLong(f));
     }
 }

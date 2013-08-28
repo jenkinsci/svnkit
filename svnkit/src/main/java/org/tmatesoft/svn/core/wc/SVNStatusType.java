@@ -97,7 +97,7 @@ import java.util.Map;
  */
 public class SVNStatusType {
 
-    public static SVNStatusType getStatusById(long id) {
+    public static SVNStatusType getStatusById(int id) {
         synchronized (allStatusTypes) {
             return allStatusTypes.get(id);
         }

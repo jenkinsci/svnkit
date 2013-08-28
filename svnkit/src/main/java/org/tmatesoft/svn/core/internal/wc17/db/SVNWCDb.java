@@ -6444,7 +6444,7 @@ public class SVNWCDb implements ISVNWCDb {
             }
         }
 
-        if (wcRoot.getSDb().hasTable(SVNWCDbSchema.UPDATE_MOVE_LIST.name())) {
+        if (wcRoot.getSDb().getTemporaryDb().hasTable(SVNWCDbSchema.UPDATE_MOVE_LIST.name())) {
             stmt = new SVNWCDbCreateSchema(wcRoot.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.FINALIZE_UPDATE_MOVE, -1);
             try {
                 stmt.done();
@@ -6657,7 +6657,7 @@ public class SVNWCDb implements ISVNWCDb {
             boolean match = propsMatch(srcProps, dstProps);
             SVNProperties props = match ? null : srcProps;
 
-            if (srcKind == SVNNodeKind.NONE) { //TODO: check for symlink ?
+            if (srcKind == SVNNodeKind.FILE) { //TODO: check for symlink ?
                 if (SvnChecksum.match(srcChecksum, dstChecksum)) {
                     srcChecksum = null;
                 }
