@@ -87,18 +87,25 @@ public class SVNWCDbSelectCopyPristines extends SVNSqlJetSelectStatement {
     }
 
     @Override
+    public void reset() throws SVNException {
+        if (joinedStatement != null) {
+            joinedStatement.reset();
+        }
+        super.reset();
+    }
+
+    @Override
     public boolean next() throws SVNException {
         if (firstPartOfUnion) {
             boolean next = super.next();
             if (next) {
-                joinedStatement = new JoinedStatement(sDb);
-                try {
-                    joinedStatement.bindChecksum(1, SvnWcDbStatementUtil.getColumnChecksum(this, SVNWCDbSchema.NODES__Fields.checksum));
-                    joinedStatement.next();
-                    return true;
-                } finally {
+                if (joinedStatement != null) {
                     joinedStatement.reset();
                 }
+                joinedStatement = new JoinedStatement(sDb);
+                joinedStatement.bindChecksum(1, SvnWcDbStatementUtil.getColumnChecksum(this, SVNWCDbSchema.NODES__Fields.checksum));
+                joinedStatement.next();
+                return true;
             } else {
                 firstPartOfUnion = false;
                 resetCursor();
@@ -107,13 +114,12 @@ public class SVNWCDbSelectCopyPristines extends SVNSqlJetSelectStatement {
         if (!firstPartOfUnion) {
             boolean next = super.next();
             if (next) {
-                joinedStatement = new JoinedStatement(sDb);
-                try {
-                    joinedStatement.bindChecksum(1, SvnWcDbStatementUtil.getColumnChecksum(this, SVNWCDbSchema.NODES__Fields.checksum));
-                    joinedStatement.next();
-                } finally {
+                if (joinedStatement != null) {
                     joinedStatement.reset();
                 }
+                joinedStatement = new JoinedStatement(sDb);
+                joinedStatement.bindChecksum(1, SvnWcDbStatementUtil.getColumnChecksum(this, SVNWCDbSchema.NODES__Fields.checksum));
+                joinedStatement.next();
             }
             return next;
         }

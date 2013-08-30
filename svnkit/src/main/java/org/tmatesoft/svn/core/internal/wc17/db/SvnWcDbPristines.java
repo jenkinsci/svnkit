@@ -402,7 +402,7 @@ public class SvnWcDbPristines extends SvnWcDbShared {
         pristineTransfer.dstWcRoot = dstParsed.wcDbDir.getWCRoot();
         pristineTransfer.srcRelPath = srcParsed.localRelPath;
 
-        dstParsed.wcDbDir.getWCRoot().getSDb().runTransaction(pristineTransfer);
+        srcParsed.wcDbDir.getWCRoot().getSDb().runTransaction(pristineTransfer);
     }
 
     private static class PristineTransfer implements SVNSqlJetTransaction {
