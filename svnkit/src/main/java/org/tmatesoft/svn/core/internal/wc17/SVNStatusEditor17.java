@@ -189,10 +189,20 @@ public class SVNStatusEditor17 {
             }
         }
         SvnStatus status = assembleStatus(myWCContext, localAbsPath, parentReposInfo, info, pathKind, pathSpecial, getAll, myIgnoreTextMods, repositoryLock);
+        status = tweakStatus(status);
         if (status != null && handler != null) {
             handler.receive(SvnTarget.fromFile(localAbsPath), status);
         }
 
+    }
+
+    private SvnStatus tweakStatus(SvnStatus status) {
+        if (status != null) {
+            if (status.isFileExternal()) {
+                status.setSwitched(false);
+            }
+        }
+        return status;
     }
 
     private void sendUnversionedItem(File nodeAbsPath, SVNNodeKind pathKind, boolean treeConflicted, Collection<String> patterns, boolean noIgnore, ISvnObjectReceiver<SvnStatus> handler) throws SVNException {
