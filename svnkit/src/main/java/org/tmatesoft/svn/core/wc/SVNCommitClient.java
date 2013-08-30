@@ -872,6 +872,8 @@ public class SVNCommitClient extends SVNBasicClient {
         }
         
         SvnCommit commit = sharedOperation;
+        commit.setIncludeDirectoryExternals(!isIgnoreExternals());
+        commit.setIncludeFileExternals(!isIgnoreExternals());
         commit.setCommitMessage(commitMessage);
         commit.setCommitHandler(SvnCodec.commitHandler(getCommitHandler()));
         commit.setCommitParameters(SvnCodec.commitParameters(getCommitParameters()));
@@ -1072,6 +1074,8 @@ public class SVNCommitClient extends SVNBasicClient {
         for (int i = 0; i < paths.length; i++) {
             commit.addTarget(SvnTarget.fromFile(paths[i]));
         }
+        commit.setIncludeFileExternals(!isIgnoreExternals());
+        commit.setIncludeDirectoryExternals(!isIgnoreExternals());
         commit.setKeepLocks(keepLocks);
         commit.setDepth(depth);
         commit.setForce(force);

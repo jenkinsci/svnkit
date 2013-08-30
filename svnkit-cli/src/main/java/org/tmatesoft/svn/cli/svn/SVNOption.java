@@ -100,6 +100,7 @@ public class SVNOption extends AbstractSVNOption {
 
     public static final SVNOption STRIP = new SVNOption("strip", "p");
     public static final SVNOption ALLOW_MIXED_REVISIONS = new SVNOption("allow-mixed-revisions");
+    public static final SVNOption INCLUDE_EXTERNALS = new SVNOption("include-externals");
 
     public static Collection addLogMessageOptions(Collection target) {
         if (target != null) {

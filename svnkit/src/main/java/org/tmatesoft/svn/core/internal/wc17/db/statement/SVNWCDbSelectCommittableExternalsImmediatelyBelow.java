@@ -55,7 +55,16 @@ public class SVNWCDbSelectCommittableExternalsImmediatelyBelow extends SVNSqlJet
     protected boolean isFilterPassed() throws SVNException {
         return checkForImmediate() &&
                 isColumnNull(SVNWCDbSchema.EXTERNALS__Fields.def_revision) &&
-                getColumnLong(SVNWCDbSchema.EXTERNALS__Fields.repos_id) == internalStatement2.getColumnLong(SVNWCDbSchema.NODES__Fields.repos_id);
+                getColumnLong(SVNWCDbSchema.EXTERNALS__Fields.repos_id) == getInternalStatement2().getColumnLong(SVNWCDbSchema.NODES__Fields.repos_id);
+    }
+
+    private InternalStatement2 getInternalStatement2() throws SVNException {
+        if (internalStatement2 == null) {
+            internalStatement2 = new InternalStatement2(sDb);
+            internalStatement2.bindf("isi", getBind(1), getBind(2), 0);
+            internalStatement2.next();
+        }
+        return internalStatement2;
     }
 
     protected boolean checkForImmediate() throws SVNException {
@@ -69,6 +78,14 @@ public class SVNWCDbSelectCommittableExternalsImmediatelyBelow extends SVNSqlJet
 
     @Override
     public boolean next() throws SVNException {
+        if (internalStatement1 != null) {
+            internalStatement1.reset();
+            internalStatement1 = null;
+        }
+        if (internalStatement2 != null) {
+            internalStatement2.reset();
+            internalStatement2 = null;
+        }
         boolean next = super.next();
         if (next) {
             if (internalStatement1 == null) {
@@ -76,10 +93,9 @@ public class SVNWCDbSelectCommittableExternalsImmediatelyBelow extends SVNSqlJet
                 internalStatement1.bindf("i", getColumnLong(SVNWCDbSchema.EXTERNALS__Fields.repos_id));
                 internalStatement1.next();
             }
-            if (internalStatement2 == null) {
-                internalStatement2 = new InternalStatement2(sDb);
-                internalStatement2.bindf("isi", getBind(1), getBind(2));
-                internalStatement2.next();
+            if (internalStatement2 != null) {
+                internalStatement2.reset();
+                internalStatement2 = null;
             }
         }
         return next;
@@ -123,17 +139,25 @@ public class SVNWCDbSelectCommittableExternalsImmediatelyBelow extends SVNSqlJet
 
         @Override
         protected boolean isFilterPassed() throws SVNException {
-            return SvnWcDbStatementUtil.getColumnKind(this, SVNWCDbSchema.NODES__Fields.kind) == ISVNWCDb.SVNWCDbKind.Dir || !internalStatement3.isColumnNull(SVNWCDbSchema.NODES__Fields.wc_id);
+            return SvnWcDbStatementUtil.getColumnKind(this, SVNWCDbSchema.NODES__Fields.kind) == ISVNWCDb.SVNWCDbKind.Dir || !getInternalStatement3().isColumnNull(SVNWCDbSchema.NODES__Fields.wc_id);
+        }
+
+        private InternalStatement3 getInternalStatement3() throws SVNException {
+            if (internalStatement3 == null) {
+                internalStatement3 = new InternalStatement3(sDb);
+                internalStatement3.bindf("is", getColumnLong(SVNWCDbSchema.NODES__Fields.wc_id), getBind(2));
+                internalStatement3.next();
+            }
+            return internalStatement3;
         }
 
         @Override
         public boolean next() throws SVNException {
             boolean next = super.next();
             if (next) {
-                if (internalStatement3 == null) {
-                    internalStatement3 = new InternalStatement3(sDb);
-                    internalStatement3.bindf("is", getColumnLong(SVNWCDbSchema.NODES__Fields.wc_id), getBind(2));
-                    internalStatement3.next();
+                if (internalStatement3 != null) {
+                    internalStatement3.reset();
+                    internalStatement3 = null;
                 }
             }
             return next;
