@@ -99,4 +99,9 @@ public class DAVDeleteHandler extends ServletDAVHandler {
         return myDAVRequest;
     }
 
+    @Override
+    public boolean isClosingConnection() {
+        return true;
+    }
+
 }

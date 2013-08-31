@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVHandlerFactory;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVResponse;
@@ -125,11 +126,16 @@ public class DAVServlet extends HttpServlet {
 
     public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         ServletDAVHandler handler = null;
-        logRequest(request);//TODO: remove later
         try {
             DAVRepositoryManager repositoryManager = new DAVRepositoryManager(getDAVConfig(), request);
             handler = DAVHandlerFactory.createHandler(repositoryManager, request, response);
-            handler.execute();
+            try {
+                handler.execute();
+            } finally {
+                if (handler.isClosingConnection()) {
+                    DAVRepositoryManager.clearRepositoriesCache(request);
+                }
+            }
         } catch (DAVException de) {
             response.setContentType(XML_CONTENT_TYPE);
             handleError(de, response);
@@ -160,45 +166,6 @@ public class DAVServlet extends HttpServlet {
         } finally {
             response.flushBuffer();
         }
-    }
-
-    private void logRequest(HttpServletRequest request) {
-        StringBuffer logBuffer = new StringBuffer();
-        logBuffer.append('\n');
-        logBuffer.append("request.getAuthType(): " + request.getAuthType());
-        logBuffer.append('\n');
-        logBuffer.append("request.getCharacterEncoding(): " + request.getCharacterEncoding());
-        logBuffer.append('\n');
-        logBuffer.append("request.getContentType(): " + request.getContentType());
-        logBuffer.append('\n');
-        logBuffer.append("request.getContextPath(): " + request.getContextPath());
-        logBuffer.append('\n');
-        logBuffer.append("request.getContentLength(): " + request.getContentLength());
-        logBuffer.append('\n');
-        logBuffer.append("request.getMethod(): " + request.getMethod());
-        logBuffer.append('\n');
-        logBuffer.append("request.getPathInfo(): " + request.getPathInfo());
-        logBuffer.append('\n');
-        logBuffer.append("request.getPathTranslated(): " + request.getPathTranslated());
-        logBuffer.append('\n');
-        logBuffer.append("request.getQueryString(): " + request.getQueryString());
-        logBuffer.append('\n');
-        logBuffer.append("request.getRemoteAddr(): " + request.getRemoteAddr());
-        logBuffer.append('\n');
-        logBuffer.append("request.getRemoteHost(): " + request.getRemoteHost());
-        logBuffer.append('\n');
-        logBuffer.append("request.getRemoteUser(): " + request.getRemoteUser());
-        logBuffer.append('\n');
-        logBuffer.append("request.getRequestURI(): " + request.getRequestURI());
-        logBuffer.append('\n');
-        logBuffer.append("request.getServerName(): " + request.getServerName());
-        logBuffer.append('\n');
-        logBuffer.append("request.getServerPort(): " + request.getServerPort());
-        logBuffer.append('\n');
-        logBuffer.append("request.getServletPath(): " + request.getServletPath());
-        logBuffer.append('\n');
-        logBuffer.append("request.getRequestURL(): " + request.getRequestURL());
-        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, logBuffer.toString());
     }
     
     public static void handleError(DAVException error, HttpServletResponse servletResponse) throws IOException {

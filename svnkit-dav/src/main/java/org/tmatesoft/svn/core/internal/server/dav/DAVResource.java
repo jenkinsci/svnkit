@@ -155,7 +155,7 @@ public class DAVResource {
         return myResourceURI;
     }
 
-    public SVNRepository getRepository() {
+    public FSRepository getRepository() {
         return myRepository;
     }
 
@@ -368,7 +368,7 @@ public class DAVResource {
     }
 
     public String getRepositoryUUID(boolean forceConnect) throws SVNException {
-        return getRepository().getRepositoryUUID(forceConnect);
+        return getRepository().getFSFS().getUUID();
     }
 
     public String getContentType() throws SVNException {
@@ -391,7 +391,7 @@ public class DAVResource {
     }
 
     public long getLatestRevision() throws SVNException {
-        return getRepository().getLatestRevision();
+        return getRepository().getFSFS().getYoungestRevision();
     }
 
     //TODO: remove this method later, use getContentLength(String path) instead
@@ -417,9 +417,10 @@ public class DAVResource {
     }
     
     public SVNLock getLock() throws SVNException {
-        return getRepository().getLock(getResourceURI().getPath());
+        final String path = getRepository().getRepositoryPath(getResourceURI().getPath());
+        return getRepository().getFSFS().getLockHelper(path, false);
     }
-
+    
     public void unlock(String token, boolean force) throws SVNException {
         Map pathsToTokens = new HashMap();
         pathsToTokens.put(getResourceURI().getPath(), token);

@@ -319,9 +319,9 @@ public class DAVRepositoryManager {
         }
         
         if (!repositoriesCache.containsKey(rootPath)) {
-            FSRepository resourceRepository = (FSRepository) SVNRepositoryFactory.create(SVNURL.parseURIEncoded(rootPath));
+            final FSRepository resourceRepository = (FSRepository) SVNRepositoryFactory.create(SVNURL.parseURIEncoded(rootPath));
             try {
-                resourceRepository.testConnection();
+                resourceRepository.openRepositoryRoot();
             } catch (SVNException svne) {
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, svne.getMessage());
                 SVNErrorMessage err = SVNErrorMessage.create(svne.getErrorMessage().getErrorCode(), "Could not open the requested SVN filesystem");
@@ -332,5 +332,20 @@ public class DAVRepositoryManager {
         return repositoriesCache.get(rootPath);
         
 
+    }
+    
+    public static void clearRepositoriesCache(HttpServletRequest request) {
+        @SuppressWarnings("unchecked")
+        final Map<String, FSRepository> repositoriesCache = (Map<String, FSRepository>) request
+                .getSession().getServletContext().getAttribute("mod_dav_svn:");
+        if (repositoriesCache != null) {
+            for (FSRepository repository : repositoriesCache.values()) {
+                try {
+                    repository.closeRepository();
+                } catch (SVNException e) {
+                }
+            }
+            request.getSession().getServletContext().removeAttribute("mod_dav_svn:");
+        }
     }
 }

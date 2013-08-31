@@ -75,5 +75,10 @@ public class DAVMakeActivityHandler extends ServletDAVHandler {
         resource.setExists(true);
         resource.setTxnName(txnInfo.getTxnId());
     }
+
+    @Override
+    public boolean isClosingConnection() {
+        return true;
+    }
     
 }

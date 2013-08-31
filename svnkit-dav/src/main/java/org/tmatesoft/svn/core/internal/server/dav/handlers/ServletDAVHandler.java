@@ -1751,7 +1751,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             InputStream inputStream = null;
             try {
                 inputStream = getRequestInputStream();
-                while (inputStream.read() != -1) {
+                final byte[] buffer = new byte[1024];
+                while (inputStream.read(buffer) >= 0) {
                     continue;
                 }
             } catch (IOException ioe) {
@@ -1761,83 +1762,49 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             }
             return -1;
         }
-
+        
         if (mySAXParser == null) {
-            CountingInputStream stream = null;
             try {
                 mySAXParser = getSAXParserFactory().newSAXParser();
-                if (myRequest.getContentLength() > 0) {
-                    org.xml.sax.XMLReader reader = mySAXParser.getXMLReader();
-                    reader.setContentHandler(this);
-                    reader.setDTDHandler(this);
-                    reader.setErrorHandler(this);
-                    reader.setEntityResolver(this);
-                    stream = new CountingInputStream(getRequestInputStream());
-                    XMLReader xmlReader = new XMLReader(stream);
-                    reader.parse(new InputSource(xmlReader));
-                }
             } catch (ParserConfigurationException e) {
-                if (stream == null || stream.getBytesRead() > 0) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
-                }
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
             } catch (SAXException e) {
-                if (stream == null || stream.getBytesRead() > 0) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
-                }
-            } catch (IOException e) {
-                if (stream == null || stream.getBytesRead() > 0) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
-                }
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
             }
+        } else {
+            mySAXParser.reset();
+        }
 
-            if (stream != null) {
-                if (stream.getBytesRead() > 0) {
-                    getDAVRequest().init();
-                }
-                return stream.getBytesRead();
+        CountingInputStream stream = null;
+        try {
+            if (myRequest.getContentLength() > 0) {
+                org.xml.sax.XMLReader reader = mySAXParser.getXMLReader();
+                reader.setContentHandler(this);
+                reader.setDTDHandler(this);
+                reader.setErrorHandler(this);
+                reader.setEntityResolver(this);
+                stream = new CountingInputStream(getRequestInputStream());
+                XMLReader xmlReader = new XMLReader(stream);
+                reader.parse(new InputSource(xmlReader));
             }
+        } catch (SAXException e) {
+            if (stream == null || stream.getBytesRead() > 0) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
+            }
+        } catch (IOException e) {
+            if (stream == null || stream.getBytesRead() > 0) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
+            }
+        }
+
+        if (stream != null) {
+            if (stream.getBytesRead() > 0) {
+                getDAVRequest().init();
+            }
+            return stream.getBytesRead();
         }
         
         return 0;
-    }
-
-    //TODO: unused?
-    protected void handleError(DAVException error, DAVResponse response) {
-        if (response == null) {
-            DAVException stackErr = error;
-            while (stackErr != null && stackErr.getTagName() == null) {
-                stackErr = stackErr.getPreviousException();
-            }
-            
-            if (stackErr != null && stackErr.getTagName() != null) {
-                myResponse.setContentType(DEFAULT_XML_CONTENT_TYPE);
-                
-                StringBuffer errorMessageBuffer = new StringBuffer();
-                errorMessageBuffer.append('\n');
-                errorMessageBuffer.append("<D:error xmlns:D=\"DAV:\"");
-                
-                if (stackErr.getMessage() != null) {
-                    errorMessageBuffer.append(" xmlns:m=\"http://apache.org/dav/xmlns\"");
-                }
-                
-                if (stackErr.getNameSpace() != null) {
-                    errorMessageBuffer.append(" xmlns:C=\"");
-                    errorMessageBuffer.append(stackErr.getNameSpace());
-                    errorMessageBuffer.append("\">\n<C:");
-                    errorMessageBuffer.append(stackErr.getTagName());
-                    errorMessageBuffer.append("/>");
-                } else {
-                    errorMessageBuffer.append(">\n<D:");
-                    errorMessageBuffer.append(stackErr.getTagName());
-                    errorMessageBuffer.append("/>");
-                }
-                
-                if (stackErr.getMessage() != null) {
-                    
-                }
-
-            }
-        }
     }
 
     protected HttpServletResponse getHttpServletResponse() {
@@ -1909,5 +1876,9 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             myParentResource = parentResource;
         }
         
+    }
+
+    public boolean isClosingConnection() {
+        return false;
     }
 }
