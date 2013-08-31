@@ -465,8 +465,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         try {
             openRepository();
             path = getRepositoryPath(path);
-            SVNLock lock = myFSFS.getLockHelper(path, false);
-            return lock;
+            return myFSFS.getLockHelper(path, false);
         } finally {
             closeRepository();
         }
@@ -697,7 +696,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 		return false;
 	}
 
-    void closeRepository() throws SVNException {
+    public void closeRepository() throws SVNException {
         if (myFSFS != null) {
             myFSFS.close();
         }
@@ -763,7 +762,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
     }
 
-    private void openRepositoryRoot() throws SVNException {
+    public void openRepositoryRoot() throws SVNException {
         lock();
 
         String hostName = getLocation().getHost();
