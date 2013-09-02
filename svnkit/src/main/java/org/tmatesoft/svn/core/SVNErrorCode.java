@@ -343,6 +343,7 @@ public class SVNErrorCode implements Serializable {
      * @since 1.8, SVN 1.8
      */
     public static final SVNErrorCode WC_MIXED_REVISIONS = new SVNErrorCode(WC_CATEGORY, 40, "Mixed-revision working copy was found but not expected");
+    public static final SVNErrorCode WC_DUPLICATE_EXTERNALS_TARGET = new SVNErrorCode(WC_CATEGORY, 7, "Duplicate targets in svn:externals property");
     
     public static final SVNErrorCode FS_GENERAL = new SVNErrorCode(FS_CATEGORY, 0, "General filesystem error");
     public static final SVNErrorCode FS_CLEANUP = new SVNErrorCode(FS_CATEGORY, 1, "Error closing filesystem");
