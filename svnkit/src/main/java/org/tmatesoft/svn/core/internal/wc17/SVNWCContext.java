@@ -4071,7 +4071,6 @@ public class SVNWCContext {
 
     public static class RunDirInstall implements RunWorkQueueOperation {
 
-        @Override
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
             File localRelPath = SVNFileUtil.createFilePath(workItem.first().next().getValue());
             File localAbsPath = SVNFileUtil.createFilePath(wcRootAbspath, localRelPath);
