@@ -543,7 +543,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         Structure<RepositoryInfo> repositoryInfo = getRepositoryAccess().createRepositoryFor(target, revision, pegRevision, dirAbspath);
         repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
         long revnum = repositoryInfo.lng(RepositoryInfo.revision);
-        SVNURL swithUrl = repositoryInfo.<SVNURL>get(RepositoryInfo.url);
+        SVNURL switchUrl = repositoryInfo.<SVNURL>get(RepositoryInfo.url);
         repositoryInfo.release();
         
         String uuid = repository.getRepositoryUUID(true);
@@ -553,12 +553,13 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         if (iprops != null && !iprops.isEmpty()) {
             iprops = SvnNgInheritableProperties.translateInheritedPropertiesPaths(iprops);
         }
+        repository.setLocation(SVNURL.parseURIEncoded(SVNPathUtil.removeTail(url.toString())), true);
         File definitionAbsPath = SVNFileUtil.getParentFile(localAbsPath);
         ISVNUpdateEditor updateEditor = SvnExternalUpdateEditor.createEditor(
                 getWcContext(), 
                 localAbsPath, 
                 definitionAbsPath, 
-                swithUrl, 
+                switchUrl,
                 reposRootUrl, 
                 uuid,
                 iprops,
@@ -569,7 +570,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                 pegRevision, 
                 revision);
         SvnExternalFileReporter reporter = new SvnExternalFileReporter(getWcContext(), localAbsPath, true, useCommitTimes);
-        repository.update(swithUrl, revnum, SVNFileUtil.getFileName(localAbsPath), SVNDepth.UNKNOWN, reporter, updateEditor);
+        repository.update(url, revnum, SVNFileUtil.getFileName(localAbsPath), SVNDepth.UNKNOWN, reporter, updateEditor);
 
         handleEvent(SVNEventFactory.createSVNEvent(localAbsPath, SVNNodeKind.NONE, null, revnum, SVNEventAction.UPDATE_COMPLETED, null, null, null, 1, 1));
 
