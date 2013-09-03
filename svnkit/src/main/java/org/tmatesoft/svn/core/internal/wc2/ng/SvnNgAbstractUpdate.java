@@ -131,7 +131,8 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             return -1;
         }
 
-        if (depthIsSticky && depth.compareTo(SVNDepth.INFINITY) < 0) {
+        boolean croppingTarget = depthIsSticky && depth.compareTo(SVNDepth.INFINITY) < 0;
+        if (croppingTarget) {
             if (depth == SVNDepth.EXCLUDE) {
                 wcContext.exclude(localAbspath);
                 return SVNWCContext.INVALID_REVNUM;
@@ -216,7 +217,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         long targetRevision = editor.getTargetRevision();
         
         if (targetRevision >= 0) {
-            if ((depth == SVNDepth.INFINITY || depth == SVNDepth.UNKNOWN) && !getOperation().isIgnoreExternals()) {
+            if ((depth.isRecursive() || croppingTarget) && !getOperation().isIgnoreExternals()) {
                 getWcContext().getDb().gatherExternalDefinitions(localAbspath, externalsStore);
                 handleExternals(externalsStore.getNewExternals(), externalsStore.getDepths(), anchorUrl, localAbspath, reposRoot, depth, false);
             }
