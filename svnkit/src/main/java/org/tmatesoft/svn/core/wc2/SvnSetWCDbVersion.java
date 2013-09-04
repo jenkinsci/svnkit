@@ -2,6 +2,7 @@ package org.tmatesoft.svn.core.wc2;
 
 import java.io.File;
 
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -54,7 +55,12 @@ public class SvnSetWCDbVersion extends SvnOperation<Void> {
                 continue;
             }
             final SVNSqlJetDb db = SVNSqlJetDb.open(wcDb, Mode.ReadWrite);
-            SvnNgUpgradeSDb.setVersion(db, getVersion());
+            db.beginTransaction(SqlJetTransactionMode.WRITE);
+            try {
+                SvnNgUpgradeSDb.setVersion(db, getVersion());
+            } finally {
+                db.commit();
+            }
         }
         return null;
     }

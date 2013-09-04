@@ -803,38 +803,39 @@ public class SvnNgUpgradeSDb {
             try {
                 readOnlyDb = new SVNWCDb();
                 readOnlyDb.open(ISVNWCDb.SVNWCDbOpenMode.ReadOnly, null, false, false);
-
-                sDb.getDb().createIndex("CREATE UNIQUE INDEX IF NOT EXISTS I_NODES_MOVED ON NODES (wc_id, moved_to, op_depth);");
-                sDb.getDb().createIndex("CREATE INDEX IF NOT EXISTS I_PRISTINE_MD5 ON PRISTINE (md5_checksum);");
-
-                final ISqlJetCursor actulaNode = sDb.getDb().getTable("ACTUAL_NODE").open();
-                while(!actulaNode.eof()) {
-                    final String conflictOld = actulaNode.getString(ACTUAL_NODE__Fields.conflict_old.toString());
-                    final String conflictWorking = actulaNode.getString(ACTUAL_NODE__Fields.conflict_working.toString());
-                    final String conflictNew = actulaNode.getString(ACTUAL_NODE__Fields.conflict_new.toString());
-                    final String propReject = actulaNode.getString(ACTUAL_NODE__Fields.prop_reject.toString());
-                    final byte[] treeConflictData = actulaNode.getBlobAsArray(ACTUAL_NODE__Fields.tree_conflict_data.toString());
-                    
-                    if (conflictOld == null && conflictWorking == null && conflictNew == null && propReject == null && treeConflictData == null) {
+                if (sDb.getDb().getSchema().getTable("NODES").getColumn("inherited_props") == null) {
+                    sDb.getDb().createIndex("CREATE UNIQUE INDEX IF NOT EXISTS I_NODES_MOVED ON NODES (wc_id, moved_to, op_depth);");
+                    sDb.getDb().createIndex("CREATE INDEX IF NOT EXISTS I_PRISTINE_MD5 ON PRISTINE (md5_checksum);");
+    
+                    final ISqlJetCursor actulaNode = sDb.getDb().getTable("ACTUAL_NODE").open();
+                    while(!actulaNode.eof()) {
+                        final String conflictOld = actulaNode.getString(ACTUAL_NODE__Fields.conflict_old.toString());
+                        final String conflictWorking = actulaNode.getString(ACTUAL_NODE__Fields.conflict_working.toString());
+                        final String conflictNew = actulaNode.getString(ACTUAL_NODE__Fields.conflict_new.toString());
+                        final String propReject = actulaNode.getString(ACTUAL_NODE__Fields.prop_reject.toString());
+                        final byte[] treeConflictData = actulaNode.getBlobAsArray(ACTUAL_NODE__Fields.tree_conflict_data.toString());
+                        
+                        if (conflictOld == null && conflictWorking == null && conflictNew == null && propReject == null && treeConflictData == null) {
+                            actulaNode.next();
+                            continue;
+                        }
+                        final String localRelpath = actulaNode.getString(ACTUAL_NODE__Fields.local_relpath.toString());
+                        final SVNSkel conflictData = createConflictSkel(wcRootAbsPath, readOnlyDb, localRelpath, conflictOld, conflictWorking, conflictNew, propReject, treeConflictData);
+                        
+                        final Map<String, Object> newRowValues = new HashMap<String, Object>();
+                        if (conflictData != null) {
+                            newRowValues.put(ACTUAL_NODE__Fields.conflict_data.toString(), conflictData.unparse());
+                        }
+    
+                        newRowValues.put(ACTUAL_NODE__Fields.conflict_old.toString(), null);
+                        newRowValues.put(ACTUAL_NODE__Fields.conflict_working.toString(), null);
+                        newRowValues.put(ACTUAL_NODE__Fields.conflict_new.toString(), null);
+                        newRowValues.put(ACTUAL_NODE__Fields.prop_reject.toString(), null);
+                        newRowValues.put(ACTUAL_NODE__Fields.tree_conflict_data.toString(), null);
+                        actulaNode.updateByFieldNames(newRowValues);
+                        
                         actulaNode.next();
-                        continue;
                     }
-                    final String localRelpath = actulaNode.getString(ACTUAL_NODE__Fields.local_relpath.toString());
-                    final SVNSkel conflictData = createConflictSkel(wcRootAbsPath, readOnlyDb, localRelpath, conflictOld, conflictWorking, conflictNew, propReject, treeConflictData);
-                    
-                    final Map<String, Object> newRowValues = new HashMap<String, Object>();
-                    if (conflictData != null) {
-                        newRowValues.put(ACTUAL_NODE__Fields.conflict_data.toString(), conflictData.unparse());
-                    }
-
-                    newRowValues.put(ACTUAL_NODE__Fields.conflict_old.toString(), null);
-                    newRowValues.put(ACTUAL_NODE__Fields.conflict_working.toString(), null);
-                    newRowValues.put(ACTUAL_NODE__Fields.conflict_new.toString(), null);
-                    newRowValues.put(ACTUAL_NODE__Fields.prop_reject.toString(), null);
-                    newRowValues.put(ACTUAL_NODE__Fields.tree_conflict_data.toString(), null);
-                    actulaNode.updateByFieldNames(newRowValues);
-                    
-                    actulaNode.next(); 
                 }
             } catch (SqlJetException e) {
                 SVNSqlJetDb.createSqlJetError(e);
@@ -897,18 +898,23 @@ public class SvnNgUpgradeSDb {
 
         public void bumpTo(SVNWCDb db, SVNSqlJetDb sDb, File wcRootAbsPath) throws SVNException {
             try {
-                if (sDb.getDb().getSchema().getIndex("I_ACTUAL_CHANGELIST") != null) {
-                    sDb.getDb().dropIndex("I_ACTUAL_CHANGELIST");
+                if (sDb.getDb().getSchema().getTable("NODES").getColumn("inherited_props") != null) {
+                    setVersion(sDb, 31);
+                    return;
+                } else {    
+                    if (sDb.getDb().getSchema().getIndex("I_ACTUAL_CHANGELIST") != null) {
+                        sDb.getDb().dropIndex("I_ACTUAL_CHANGELIST");
+                    }
+                    if (sDb.getDb().getSchema().getIndex("I_EXTERNALS_PARENT") != null) {
+                        sDb.getDb().dropIndex("I_EXTERNALS_PARENT");
+                    }
+                    sDb.getDb().alterTable("ALTER TABLE NODES ADD COLUMN inherited_props BLOB;");
+    
+                    sDb.getDb().dropIndex("I_NODES_PARENT");
+                    sDb.getDb().createIndex("CREATE UNIQUE INDEX I_NODES_PARENT ON NODES (wc_id, parent_relpath, local_relpath, op_depth);");
+                    sDb.getDb().dropIndex("I_ACTUAL_PARENT");
+                    sDb.getDb().createIndex("CREATE UNIQUE INDEX I_ACTUAL_PARENT ON ACTUAL_NODE (wc_id, parent_relpath, local_relpath);");
                 }
-                if (sDb.getDb().getSchema().getIndex("I_EXTERNALS_PARENT") != null) {
-                    sDb.getDb().dropIndex("I_EXTERNALS_PARENT");
-                }
-                sDb.getDb().alterTable("ALTER TABLE NODES ADD COLUMN inherited_props BLOB;");
-
-                sDb.getDb().dropIndex("I_NODES_PARENT");
-                sDb.getDb().createIndex("CREATE UNIQUE INDEX I_NODES_PARENT ON NODES (wc_id, parent_relpath, local_relpath, op_depth);");
-                sDb.getDb().dropIndex("I_ACTUAL_PARENT");
-                sDb.getDb().createIndex("CREATE UNIQUE INDEX I_ACTUAL_PARENT ON ACTUAL_NODE (wc_id, parent_relpath, local_relpath);");
             } catch (SqlJetException e) {
                 SVNSqlJetDb.createSqlJetError(e);
             }
