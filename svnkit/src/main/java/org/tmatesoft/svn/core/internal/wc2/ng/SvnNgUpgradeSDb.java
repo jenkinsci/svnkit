@@ -228,7 +228,7 @@ public class SvnNgUpgradeSDb {
         }
     }
     
-    private static void setVersion(SVNSqlJetDb sDb, int version) throws SVNException {
+    public static void setVersion(SVNSqlJetDb sDb, int version) throws SVNException {
         try {
             sDb.getDb().pragma("pragma user_version = " + version);
         } catch (SqlJetException e) {

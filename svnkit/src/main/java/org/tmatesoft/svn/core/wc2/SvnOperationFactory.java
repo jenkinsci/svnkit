@@ -1212,6 +1212,10 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         return new SvnGetStatusSummary(this);
     }
 
+    public SvnSetWCDbVersion createSetWCDbVersion() {
+        return new SvnSetWCDbVersion(this);
+    }
+
     /**
      * Sets whether to dispose repository pool on {@link #dispose()} call.
      * This flag has sense only if <code>repositoryPool</code> field is not <code>null</code>.
