@@ -1,4 +1,10 @@
-== version 1.7.9 ==
+== version 1.7.11 ==
+
++ Eclipse update site issues fixed.
++ Minor performance improvements.
++ Minor stability improvements and bugfixes. 
+
+== version 1.7.10 ==
 
 + SSH agent support added via JSCH library.
 + Minor stability improvements and bugfixes. 

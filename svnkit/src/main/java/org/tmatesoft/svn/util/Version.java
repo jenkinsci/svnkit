@@ -39,7 +39,7 @@ public class Version {
     private static final String VERSION_MINOR_DEFAULT = "7";
     private static final String VERSION_MICRO_DEFAULT = "11";
     private static final String VERSION_REVISION_DEFAULT = "SNAPSHOT";
-    private static final String SVN_VERSION_DEFAULT = "1.7.10";
+    private static final String SVN_VERSION_DEFAULT = "1.7.11";
     private static String ourUserAgent;
 
     private static Properties ourProperties;
