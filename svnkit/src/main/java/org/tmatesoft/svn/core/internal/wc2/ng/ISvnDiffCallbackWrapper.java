@@ -34,16 +34,12 @@ public class ISvnDiffCallbackWrapper implements ISvnDiffCallback2 {
     }
 
     public void fileAdded(SvnDiffCallbackResult result, File relPath, SvnDiffSource copyFromSource, SvnDiffSource rightSource, File copyFromFile, File rightFile, SVNProperties copyFromProps, SVNProperties rightProps) throws SVNException {
-        SVNProperties pristineProps = copyFromProps;
-
-        if (rightProps != null && rightProps.size() > 0) {
-            if (pristineProps == null) {
-                pristineProps = new SVNProperties();
-            }
-            SVNProperties propChanges = rightProps.compareTo(pristineProps);
-            callback.dirPropsChanged(result, getAbsPath(relPath), true, propChanges, pristineProps);
+        if (copyFromProps == null) {
+            copyFromProps = new SVNProperties();
         }
-        callback.dirClosed(result, getAbsPath(relPath), true);
+        SVNProperties propChanges = rightProps.compareTo(copyFromProps);
+
+        callback.fileAdded(result, getAbsPath(relPath), copyFromSource != null ? copyFromFile : null, rightFile, 0, rightSource.getRevision(), copyFromProps != null ? copyFromProps.getStringValue(SVNProperty.MIME_TYPE) : null, rightProps != null ? rightProps.getStringValue(SVNProperty.MIME_TYPE) : null, copyFromSource != null ? copyFromSource.getReposRelPath() : null, copyFromSource != null ? copyFromSource.getRevision() : SVNRepository.INVALID_REVISION, propChanges, copyFromProps);
     }
 
     public void fileDeleted(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, File leftFile, SVNProperties leftProps) throws SVNException {

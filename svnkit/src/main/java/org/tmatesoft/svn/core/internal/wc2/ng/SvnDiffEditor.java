@@ -55,6 +55,9 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
     private final SvnDiffCallbackResult result;
 
     public SvnDiffEditor(File anchorAbspath, String target, ISvnDiffCallback callback, SVNDepth depth, SVNWCContext context, boolean reverseOrder, boolean useTextBase, boolean showCopiesAsAdds, boolean ignoreAncestry, Collection<String> changelists, boolean useGitDiffFormat, ISVNCanceller canceller) {
+        if (useGitDiffFormat) {
+            showCopiesAsAdds = true;
+        }
         this.depth = depth;
         this.context = context;
         this.db = context.getDb();
@@ -63,6 +66,9 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
         this.useTextBase = useTextBase;
         this.showCopiesAsAdds = showCopiesAsAdds;
         this.callback = new ISvnDiffCallbackWrapper(callback, true, anchorAbspath);
+        if (!showCopiesAsAdds) {
+            this.callback = new SvnCopyAsChangedDiffCallback(this.callback);
+        }
         if (reverseOrder) {
             this.callback = new SvnReverseOrderDiffCallback(this.callback, null);
         }
@@ -250,6 +256,10 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
             }
 
             if (currentEntry.propChanges.size() > 0) {
+                reposProps.putAll(currentEntry.propChanges);
+            }
+
+            if (currentEntry.reposOnly) {
                 result.reset();
                 callback.dirDeleted(result, new File(currentEntry.path), currentEntry.leftSource, reposProps, null);
                 reportedClosed = true;
@@ -1208,6 +1218,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
             this.depth = depth;
             this.localAbspath = localAbspath;
             this.propChanges = new SVNProperties();
+            this.compared = new HashSet<String>();
         }
 
         public void ensureLocalInfo() throws SVNException {
