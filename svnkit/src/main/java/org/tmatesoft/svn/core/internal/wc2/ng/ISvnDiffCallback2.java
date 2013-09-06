@@ -39,6 +39,11 @@ public interface ISvnDiffCallback2 {
                             File leftFile,
                             SVNProperties leftProps) throws SVNException;
 
+    public void fileClosed(SvnDiffCallbackResult result,
+                            File relPath,
+                            SvnDiffSource leftSource,
+                            SvnDiffSource rightSource) throws SVNException;
+
     public void dirOpened(SvnDiffCallbackResult result,
                           File relPath,
                           SvnDiffSource leftSource,
@@ -68,14 +73,6 @@ public interface ISvnDiffCallback2 {
                          SVNProperties copyFromProps,
                          SVNProperties rightProps,
                          Object dirBaton) throws SVNException;
-
-    public void dirPropsChanged(SvnDiffCallbackResult result,
-                                File relPath,
-                                SvnDiffSource leftSource,
-                                SvnDiffSource rightSource,
-                                SVNProperties leftProps,
-                                SVNProperties rightProps,
-                                SVNProperties propChanges) throws SVNException;
 
     public void dirClosed(SvnDiffCallbackResult result,
                           File relPath,

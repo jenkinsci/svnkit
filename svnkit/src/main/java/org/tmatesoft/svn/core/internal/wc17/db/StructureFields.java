@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
@@ -23,7 +24,8 @@ public class StructureFields {
         depth(SVNDepth.class), 
         checksum(SvnChecksum.class), 
         target(String.class),
-        hadProps(Boolean.TYPE);
+        hadProps(Boolean.TYPE),
+        props(SVNProperties.class);
 
         public static final Collection<PristineInfo> all = Collections.emptyList(); 
         public static final Collection<PristineInfo> defaults = all;

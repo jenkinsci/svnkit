@@ -1484,6 +1484,23 @@ public class SVNWCDb implements ISVNWCDb {
                     else
                         info.target = SVNFileUtil.createFilePath(getColumnText(stmt, SVNWCDbSchema.NODES__Fields.symlink_target));
                 }
+                if (f.contains(BaseInfoField.hadProps)) {
+                    info.hadProps = !stmt.isColumnNull(NODES__Fields.properties) && stmt.getColumnBlob(NODES__Fields.properties).length > 2;
+                }
+                if (f.contains(BaseInfoField.props)) {
+                    SVNWCDbStatus nodeStatus = getColumnPresence(stmt);
+                    SVNProperties properties;
+                    if (nodeStatus == SVNWCDbStatus.Normal || nodeStatus == SVNWCDbStatus.Incomplete) {
+                        properties = stmt.getColumnProperties(NODES__Fields.properties);
+                        if (properties == null) {
+                            properties = new SVNProperties();
+                        }
+                    } else {
+                        assert stmt.isColumnNull(NODES__Fields.properties);
+                        properties = null;
+                    }
+                    info.props = properties;
+                }
                 if (f.contains(BaseInfoField.updateRoot)) {
                     info.updateRoot = getColumnBoolean(stmt, SVNWCDbSchema.NODES__Fields.file_external);
                 }
@@ -5809,6 +5826,18 @@ public class SVNWCDb implements ISVNWCDb {
                 result.set(PristineInfo.target, getColumnText(stmt, NODES__Fields.symlink_target));
             }
             result.set(PristineInfo.hadProps, hasColumnProperties(stmt, NODES__Fields.properties));
+
+            SVNProperties props;
+            if (status == SVNWCDbStatus.Normal || status == SVNWCDbStatus.Incomplete) {
+                props = SvnWcDbStatementUtil.getColumnProperties(stmt, NODES__Fields.properties);
+                if (props == null) {
+                    props = new SVNProperties();
+                }
+            } else {
+                assert stmt.isColumnNull(NODES__Fields.properties);
+                props = null;
+            }
+            result.set(PristineInfo.props, props);
         } finally {
             stmt.reset();
         }

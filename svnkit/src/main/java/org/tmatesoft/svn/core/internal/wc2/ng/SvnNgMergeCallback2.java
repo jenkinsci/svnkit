@@ -372,6 +372,11 @@ public class SvnNgMergeCallback2 implements ISvnDiffCallback2 {
         }
     }
 
+    public void fileClosed(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource) throws SVNException {
+        SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE);
+        SVNErrorManager.error(errorMessage, SVNLogType.WC);
+    }
+
     public void dirOpened(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, SvnDiffSource copyFromSource, Object dirBaton) throws SVNException {
         DirectoryBaton currentDirectory = (DirectoryBaton) dirBaton;
 

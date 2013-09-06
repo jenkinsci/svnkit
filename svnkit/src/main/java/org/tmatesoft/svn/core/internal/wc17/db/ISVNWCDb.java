@@ -270,8 +270,11 @@ public interface ISVNWCDb {
          * The BASE node has been marked as deleted. Only used as an internal
          * status.
          */
-        BaseDeleted
+        BaseDeleted;
 
+        public boolean isNotPresent() {
+            return this == Excluded || this == ServerExcluded || this == NotPresent;
+        }
     }
 
     /**
@@ -682,7 +685,7 @@ public interface ISVNWCDb {
     class WCDbBaseInfo {
 
         public enum BaseInfoField {
-            status, kind, revision, reposRelPath, reposRootUrl, reposUuid, changedRev, changedDate, changedAuthor, lastModTime, depth, checksum, translatedSize, target, lock, updateRoot, reposId; 
+            status, kind, revision, reposRelPath, reposRootUrl, reposUuid, changedRev, changedDate, changedAuthor, lastModTime, depth, checksum, translatedSize, target, lock, updateRoot, reposId, hadProps, props;
         }
 
         public SVNWCDbStatus status;
@@ -702,6 +705,8 @@ public interface ISVNWCDb {
         public File target;
         public boolean updateRoot;
         public SVNWCDbLock lock;
+        public boolean hadProps;
+        public SVNProperties props;
     }
 
     /**
