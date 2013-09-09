@@ -2912,12 +2912,18 @@ public class SVNWCDb implements ISVNWCDb {
 
         return names;
     }
+
+    public Map<String, WCDbBaseInfo> getBaseChildrenMap(File localAbsPath, boolean fetchLocks) throws SVNException {
+        DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadOnly);
+        return getBaseChildrenMap(parsed.wcDbDir.getWCRoot(), parsed.localRelPath, fetchLocks);
+    }
+
     public Map<String, WCDbBaseInfo> getBaseChildrenMap(SVNWCDbRoot wcRoot, File localRelPath, boolean fetchLocks) throws SVNException {
         final long wcId = wcRoot.getWcId();
         final SVNSqlJetDb sDb = wcRoot.getSDb();
 
         final Map<String, WCDbBaseInfo> children = new TreeMap<String, WCDbBaseInfo>();
-        final SVNSqlJetSelectStatement baseStmt = (SVNSqlJetSelectStatement) sDb.getStatement(SVNWCDbStatements.SELECT_BASE_NODE_CHILDREN);
+        final SVNSqlJetSelectStatement baseStmt = (SVNSqlJetSelectStatement) sDb.getStatement(SVNWCDbStatements.SELECT_BASE_CHILDREN_INFO);
 
         baseStmt.bindf("is", wcId, localRelPath);
         Map<String, Object> row = null;

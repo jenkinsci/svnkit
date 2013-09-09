@@ -31,7 +31,6 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
     private ISVNWCDb db;
     private File anchorAbspath;
     private String target;
-    private boolean useTextBase;
     private boolean showCopiesAsAdds;
     private ISvnDiffCallback2 callback;
     private Collection<String> changelists;
@@ -63,7 +62,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
         this.db = context.getDb();
         this.anchorAbspath = anchorAbspath;
         this.target = target;
-        this.useTextBase = useTextBase;
+        this.diffPristine = useTextBase;
         this.showCopiesAsAdds = showCopiesAsAdds;
         this.callback = new ISvnDiffCallbackWrapper(callback, true, anchorAbspath);
         if (!showCopiesAsAdds) {
@@ -73,6 +72,9 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
             this.callback = new SvnReverseOrderDiffCallback(this.callback, null);
         }
         this.changelists = changelists;
+        if (showCopiesAsAdds) {
+            ignoreAncestry = false;
+        }
         this.ignoreAncestry = ignoreAncestry;
         this.useGitDiffFormat = useGitDiffFormat;
         this.canceller = canceller;
@@ -225,6 +227,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
     }
 
     public void closeDir() throws SVNException {
+        try {
         boolean reportedClosed = false;
         Entry pb = currentEntry.parent;
 
@@ -287,7 +290,9 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
         if (pb != null && localBeforeRemote && !currentEntry.reposOnly && !currentEntry.ignoringAncestry) {
             handleLocalOnly(pb, currentEntry.name);
         }
-        currentEntry = currentEntry.parent;
+        } finally {
+            currentEntry = currentEntry.parent;
+        }
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
@@ -411,6 +416,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {
+        try {
         Entry pb = currentEntry.parent;
 
         if (!currentEntry.skip && textChecksum != null) {
@@ -474,7 +480,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
                 localFile = context.getTranslatedFile(currentEntry.localAbspath, currentEntry.localAbspath, true, false, false, false, false); //TODO: cancellation?
             }
 
-            SVNProperties propChanges = localProps.compareTo(reposProps);
+            SVNProperties propChanges = reposProps.compareTo(localProps);
 
             result.reset();
             callback.fileChanged(result, new File(currentEntry.path), currentEntry.leftSource, currentEntry.rightSource, reposFile, localFile, reposProps, localProps, true, propChanges);
@@ -483,8 +489,9 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
         if (!localBeforeRemote && !currentEntry.reposOnly && !currentEntry.ignoringAncestry) {
             handleLocalOnly(pb, currentEntry.name);
         }
-
-        currentEntry = currentEntry.parent;
+        } finally {
+            currentEntry = currentEntry.parent;
+        }
     }
 
     public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
@@ -1039,7 +1046,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
         boolean skipChildren = result.skipChildren;
 
         if (!skipChildren && (depth == SVNDepth.UNKNOWN || depth.compareTo(SVNDepth.EMPTY) > 0)) {
-            Map<String, ISVNWCDb.WCDbBaseInfo> nodes = db.getBaseChildrenMap(getWcRoot(), localAbsPath, true);
+            Map<String, ISVNWCDb.WCDbBaseInfo> nodes = db.getBaseChildrenMap(localAbsPath, true);
             List<String> children = new ArrayList<String>(nodes.keySet());
             Collections.sort(children);
 

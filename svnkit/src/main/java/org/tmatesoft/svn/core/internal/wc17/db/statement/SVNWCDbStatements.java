@@ -207,7 +207,8 @@ public enum SVNWCDbStatements {
     SELECT_MOVED_PAIR3(SVNWCDbSelectMovedPair3.class),
     SELECT_HAS_NON_FILE_CHILDREN(SVNWCDbSelectHasNonFileChildren.class),
     SELECT_HAS_GRANDCHILDREN(SVNWCDbSelectHasGrandChildren.class),
-    SELECT_DEPTH_NODE(SVNWCDbSelectDepthNode.class)
+    SELECT_DEPTH_NODE(SVNWCDbSelectDepthNode.class),
+    SELECT_BASE_CHILDREN_INFO(SVNWCDbSelectBaseChildrenInfo.class)
     ;
     
 
