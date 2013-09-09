@@ -30,7 +30,7 @@ public class SvnReverseOrderDiffCallback implements ISvnDiffCallback2 {
         SVNProperties reversedPropChanges = null;
         if (propChanges != null) {
             assert leftProps != null && rightProps != null;
-            reversedPropChanges = leftProps.compareTo(rightProps);
+            reversedPropChanges = rightProps.compareTo(leftProps);
         }
         delegate.fileChanged(result, relPath, rightSource, leftSource, rightFile, leftFile, rightProps, leftProps, fileModified, reversedPropChanges);
     }
@@ -70,7 +70,7 @@ public class SvnReverseOrderDiffCallback implements ISvnDiffCallback2 {
         SVNProperties reversedPropChanges = null;
         if (propChanges != null) {
             assert leftProps != null && rightProps != null;
-            reversedPropChanges = leftProps.compareTo(rightProps);
+            reversedPropChanges = rightProps.compareTo(leftProps);
         }
         delegate.dirChanged(result, relPath, rightSource, leftSource, rightProps, leftProps, reversedPropChanges, dirBaton);
     }

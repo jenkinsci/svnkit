@@ -274,7 +274,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
                 } else {
                     localProps = db.readProperties(currentEntry.localAbspath);
                 }
-                SVNProperties propChanges = localProps.compareTo(reposProps);
+                SVNProperties propChanges = reposProps.compareTo(localProps);
                 if (propChanges.size() > 0) {
                     result.reset();
                     callback.dirChanged(result, new File(currentEntry.path), currentEntry.leftSource, currentEntry.rightSource, reposProps, localProps, propChanges, null);
