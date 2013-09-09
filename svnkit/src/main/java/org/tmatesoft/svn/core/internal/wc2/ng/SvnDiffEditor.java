@@ -260,6 +260,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
 
             if (currentEntry.propChanges.size() > 0) {
                 reposProps.putAll(currentEntry.propChanges);
+                reposProps.removeNullValues();
             }
 
             if (currentEntry.reposOnly) {
@@ -452,6 +453,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
 
         SVNProperties reposProps = new SVNProperties(propBase);
         reposProps.putAll(currentEntry.propChanges);
+        reposProps.removeNullValues();
 
         File reposFile = currentEntry.tempFile;
         if (reposFile == null) {
@@ -716,6 +718,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
             SVNProperties leftProps = propDiffs.originalProps;
             SVNProperties rightProps = new SVNProperties(leftProps);
             rightProps.putAll(propChanges);
+            rightProps.removeNullValues();
 
             result.reset();
             callback.dirChanged(result, new File(path), leftSource, rightSource, leftProps, rightProps, propChanges, null);

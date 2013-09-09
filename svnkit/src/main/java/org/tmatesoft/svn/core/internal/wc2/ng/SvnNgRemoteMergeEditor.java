@@ -231,6 +231,7 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
             if (db.propChanges.size() > 0 || db.added) {
                 SVNProperties rightProps = new SVNProperties(pristineProps);
                 rightProps.putAll(db.propChanges);
+                rightProps.removeNullValues();
                 if (db.added) {
                     mergeResult.reset();
                     processor.dirAdded(mergeResult, SVNFileUtil.createFilePath(db.path), null, db.rightSource, null, rightProps, db.pdb);
@@ -319,6 +320,7 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
             }
             SVNProperties rightProps = fb.pristineProps == null ? new SVNProperties() : new SVNProperties(fb.pristineProps);
             rightProps.putAll(fb.propChanges);
+            rightProps.removeNullValues();
 
             if (fb.added) {
                 mergeResult.reset();
