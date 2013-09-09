@@ -83,7 +83,7 @@ public class SvnDiffCallback implements ISvnDiffCallback {
 
         if (propChanges != null && !propChanges.isEmpty()) {
             //we do not rev1 and rev2 here because SVN doesn't
-            propertiesChanged(path, revision1, revision2, false, propChanges, originalProperties);
+            propertiesChanged(path, rev1, rev2, false, propChanges, originalProperties);
         }
         generator.setForceEmpty(false);
     }
@@ -110,7 +110,7 @@ public class SvnDiffCallback implements ISvnDiffCallback {
         if (regularDiff == null || regularDiff.isEmpty()) {
             return;
         }
-        generator.displayPropsChanged(getTarget(path), getRevisionString(revision1), getRevisionString(revision2), dirWasAdded, originalProperties, regularDiff, outputStream);
+        generator.displayPropsChanged(getTarget(path), dirWasAdded ? getRevisionString(0) : getRevisionString(revision1), getRevisionString(revision2), dirWasAdded, originalProperties, regularDiff, outputStream);
     }
 
     public void dirClosed(SvnDiffCallbackResult result, File path, boolean dirWasAdded) throws SVNException {

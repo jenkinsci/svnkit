@@ -37,7 +37,7 @@ public class ISvnDiffCallbackWrapper implements ISvnDiffCallback2 {
         if (copyFromProps == null) {
             copyFromProps = new SVNProperties();
         }
-        SVNProperties propChanges = rightProps.compareTo(copyFromProps);
+        SVNProperties propChanges = copyFromProps.compareTo(rightProps);
 
         callback.fileAdded(result, getAbsPath(relPath), copyFromSource != null ? copyFromFile : null, rightFile, 0, rightSource.getRevision(), copyFromProps != null ? copyFromProps.getStringValue(SVNProperty.MIME_TYPE) : null, rightProps != null ? rightProps.getStringValue(SVNProperty.MIME_TYPE) : null, copyFromSource != null ? copyFromSource.getReposRelPath() : null, copyFromSource != null ? copyFromSource.getRevision() : SVNRepository.INVALID_REVISION, propChanges, copyFromProps);
     }
@@ -82,7 +82,7 @@ public class ISvnDiffCallbackWrapper implements ISvnDiffCallback2 {
             if (pristineProps == null) {
                 pristineProps = new SVNProperties();
             }
-            SVNProperties propChanges = rightProps.compareTo(pristineProps);
+            SVNProperties propChanges = pristineProps.compareTo(rightProps);
             callback.dirPropsChanged(result, getAbsPath(relPath), true, propChanges, pristineProps);
         }
         callback.dirClosed(result, getAbsPath(relPath), true);
