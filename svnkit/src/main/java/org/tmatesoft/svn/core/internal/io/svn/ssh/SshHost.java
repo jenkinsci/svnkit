@@ -10,6 +10,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
+
 public class SshHost {
     
     private static final long CONNECTION_INACTIVITY_TIMEOUT = 60*1000*10; // 10 minutes
@@ -185,12 +188,17 @@ public class SshHost {
                         return connection.openSession();
                     } catch (IOException e) {
                         // this connection has been closed by server.
-                        if (e.getMessage() != null && e.getMessage().contains("connection is closed")) {
-                            connection.close();
-                            connections.remove();
-                        } else {
-                            throw e;
-                        }
+                        if (e.getMessage() != null) {
+                            final String message = e.getMessage();
+                            if (message.contains("connection is closed") 
+                                    || message.contains("connection is being shutdown")) {
+                                SVNDebugLog.getDefaultLog().logFinest(SVNLogType.NETWORK, "SSH connection has been unexpectedly closed");
+                                connection.close();
+                                connections.remove();
+                                return null;
+                            }
+                        } 
+                        throw e;
                     }
                 }
             }
