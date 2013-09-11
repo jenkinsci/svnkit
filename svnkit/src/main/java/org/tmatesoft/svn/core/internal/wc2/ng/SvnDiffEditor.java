@@ -64,7 +64,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
         this.target = target;
         this.diffPristine = useTextBase;
         this.showCopiesAsAdds = showCopiesAsAdds;
-        this.callback = new ISvnDiffCallbackWrapper(callback, true, anchorAbspath);
+        this.callback = new SvnDiffCallbackWrapper(callback, true, anchorAbspath);
         if (!showCopiesAsAdds) {
             this.callback = new SvnCopyAsChangedDiffCallback(this.callback);
         }
