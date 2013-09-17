@@ -676,22 +676,22 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
 
                 if (localBeforeRemote && localOnly) {
                     if (info.kind == ISVNWCDb.SVNWCDbKind.File && diffFiles) {
-                        diffLocalOnlyFile(childAbsPath, childRelPath, changelists);
+                        SvnNgDiffUtil.diffLocalOnlyFile(childAbsPath, childRelPath, changelists, this.diffPristine, this.context, this.callback);
                     } else if (info.kind == ISVNWCDb.SVNWCDbKind.Dir && diffDirectories) {
-                        diffLocalOnlyDirectory(childAbsPath, childRelPath, depthBelowHere, changelists);
+                        SvnNgDiffUtil.diffLocalOnlyDirectory(childAbsPath, childRelPath, depthBelowHere, changelists, this.diffPristine, this.context, this.callback);
                     }
                 }
 
                 if (reposOnly) {
                     if (baseKind == ISVNWCDb.SVNWCDbKind.File && diffFiles) {
-                        diffBaseOnlyFile(childAbsPath, childRelPath, this.revision);
+                        SvnNgDiffUtil.diffBaseOnlyFile(childAbsPath, childRelPath, this.revision, this.db, this.callback);
                     } else if (baseKind == ISVNWCDb.SVNWCDbKind.Dir && diffDirectories) {
-                        diffBaseOnlyDirectory(childAbsPath, childRelPath, this.revision, depthBelowHere);
+                        SvnNgDiffUtil.diffBaseOnlyDirectory(childAbsPath, childRelPath, this.revision, depthBelowHere, this.db, this.callback);
                     }
                 } else if (!localOnly) {
                     if (info.kind == ISVNWCDb.SVNWCDbKind.File && diffFiles) {
                         if (info.status != ISVNWCDb.SVNWCDbStatus.Normal || !diffPristine) {
-                            difBaseWorkingDiff(childAbsPath, childRelPath, this.revision, changelists);
+                            SvnNgDiffUtil.diffBaseWorkingDiff(childAbsPath, childRelPath, this.revision, changelists, this.diffPristine, this.context, this.callback);
                         }
                     } else if (info.kind == ISVNWCDb.SVNWCDbKind.Dir && diffDirectories) {
                         walkLocalNodesDiff(childAbsPath, SVNFileUtil.getFilePath(childRelPath), depthBelowHere, null);
@@ -700,9 +700,9 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
 
                 if (!localBeforeRemote && localOnly) {
                     if (info.kind == ISVNWCDb.SVNWCDbKind.File && diffFiles) {
-                        diffLocalOnlyFile(childAbsPath, childRelPath, changelists);
+                        SvnNgDiffUtil.diffLocalOnlyFile(childAbsPath, childRelPath, changelists, this.diffPristine, this.context, this.callback);
                     } else if (info.kind == ISVNWCDb.SVNWCDbKind.Dir && diffDirectories) {
-                        diffLocalOnlyDirectory(childAbsPath, childRelPath, depthBelowHere, changelists);
+                        SvnNgDiffUtil.diffLocalOnlyDirectory(childAbsPath, childRelPath, depthBelowHere, changelists, this.diffPristine, this.context, this.callback);
                     }
                 }
             }
@@ -837,360 +837,9 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
                 depth = SVNDepth.EMPTY;
             }
 
-            diffLocalOnlyDirectory(SVNFileUtil.createFilePath(pb.localAbspath, name), SVNFileUtil.createFilePath(pb.path, name), reposDelete ? SVNDepth.INFINITY : depth, changelists);
+            SvnNgDiffUtil.diffLocalOnlyDirectory(SVNFileUtil.createFilePath(pb.localAbspath, name), SVNFileUtil.createFilePath(pb.path, name), reposDelete ? SVNDepth.INFINITY : depth, changelists, this.diffPristine, this.context, this.callback);
         } else {
-            diffLocalOnlyFile(SVNFileUtil.createFilePath(pb.localAbspath, name), SVNFileUtil.createFilePath(pb.path, name), changelists);
-        }
-    }
-
-    private void diffLocalOnlyFile(File localAbsPath, File relPath, Collection<String> changelists) throws SVNException {
-        Structure<StructureFields.NodeInfo> nodeInfoStructure = db.readInfo(localAbsPath, StructureFields.NodeInfo.status, StructureFields.NodeInfo.kind, StructureFields.NodeInfo.revision,
-                StructureFields.NodeInfo.checksum,
-                StructureFields.NodeInfo.originalReposRelpath, StructureFields.NodeInfo.originalRevision,
-                StructureFields.NodeInfo.changelist,
-                StructureFields.NodeInfo.hadProps, StructureFields.NodeInfo.propsMod);
-        ISVNWCDb.SVNWCDbStatus status = nodeInfoStructure.get(StructureFields.NodeInfo.status);
-        ISVNWCDb.SVNWCDbKind kind = nodeInfoStructure.get(StructureFields.NodeInfo.kind);
-        long revision = nodeInfoStructure.lng(StructureFields.NodeInfo.revision);
-        SvnChecksum checksum = nodeInfoStructure.get(StructureFields.NodeInfo.checksum);
-        File originalReposRelPath = nodeInfoStructure.get(StructureFields.NodeInfo.originalReposRelpath);
-        long originalRevision = nodeInfoStructure.lng(StructureFields.NodeInfo.originalRevision);
-        String changelist = nodeInfoStructure.get(StructureFields.NodeInfo.changelist);
-        boolean hadProps = nodeInfoStructure.is(StructureFields.NodeInfo.hadProps);
-        boolean propMods = nodeInfoStructure.is(StructureFields.NodeInfo.propsMod);
-
-        assert kind == ISVNWCDb.SVNWCDbKind.File && (status == ISVNWCDb.SVNWCDbStatus.Normal || status == ISVNWCDb.SVNWCDbStatus.Added || (status == ISVNWCDb.SVNWCDbStatus.Deleted && diffPristine));
-
-        if (changelist != null && changelists != null && !changelists.contains(changelist)) {
-            return;
-        }
-
-        SVNProperties pristineProps;
-        if (status == ISVNWCDb.SVNWCDbStatus.Deleted) {
-            assert diffPristine;
-
-            Structure<StructureFields.PristineInfo> pristineInfoStructure = db.readPristineInfo(localAbsPath);
-            status = pristineInfoStructure.get(StructureFields.PristineInfo.status);
-            kind = pristineInfoStructure.get(StructureFields.PristineInfo.kind);
-            checksum = pristineInfoStructure.get(StructureFields.PristineInfo.checksum);
-            hadProps = pristineInfoStructure.is(StructureFields.PristineInfo.hadProps);
-            pristineProps = pristineInfoStructure.get(StructureFields.PristineInfo.props);
-            propMods = false;
-        } else if (!hadProps) {
-            pristineProps = new SVNProperties();
-        } else {
-            pristineProps = db.readPristineProperties(localAbsPath);
-        }
-
-        SvnDiffSource copyFromSource = null;
-        if (originalReposRelPath != null) {
-            copyFromSource = new SvnDiffSource(originalRevision);
-            copyFromSource.setReposRelPath(originalReposRelPath);
-        }
-
-        boolean fileMod = true;
-        SvnDiffSource rightSource;
-        if (propMods || !SVNRevision.isValidRevisionNumber(revision)) {
-            rightSource = new SvnDiffSource(SVNRepository.INVALID_REVISION);
-        } else {
-            if (diffPristine) {
-                fileMod = false;
-            } else {
-                fileMod = context.isTextModified(localAbsPath, false);
-            }
-
-            if (!fileMod) {
-                rightSource = new SvnDiffSource(revision);
-            } else {
-                rightSource = new SvnDiffSource(SVNRepository.INVALID_REVISION);
-            }
-        }
-
-        result.reset();
-        callback.fileOpened(result, relPath, null, rightSource, copyFromSource, false, null);
-        boolean skip = result.skip;
-
-        if (skip) {
-            return;
-        }
-
-        SVNProperties rightProps;
-        if (propMods && !diffPristine) {
-            rightProps = db.readProperties(localAbsPath);
-        } else {
-            rightProps = new SVNProperties(pristineProps);
-        }
-
-        File pristineFile;
-        if (checksum != null) {
-            pristineFile = db.getPristinePath(localAbsPath, checksum);
-        } else {
-            pristineFile = null;
-        }
-
-        File translatedFile;
-        if (diffPristine) {
-            translatedFile = pristineFile;
-        } else {
-            translatedFile = context.getTranslatedFile(localAbsPath, localAbsPath, true, false, true, false, false);
-        }
-
-        result.reset();
-        callback.fileAdded(result, relPath, copyFromSource, rightSource,
-                copyFromSource != null ? pristineFile : null,
-                translatedFile,
-                copyFromSource != null ? pristineProps : null,
-                rightProps);
-    }
-
-    private void diffLocalOnlyDirectory(File localAbsPath, File relPath, SVNDepth depth, Collection<String> changelists) throws SVNException {
-        boolean skip = false;
-        boolean skipChildren = false;
-        SvnDiffSource rightSource = new SvnDiffSource(SVNRepository.INVALID_REVISION);
-        SVNDepth depthBelowHere = depth;
-
-        result.reset();
-        callback.dirOpened(result, relPath, null, rightSource, null, null);
-        skip = result.skip;
-        skipChildren = result.skipChildren;
-
-        Map<String, ISVNWCDb.SVNWCDbInfo> nodes = new HashMap<String, ISVNWCDb.SVNWCDbInfo>();
-        db.readChildren(localAbsPath, nodes, new HashSet<String>());
-
-        if (depthBelowHere == SVNDepth.IMMEDIATES) {
-            depthBelowHere = SVNDepth.EMPTY;
-        }
-
-        List<String> children = new ArrayList<String>(nodes.keySet());
-        Collections.sort(children);
-
-        for (String name : children) {
-            File childAbsPath = SVNFileUtil.createFilePath(localAbsPath, name);
-            ISVNWCDb.SVNWCDbInfo info = nodes.get(name);
-
-            if (info.status.isNotPresent()) {
-                continue;
-            }
-
-            if (!diffPristine && info.status == ISVNWCDb.SVNWCDbStatus.Deleted) {
-                continue;
-            }
-
-            File childRelPath = SVNFileUtil.createFilePath(relPath, name);
-
-            switch (info.kind) {
-                case File:
-                case Symlink:
-                    diffLocalOnlyFile(childAbsPath, childRelPath, changelists);
-                    break;
-                case Dir:
-                    if (depth.compareTo(SVNDepth.FILES) > 0 || depth == SVNDepth.UNKNOWN) {
-                        diffLocalOnlyDirectory(childAbsPath, childRelPath, depthBelowHere, changelists);
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        if (!skip) {
-            SVNProperties rightProps;
-            if (diffPristine) {
-                rightProps = db.readPristineProperties(localAbsPath);
-            } else {
-                rightProps = db.readProperties(localAbsPath);
-            }
-
-            result.reset();
-            callback.dirAdded(result, relPath, null, rightSource, null, rightProps, null);
-        }
-    }
-
-    private void diffBaseOnlyFile(File localAbsPath, File relPath, long revision) throws SVNException {
-        ISVNWCDb.WCDbBaseInfo baseInfo = db.getBaseInfo(localAbsPath, ISVNWCDb.WCDbBaseInfo.BaseInfoField.status, ISVNWCDb.WCDbBaseInfo.BaseInfoField.kind,
-                ISVNWCDb.WCDbBaseInfo.BaseInfoField.revision, ISVNWCDb.WCDbBaseInfo.BaseInfoField.checksum, ISVNWCDb.WCDbBaseInfo.BaseInfoField.props);
-        ISVNWCDb.SVNWCDbStatus status = baseInfo.status;
-        ISVNWCDb.SVNWCDbKind kind = baseInfo.kind;
-        if (!SVNRevision.isValidRevisionNumber(revision)) {
-            revision = baseInfo.revision;
-        }
-        SvnChecksum checksum = baseInfo.checksum;
-        SVNProperties props = baseInfo.props;
-
-        assert status == ISVNWCDb.SVNWCDbStatus.Normal && kind == ISVNWCDb.SVNWCDbKind.File && checksum != null;
-
-        SvnDiffSource leftSource = new SvnDiffSource(revision);
-
-        result.reset();
-        callback.fileOpened(result, relPath, leftSource, null, null, false, null);
-        boolean skip = result.skip;
-
-        if (skip) {
-            return;
-        }
-
-        File pristineFile = db.getPristinePath(localAbsPath, checksum);
-
-        result.reset();
-        callback.fileDeleted(result, relPath, leftSource, pristineFile, props);
-    }
-
-    private void diffBaseOnlyDirectory(File localAbsPath, File relPath, long revision, SVNDepth depth) throws SVNException {
-        long reportRevision = revision;
-        if (!SVNRevision.isValidRevisionNumber(reportRevision)) {
-            ISVNWCDb.WCDbBaseInfo baseInfo = db.getBaseInfo(localAbsPath, ISVNWCDb.WCDbBaseInfo.BaseInfoField.revision);
-            reportRevision = baseInfo.revision;
-        }
-        SvnDiffSource leftSource = new SvnDiffSource(reportRevision);
-
-        result.reset();
-        callback.dirOpened(result, relPath, leftSource, null, null, null);
-        boolean skip = result.skip;
-        boolean skipChildren = result.skipChildren;
-
-        if (!skipChildren && (depth == SVNDepth.UNKNOWN || depth.compareTo(SVNDepth.EMPTY) > 0)) {
-            Map<String, ISVNWCDb.WCDbBaseInfo> nodes = db.getBaseChildrenMap(localAbsPath, true);
-            List<String> children = new ArrayList<String>(nodes.keySet());
-            Collections.sort(children);
-
-            for (String name : children) {
-                ISVNWCDb.WCDbBaseInfo info = nodes.get(name);
-
-                if (info.status != ISVNWCDb.SVNWCDbStatus.Normal) {
-                    continue;
-                }
-
-                File childAbsPath = SVNFileUtil.createFilePath(localAbsPath, name);
-                File childRelPath = SVNFileUtil.createFilePath(relPath, name);
-
-                switch (info.kind) {
-                    case File:
-                    case Symlink:
-                        diffBaseOnlyFile(childAbsPath, childRelPath, revision);
-                        break;
-                    case Dir:
-                        if (depth.compareTo(SVNDepth.FILES) > 0 || depth == SVNDepth.UNKNOWN) {
-                            SVNDepth depthBelowHere = depth;
-                            if (depthBelowHere == SVNDepth.IMMEDIATES) {
-                                depthBelowHere = SVNDepth.EMPTY;
-                            }
-                            diffBaseOnlyDirectory(childAbsPath, childRelPath, revision, depthBelowHere);
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-
-        if (!skip) {
-            SVNProperties props = db.getBaseProps(localAbsPath);
-
-            result.reset();
-            callback.dirDeleted(result, relPath, leftSource, props, null);
-        }
-    }
-
-    private void difBaseWorkingDiff(File localAbsPath, File relPath, long revision, Collection<String> changeists) throws SVNException {
-        Structure<StructureFields.NodeInfo> nodeInfoStructure = db.readInfo(localAbsPath, StructureFields.NodeInfo.status, StructureFields.NodeInfo.revision,
-                StructureFields.NodeInfo.checksum, StructureFields.NodeInfo.recordedSize, StructureFields.NodeInfo.recordedTime,
-                StructureFields.NodeInfo.changelist, StructureFields.NodeInfo.hadProps, StructureFields.NodeInfo.propsMod);
-        ISVNWCDb.SVNWCDbStatus status = nodeInfoStructure.get(StructureFields.NodeInfo.status);
-        long dbRevision = nodeInfoStructure.lng(StructureFields.NodeInfo.revision);
-        SvnChecksum workingChecksum = nodeInfoStructure.get(StructureFields.NodeInfo.checksum);
-        long recordedSize = nodeInfoStructure.lng(StructureFields.NodeInfo.recordedSize);
-        long recordedTime = nodeInfoStructure.lng(StructureFields.NodeInfo.recordedTime);
-        String changelist = nodeInfoStructure.get(StructureFields.NodeInfo.changelist);
-        boolean hadProps = nodeInfoStructure.is(StructureFields.NodeInfo.hadProps);
-        boolean propsMod = nodeInfoStructure.is(StructureFields.NodeInfo.propsMod);
-
-        SvnChecksum checksum = workingChecksum;
-
-        assert status == ISVNWCDb.SVNWCDbStatus.Normal || status == ISVNWCDb.SVNWCDbStatus.Added || (status == ISVNWCDb.SVNWCDbStatus.Deleted && diffPristine);
-
-        if (changeists != null && !changeists.contains(changelist)) {
-            return;
-        }
-
-        boolean filesSame = false;
-
-        if (status != ISVNWCDb.SVNWCDbStatus.Normal) {
-            ISVNWCDb.WCDbBaseInfo baseInfo = db.getBaseInfo(localAbsPath, ISVNWCDb.WCDbBaseInfo.BaseInfoField.status, ISVNWCDb.WCDbBaseInfo.BaseInfoField.revision, ISVNWCDb.WCDbBaseInfo.BaseInfoField.checksum, ISVNWCDb.WCDbBaseInfo.BaseInfoField.hadProps);
-            ISVNWCDb.SVNWCDbStatus baseStatus = baseInfo.status;
-            dbRevision = baseInfo.revision;
-            checksum = baseInfo.checksum;
-            hadProps = baseInfo.hadProps;
-            recordedSize = -1;
-            recordedTime = 0;
-            propsMod = true;
-        } else if (diffPristine) {
-            filesSame = true;
-        } else {
-            SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(localAbsPath));
-
-            if (kind != SVNNodeKind.FILE || (kind == SVNNodeKind.FILE && SVNFileUtil.getFileLength(localAbsPath) == recordedSize && SVNFileUtil.getFileLastModified(localAbsPath) == recordedTime)) {
-                filesSame = true;
-            }
-        }
-        if (filesSame && !propsMod) {
-            return;
-        }
-        assert checksum != null;
-
-        if (!SVNRevision.isValidRevisionNumber(revision)) {
-            revision = dbRevision;
-        }
-        SvnDiffSource leftSource = new SvnDiffSource(revision);
-        SvnDiffSource rightSource = new SvnDiffSource(SVNRepository.INVALID_REVISION);
-
-        result.reset();
-        callback.fileOpened(result, relPath, leftSource, rightSource, null, false, null);
-        boolean skip = result.skip;
-
-        if (skip) {
-            return;
-        }
-        File pristineFile = db.getPristinePath(localAbsPath, checksum);
-
-        File localFile;
-        if (diffPristine) {
-            localFile = db.getPristinePath(localAbsPath, workingChecksum);
-        } else if (! (hadProps || propsMod)) {
-            localFile = localAbsPath;
-        } else if (filesSame) {
-            localFile = pristineFile;
-        } else {
-            localFile = context.getTranslatedFile(localAbsPath, localAbsPath, true, false, true, false, false);
-        }
-
-        if (!filesSame) {
-            filesSame = SVNFileUtil.compareFiles(localFile, pristineFile, null);
-        }
-
-        SVNProperties baseProps;
-        if (hadProps) {
-            baseProps = db.getBaseProps(localAbsPath);
-        } else {
-            baseProps = new SVNProperties();
-        }
-
-        SVNProperties localProps;
-        if (status == ISVNWCDb.SVNWCDbStatus.Normal && (diffPristine || !propsMod)) {
-            localProps = baseProps;
-        } else if (diffPristine) {
-            localProps = db.readPristineProperties(localAbsPath);
-        } else {
-            localProps = db.readProperties(localAbsPath);
-        }
-
-        SVNProperties propChanges = localProps.compareTo(baseProps);
-
-        if (propChanges.size() > 0 || !filesSame) {
-            result.reset();
-            callback.fileChanged(result, relPath, leftSource, rightSource, pristineFile, localFile, baseProps, localProps, !filesSame, propChanges);
-        } else {
-            result.reset();
-            callback.fileClosed(result, relPath, leftSource, rightSource);
+            SvnNgDiffUtil.diffLocalOnlyFile(SVNFileUtil.createFilePath(pb.localAbspath, name), SVNFileUtil.createFilePath(pb.path, name), changelists, this.diffPristine, this.context, this.callback);
         }
     }
 

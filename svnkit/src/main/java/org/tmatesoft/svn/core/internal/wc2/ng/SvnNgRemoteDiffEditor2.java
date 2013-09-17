@@ -14,10 +14,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SvnNgRemoteDiffEditor2 implements ISVNEditor {
 
@@ -33,6 +30,8 @@ public class SvnNgRemoteDiffEditor2 implements ISVNEditor {
     private DirBaton dirBaton;
     private FileBaton fileBaton;
 
+    private Set<File> tempFiles;
+
     public SvnNgRemoteDiffEditor2(long revision, boolean textDeltas, SVNRepository repository, ISvnDiffCallback2 callback) {
         this.revision = revision;
         this.repository = repository;
@@ -40,6 +39,7 @@ public class SvnNgRemoteDiffEditor2 implements ISVNEditor {
         this.result = new SvnDiffCallbackResult();
         this.textDeltas = textDeltas;
         this.deltaProcessor = new SVNDeltaProcessor();
+        this.tempFiles = new HashSet<File>();
     }
 
     public void targetRevision(long revision) throws SVNException {
@@ -332,8 +332,10 @@ public class SvnNgRemoteDiffEditor2 implements ISVNEditor {
         fb.resultMd5Checksum = deltaProcessor.textDeltaEnd();
     }
 
-    public void cleanup() {
-        //TODO
+    public void cleanup() throws SVNException {
+        for (File tempFile : tempFiles) {
+            SVNFileUtil.deleteFile(tempFile);
+        }
     }
 
     private void diffDeletedFile(String path) throws SVNException {
@@ -423,6 +425,7 @@ public class SvnNgRemoteDiffEditor2 implements ISVNEditor {
         }
         if (!propsOnly) {
             fb.pathStartRevision = SVNFileUtil.createUniqueFile(null, "svn", "tmp", false);
+            tempFiles.add(fb.pathStartRevision);
             OutputStream outputStream = SVNFileUtil.openFileForWriting(fb.pathStartRevision);
             SVNChecksumOutputStream checksumOutputStream = new SVNChecksumOutputStream(outputStream, SVNChecksumOutputStream.MD5_ALGORITHM, true);
             try {
