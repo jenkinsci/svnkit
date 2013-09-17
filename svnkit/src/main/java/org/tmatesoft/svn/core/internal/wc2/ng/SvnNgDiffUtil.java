@@ -768,23 +768,31 @@ public class SvnNgDiffUtil {
         if (originalPropertiesOverride != null) {
             originalProps = originalPropertiesOverride;
         } else {
-            try {
-                originalProps = context.getActualProps(localAbsPath1);
-            } catch (SVNException e) {
-                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND && e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY) {
-                    throw e;
+            if (localAbsPath1 != null) {
+                try {
+                    originalProps = context.getActualProps(localAbsPath1);
+                } catch (SVNException e) {
+                    if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND && e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY) {
+                        throw e;
+                    }
+                    originalProps = new SVNProperties();
                 }
+            } else {
                 originalProps = new SVNProperties();
             }
         }
 
         SVNProperties modifiedProps;
-        try {
-            modifiedProps = context.getActualProps(localAbsPath2);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND && e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY) {
-                throw e;
+        if (localAbsPath2 != null) {
+            try {
+                modifiedProps = context.getActualProps(localAbsPath2);
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND && e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY) {
+                    throw e;
+                }
+                modifiedProps = new SVNProperties();
             }
+        } else {
             modifiedProps = new SVNProperties();
         }
 
@@ -854,7 +862,6 @@ public class SvnNgDiffUtil {
         diffWalker.root1AbsPath = rootAbsPath1 != null ? rootAbsPath1 : localAbsPath1;
         diffWalker.root2AbsPath = rootAbsPath2 != null ? rootAbsPath2 : localAbsPath2;
         diffWalker.recursingWithinAdmDir = false;
-        diffWalker.context = context;
 
         if (depth.compareTo(SVNDepth.IMMEDIATES) <= 0) {
             arbitraryDiffThisDir(diffWalker, localAbsPath1, depth, context, callback, canceller);
@@ -985,13 +992,13 @@ public class SvnNgDiffUtil {
             }
             if (childKind1 == SVNNodeKind.DIR && childKind2 == SVNNodeKind.DIR) {
                 if (depth == SVNDepth.IMMEDIATES) {
-                    doArbitraryDirsDiff(childAbsPath1, childAbsPath2, diffWalker.root1AbsPath, diffWalker.root2AbsPath, SVNDepth.EMPTY, context, diffWalker.callback, canceller);
+                    doArbitraryDirsDiff(childAbsPath1, childAbsPath2, diffWalker.root1AbsPath, diffWalker.root2AbsPath, SVNDepth.EMPTY, context, callback, canceller);
                 } else {
                     continue;
                 }
             }
             if (childKind1 == SVNNodeKind.FILE && (childKind2 == SVNNodeKind.DIR || childKind2 == SVNNodeKind.NONE)) {
-                doArbitraryFilesDiff(childAbsPath1, null, SVNFileUtil.createFilePath(childRelPath, name), false, true, null, context, diffWalker.callback, canceller);
+                doArbitraryFilesDiff(childAbsPath1, null, SVNFileUtil.createFilePath(childRelPath, name), false, true, null, context, callback, canceller);
             }
             if (childKind2 == SVNNodeKind.FILE && (childKind1 == SVNNodeKind.DIR || childKind1 == SVNNodeKind.NONE)) {
                 SVNProperties originalProps;
@@ -1003,14 +1010,14 @@ public class SvnNgDiffUtil {
                     }
                     originalProps = new SVNProperties();
                 }
-                doArbitraryFilesDiff(null, childAbsPath2, SVNFileUtil.createFilePath(childRelPath, name), true, false, originalProps, context, diffWalker.callback, canceller);
+                doArbitraryFilesDiff(null, childAbsPath2, SVNFileUtil.createFilePath(childRelPath, name), true, false, originalProps, context, callback, canceller);
             }
             if (childKind1 == SVNNodeKind.FILE && childKind2 == SVNNodeKind.FILE) {
                 doArbitraryFilesDiff(childAbsPath1, childAbsPath2, SVNFileUtil.createFilePath(childRelPath, name), false, false, null, context, callback, canceller);
             }
 
             if (depth.compareTo(SVNDepth.FILES) > 0 && childKind2 == SVNNodeKind.DIR && (childKind1 == SVNNodeKind.FILE || childKind1 == SVNNodeKind.NONE)) {
-                doArbitraryDirsDiff(childAbsPath1, childAbsPath2, diffWalker.root1AbsPath, diffWalker.root2AbsPath, depth.compareTo(SVNDepth.IMMEDIATES) <= 0 ? SVNDepth.EMPTY : SVNDepth.INFINITY, context, diffWalker.callback, canceller);
+                doArbitraryDirsDiff(childAbsPath1, childAbsPath2, diffWalker.root1AbsPath, diffWalker.root2AbsPath, depth.compareTo(SVNDepth.IMMEDIATES) <= 0 ? SVNDepth.EMPTY : SVNDepth.INFINITY, context, callback, canceller);
             }
         }
     }
@@ -1047,7 +1054,5 @@ public class SvnNgDiffUtil {
         private boolean recursingWithinAddedSubtree;
         private boolean recursingWithinAdmDir;
         private File admDirAbsPath;
-        private ISvnDiffCallback callback;
-        private SVNWCContext context;
     }
 }

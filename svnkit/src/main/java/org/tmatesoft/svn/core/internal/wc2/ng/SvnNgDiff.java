@@ -119,6 +119,8 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
             } else {
                 if (revision1 == SVNRevision.WORKING && revision2 == SVNRevision.WORKING) {
                     ISvnDiffGenerator generator = getDiffGenerator();
+                    generator.setOriginalTargets(target1, target2);
+                    generator.setAnchors(target1, target2);
                     SvnNgDiffUtil.doArbitraryNodesDiff(target1, target2, getOperation().getDepth(), getWcContext(), createDiffCallback(generator, false, -1, -1), getOperation().getEventHandler());
                 } else {
                     doDiffWCWC(target1, revision1, target2, revision2);
