@@ -131,7 +131,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
                 end = newTarget.getPegRevision();
             }
             if (start == SVNRevision.UNDEFINED) {
-                start = oldTarget.isURL() ? SVNRevision.HEAD : SVNRevision.BASE;
+                start = oldTarget.isURL() ? SVNRevision.HEAD : (getSVNEnvironment().getNewTarget() != null ? SVNRevision.WORKING : SVNRevision.BASE);
             }
             if (end == SVNRevision.UNDEFINED) {
                 end = newTarget.isURL() ? SVNRevision.HEAD : SVNRevision.WORKING;
