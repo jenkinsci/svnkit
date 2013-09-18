@@ -139,13 +139,14 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private Map myServersOptions;
     private boolean myIsGitDiffFormat;
     private boolean myIsShowDiff;
+    private boolean myIsPropertiesOnly;
 
     private int myStripCount;
     private boolean myIsShowInhertiedProps;
     private boolean myIsIncludeExternals;
 
     private SVNConflictStats myConflictStats;
-    
+
     public SVNCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
         super(programName, out, err, in);
         myIsDescend = true;
@@ -530,6 +531,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myIsShowCopiesAsAdds = true;
         } else if (option == SVNOption.GIT_DIFF_FORMAT) {
             myIsGitDiffFormat = true;
+        } else if (option == SVNOption.PROPERTIES_ONLY) {
+            myIsPropertiesOnly = true;
         } else if (option == SVNOption.DIFF) {
             myIsShowDiff = true;
         } else if (option == SVNOption.IGNORE_EXTERNALS) {
@@ -843,6 +846,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
 
     public boolean isGitDiffFormat() {
         return myIsGitDiffFormat;
+    }
+
+    public boolean isPropertiesOnly() {
+        return myIsPropertiesOnly;
     }
 
     public boolean isShowDiff() {

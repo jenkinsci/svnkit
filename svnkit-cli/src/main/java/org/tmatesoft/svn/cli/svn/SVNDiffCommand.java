@@ -71,6 +71,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         options.add(SVNOption.FORCE);
         options.add(SVNOption.XML);
         options.add(SVNOption.GIT_DIFF_FORMAT);
+        options.add(SVNOption.PROPERTIES_ONLY);
         return options;
     }
 
@@ -261,6 +262,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         diffGenerator.setFallbackToAbsolutePath(true);
         diffGenerator.setOptions(svnEnvironment.getOptions());
         diffGenerator.setDiffDeleted(!svnEnvironment.isNoDiffDeleted());
+        diffGenerator.setPropertiesOnly(svnEnvironment.isPropertiesOnly());
         return new SvnNewDiffGenerator(diffGenerator);
     }
 

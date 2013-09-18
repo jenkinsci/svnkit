@@ -45,6 +45,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     private SVNDiffOptions diffOptions;
     private boolean fallbackToAbsolutePath;
     private ISVNOptions options;
+    private boolean propertiesOnly;
 
     private String getDisplayPath(SvnTarget target) {
         String relativePath;
@@ -185,6 +186,14 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 
     public void setForcedBinaryDiff(boolean forcedBinaryDiff) {
         this.forcedBinaryDiff = forcedBinaryDiff;
+    }
+
+    public boolean isPropertiesOnly() {
+        return propertiesOnly;
+    }
+
+    public void setPropertiesOnly(boolean propertiesOnly) {
+        this.propertiesOnly = propertiesOnly;
     }
 
     public void displayDeletedDirectory(SvnTarget target, String revision1, String revision2, OutputStream outputStream) throws SVNException {
@@ -328,6 +337,9 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     }
 
     public void displayContentChanged(SvnTarget target, File leftFile, File rightFile, String revision1, String revision2, String mimeType1, String mimeType2, SvnDiffCallback.OperationKind operation, File copyFromPath, OutputStream outputStream) throws SVNException {
+        if (isPropertiesOnly()) {
+            return;
+        }
         ensureEncodingAndEOLSet();
         String displayPath = getDisplayPath(target);
 
