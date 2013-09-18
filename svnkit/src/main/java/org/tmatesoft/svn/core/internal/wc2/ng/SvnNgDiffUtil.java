@@ -955,25 +955,23 @@ public class SvnNgDiffUtil {
             return;
         }
 
-        Set<File> mergedChildren = new HashSet<File>();
+        Set<String> mergedChildren = new HashSet<String>();
         if (children1 != null) {
             for (File child1 : children1) {
-                mergedChildren.add(child1);
+                mergedChildren.add(SVNFileUtil.getFileName(child1));
             }
         }
         if (children2 != null) {
             for (File child2 : children2) {
-                mergedChildren.add(child2);
+                mergedChildren.add(SVNFileUtil.getFileName(child2));
             }
         }
-        List<File> sortedChildren = new ArrayList<File>(mergedChildren);
+        List<String> sortedChildren = new ArrayList<String>(mergedChildren);
         Collections.sort(sortedChildren);
-        for (File sortedChild : sortedChildren) {
+        for (String name : sortedChildren) {
             if (canceller != null) {
                 canceller.checkCancelled();
             }
-
-            String name = SVNFileUtil.getFileName(sortedChild);
 
             if (name.equals(SVNFileUtil.getAdminDirectoryName())) {
                 continue;
