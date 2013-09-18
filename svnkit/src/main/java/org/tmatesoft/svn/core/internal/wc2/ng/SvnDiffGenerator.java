@@ -37,6 +37,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     private boolean forcedBinaryDiff;
 
     private boolean diffDeleted;
+    private boolean diffAdded;
     private List<String> rawDiffOptions;
     private boolean forceEmpty;
 
@@ -260,7 +261,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             String label1 = getLabel(newTargetString1, revision1);
             String label2 = getLabel(newTargetString2, revision2);
 
-            boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, false, SvnDiffCallback.OperationKind.Modified);
+            boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, false, fallbackToAbsolutePath, SvnDiffCallback.OperationKind.Modified);
             visitedPaths.add(displayPath);
             if (useGitFormat) {
                 displayGitDiffHeader(outputStream, SvnDiffCallback.OperationKind.Modified,
@@ -400,7 +401,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         }
 
         if (!forcedBinaryDiff && (leftIsBinary || rightIsBinary)) {
-            boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, rightFile == null, operation);
+            boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, rightFile == null, leftFile == null, operation);
             if (useGitFormat) {
                 displayGitDiffHeader(outputStream, operation,
                         getRelativeToRootPath(target, originalTarget1),
@@ -421,7 +422,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 
         final String diffCommand = getExternalDiffCommand();
         if (diffCommand != null) {
-            boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, rightFile == null, operation);
+            boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, rightFile == null, leftFile == null, operation);
             if (useGitFormat) {
                 displayGitDiffHeader(outputStream, operation,
                         getRelativeToRootPath(target, originalTarget1),
@@ -456,8 +457,16 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     }
 
     private void internalDiff(SvnTarget target, OutputStream outputStream, String displayPath, File file1, File file2, String label1, String label2, SvnDiffCallback.OperationKind operation, String copyFromPath, String revision1, String revision2) throws SVNException {
-        String header = getHeaderString(target, displayPath, file2 == null, operation, copyFromPath);
+        String header = getHeaderString(target, displayPath, file2 == null, file1 == null, operation, copyFromPath);
         if (file2 == null && !isDiffDeleted()) {
+            try {
+                displayString(outputStream, header);
+            } catch (IOException e) {
+                wrapException(e);
+            }
+            return;
+        }
+        if (file1 == null && !isDiffAdded()) {
             try {
                 displayString(outputStream, header);
             } catch (IOException e) {
@@ -536,10 +545,10 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         }
     }
 
-    private String getHeaderString(SvnTarget target, String displayPath, boolean deleted, SvnDiffCallback.OperationKind operation, String copyFromPath) throws SVNException {
+    private String getHeaderString(SvnTarget target, String displayPath, boolean deleted, boolean added, SvnDiffCallback.OperationKind operation, String copyFromPath) throws SVNException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try {
-            boolean stopDisplaying = displayHeader(byteArrayOutputStream, displayPath, deleted, operation);
+            boolean stopDisplaying = displayHeader(byteArrayOutputStream, displayPath, deleted, added, operation);
             if (useGitFormat) {
                 displayGitDiffHeader(byteArrayOutputStream, operation,
                         getRelativeToRootPath(target, originalTarget1),
@@ -967,12 +976,21 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         return path + "\t" + revToken;
     }
 
-    protected boolean displayHeader(OutputStream os, String path, boolean deleted, SvnDiffCallback.OperationKind operation) throws SVNException {
+    protected boolean displayHeader(OutputStream os, String path, boolean deleted, boolean added, SvnDiffCallback.OperationKind operation) throws SVNException {
         try {
             if (deleted && !isDiffDeleted()) {
                 displayString(os, "Index: ");
                 displayString(os, path);
                 displayString(os, " (deleted)");
+                displayEOL(os);
+                displayString(os, HEADER_SEPARATOR);
+                displayEOL(os);
+                return true;
+            }
+            if (added && !isDiffAdded()) {
+                displayString(os, "Index: ");
+                displayString(os, path);
+                displayString(os, " (added)");
                 displayEOL(os);
                 displayString(os, HEADER_SEPARATOR);
                 displayEOL(os);
@@ -1068,6 +1086,10 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         return diffDeleted;
     }
 
+    public boolean isDiffAdded() {
+        return diffAdded;
+    }
+
     private void wrapException(IOException e) throws SVNException {
         SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, e);
         SVNErrorManager.error(errorMessage, e, SVNLogType.WC);
@@ -1102,6 +1124,10 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 
     public void setDiffDeleted(boolean diffDeleted) {
         this.diffDeleted = diffDeleted;
+    }
+
+    public void setDiffAdded(boolean diffAdded) {
+        this.diffAdded = diffAdded;
     }
 
     public void setBasePath(File absoluteFile) {

@@ -122,6 +122,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsNoticeAncestry;
     private boolean myIsSummarize;
     private boolean myIsNoDiffDeleted;
+    private boolean myIsNoDiffAdded;
     private long myLimit;
     private boolean myIsStopOnCopy;
     private boolean myIsChangeOptionUsed;
@@ -523,6 +524,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myIsNonInteractive = true;
         } else if (option == SVNOption.NO_DIFF_DELETED) {
             myIsNoDiffDeleted = true;
+        } else if (option == SVNOption.NO_DIFF_ADDED) {
+            myIsNoDiffAdded = true;
         } else if (option == SVNOption.NOTICE_ANCESTRY) {
             myIsNoticeAncestry = true;
         } else if (option == SVNOption.IGNORE_ANCESTRY) {
@@ -911,7 +914,11 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     public boolean isNoDiffDeleted() {
         return myIsNoDiffDeleted;
     }
-    
+
+    public boolean isNoDiffAdded() {
+        return myIsNoDiffAdded;
+    }
+
     public String getOldTarget() {
         return myOldTarget;
     }

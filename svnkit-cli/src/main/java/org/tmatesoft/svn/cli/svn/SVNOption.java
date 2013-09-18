@@ -81,6 +81,7 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption SUMMARIZE = new SVNOption("summarize");
     public static final SVNOption NOTICE_ANCESTRY = new SVNOption("notice-ancestry");
     public static final SVNOption NO_DIFF_DELETED = new SVNOption("no-diff-deleted");
+    public static final SVNOption NO_DIFF_ADDED = new SVNOption("no-diff-added");
     public static final SVNOption STOP_ON_COPY = new SVNOption("stop-on-copy");
     public static final SVNOption LIMIT = new SVNOption("limit", "l", false);
     public static final SVNOption AUTHOR_OF_INTEREST = new SVNOption("author", "a", false);

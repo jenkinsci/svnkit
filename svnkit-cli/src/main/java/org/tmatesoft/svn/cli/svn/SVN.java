@@ -128,6 +128,7 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.SUMMARIZE);
         SVNCommandLine.registerOption(SVNOption.NOTICE_ANCESTRY);
         SVNCommandLine.registerOption(SVNOption.NO_DIFF_DELETED);
+        SVNCommandLine.registerOption(SVNOption.NO_DIFF_ADDED);
         SVNCommandLine.registerOption(SVNOption.STOP_ON_COPY);
         SVNCommandLine.registerOption(SVNOption.LIMIT);
         SVNCommandLine.registerOption(SVNOption.AUTHOR_OF_INTEREST);
