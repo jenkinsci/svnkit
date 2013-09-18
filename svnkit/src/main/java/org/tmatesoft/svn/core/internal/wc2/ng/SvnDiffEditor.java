@@ -668,7 +668,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
                     baseKind = baseInfo.kind;
                     if (baseInfo.status.isNotPresent()) {
                         localOnly = true;
-                    } else if (baseKind != info.kind || ignoreAncestry) {
+                    } else if (baseKind != info.kind || !ignoreAncestry) {
                         reposOnly = true;
                         localOnly = true;
                     }
