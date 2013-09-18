@@ -234,7 +234,7 @@ public class SvnNgRemoteDiffEditor2 implements ISVNEditor {
         }
 
         if (textChecksum != null && this.textDeltas) {
-            if (!textChecksum.equals(fb.resultMd5Checksum)) {
+            if (fb.resultMd5Checksum != null && !textChecksum.equals(fb.resultMd5Checksum)) {
                 SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, "Checksum mismatch for ''{0}''", fb.path);
                 SVNErrorManager.error(errorMessage, SVNLogType.WC);
             }
@@ -300,7 +300,7 @@ public class SvnNgRemoteDiffEditor2 implements ISVNEditor {
             return;
         }
 
-        if (fb.added) {
+        if (!fb.added) {
             getFileFromRa(fb, false);
         } else {
             fb.pathStartRevision = null;
@@ -310,6 +310,11 @@ public class SvnNgRemoteDiffEditor2 implements ISVNEditor {
             SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, "Base checksum mismatch for ''{0}''", fb.path);
             SVNErrorManager.error(errorMessage, SVNLogType.WC);
         }
+        if (fb.pathEndRevision == null) {
+            fb.pathEndRevision = SVNFileUtil.createUniqueFile(null, "svn", "tmp", false);
+            tempFiles.add(fb.pathEndRevision);
+        }
+
         if (fb.pathStartRevision == null) {
             deltaProcessor.applyTextDelta(SVNFileUtil.DUMMY_IN, fb.pathEndRevision, true);
         } else {
@@ -461,7 +466,7 @@ public class SvnNgRemoteDiffEditor2 implements ISVNEditor {
         }
     }
 
-    private static class FileBaton {
+    private class FileBaton {
         private boolean added;
         private boolean treeConflicted;
         private boolean skip;
@@ -483,7 +488,7 @@ public class SvnNgRemoteDiffEditor2 implements ISVNEditor {
             this.parentBaton = parentBaton;
             this.added = added;
             this.propChanges = new SVNProperties();
-            this.baseRevision = parentBaton.baseRevision;
+            this.baseRevision = SvnNgRemoteDiffEditor2.this.revision;
         }
     }
 }

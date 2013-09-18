@@ -255,7 +255,7 @@ public class SvnNgDiffSummarize extends SvnNgOperationRunner<SvnDiffStatus, SvnD
         }
 
         repository1.setLocation(anchor1, true);
-        repository2.setLocation(anchor2, true);
+        repository2.setLocation(anchor1, true);
         SvnNgRemoteDiffEditor2 editor = null;
         try {
             editor = new SvnNgRemoteDiffEditor2(rev1, false, repository2, callback);
