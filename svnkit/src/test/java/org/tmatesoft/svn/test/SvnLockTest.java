@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.test;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,6 +10,7 @@ import junit.framework.Assert;
 import org.junit.Test;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -100,6 +102,51 @@ public class SvnLockTest {
             Assert.assertNotNull(lock[0]);
             Assert.assertEquals("/directory/file", lock[0].getPath());
             Assert.assertEquals(lockMessage, lock[0].getComment());
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testLocksUnderRemovedDirectoryAreRemoved() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testLocksUnderRemovedDirectoryAreRemoved", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("directory/file");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+            final File directory = workingCopy.getFile("directory");
+            final File file = workingCopy.getFile("directory/file");
+
+            final SvnSetLock setLock = svnOperationFactory.createSetLock();
+            setLock.setSingleTarget(SvnTarget.fromFile(file));
+            setLock.run();
+
+            workingCopy.delete(directory);
+            workingCopy.commit("");
+
+            SVNFileUtil.ensureDirectoryExists(directory);
+            TestUtil.writeFileContentsString(file, "");
+
+            final SvnScheduleForAddition scheduleForAddition = svnOperationFactory.createScheduleForAddition();
+            scheduleForAddition.setAddParents(true);
+            scheduleForAddition.setSingleTarget(SvnTarget.fromFile(file));
+            scheduleForAddition.run();
+
+            workingCopy.commit("");
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            final SvnStatus status = statuses.get(file);
+            Assert.assertNull(status.getLock());
+
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
