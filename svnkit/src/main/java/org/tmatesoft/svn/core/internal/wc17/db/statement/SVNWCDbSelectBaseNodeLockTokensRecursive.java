@@ -73,7 +73,7 @@ public class SVNWCDbSelectBaseNodeLockTokensRecursive extends SVNSqlJetSelectSta
     private static class JoinedStatement extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.LOCK__Fields> {
 
         public JoinedStatement(SVNSqlJetDb sDb) throws SVNException {
-            super(sDb, SVNWCDbSchema.NODES);
+            super(sDb, SVNWCDbSchema.LOCK);
         }
 
         @Override
