@@ -281,7 +281,7 @@ public class SvnNgDiffUtil {
                     diffBaseWorkingDiff(childAbsPath, childRelPath, SVNRepository.INVALID_REVISION, changelists, false, context, callback);
                 } else if (dbKind == SVNNodeKind.DIR) {
                     ensureState(localAbsPath, false);
-                    if (status.getPropertiesStatus() == SVNStatusType.STATUS_NONE && status.getPropertiesStatus() == SVNStatusType.STATUS_NORMAL) {
+                    if (status.getPropertiesStatus() != SVNStatusType.STATUS_NONE && status.getPropertiesStatus() != SVNStatusType.STATUS_NORMAL) {
                         currentNode.leftProps = db.getBaseProps(localAbsPath);
                         currentNode.rightProps = db.readProperties(localAbsPath);
                         currentNode.propChanges = currentNode.leftProps.compareTo(currentNode.rightProps);
@@ -722,7 +722,7 @@ public class SvnNgDiffUtil {
             localProps = db.readProperties(localAbsPath);
         }
 
-        SVNProperties propChanges = localProps.compareTo(baseProps);
+        SVNProperties propChanges = baseProps.compareTo(localProps);
 
         if (propChanges.size() > 0 || !filesSame) {
             result.reset();

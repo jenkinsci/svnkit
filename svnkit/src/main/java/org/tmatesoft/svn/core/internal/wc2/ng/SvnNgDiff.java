@@ -9,10 +9,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.internal.wc17.SVNAmbientDepthFilterEditor17;
 import org.tmatesoft.svn.core.internal.wc17.SVNReporter17;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatusEditor17;
@@ -368,9 +365,12 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         assert (!target1.isURL());
         assert (!target2.isURL());
 
-        if (!target1.getFile().equals(target2.getFile()) || !(revision1 == SVNRevision.BASE && revision2 == SVNRevision.WORKING)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Only diffs between a path's text-base and its working files are supported at this time");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        File path1 = target1.getFile();
+        File path2 = target2.getFile();
+
+        if (!path1.equals(path2) || (!(revision1 == SVNRevision.BASE && revision2 == SVNRevision.WORKING))) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Summarized diffs are only supported between a path's text-base and its working files at this time");
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
         }
 
         long revisionNumber1;
@@ -384,6 +384,10 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
             }
         }
 
+        SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path1));
+
+        String targetString1 = (kind == SVNNodeKind.DIR) ? "" : SVNFileUtil.getFileName(path1);
+
         final ISvnDiffGenerator generator = getDiffGenerator();
         generator.setOriginalTargets(target1, target2);
         generator.setAnchors(target1, target2);
@@ -394,7 +398,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
 
         final SvnDiffCallback callback = createDiffCallback(generator, false, revisionNumber1, -1);
 
-        doDiffWC(target1.getFile(), callback);
+        SvnNgDiffUtil.doDiffWCWC(path1, getRepositoryAccess(), getWcContext(), getOperation().getDepth(), !getOperation().isIgnoreAncestry(), getOperation().getApplicableChangelists(), getOperation().isShowCopiesAsAdds(), getOperation().isUseGitDiffFormat(), generator, callback, getOperation().getEventHandler());
     }
 
     private void doDiffWC(File localAbspath, ISvnDiffCallback callback) throws SVNException {
