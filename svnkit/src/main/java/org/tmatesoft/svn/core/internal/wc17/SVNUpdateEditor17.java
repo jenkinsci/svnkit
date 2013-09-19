@@ -476,7 +476,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
         
         if (baseStatus == SVNWCDbStatus.NotPresent || baseStatus == SVNWCDbStatus.Excluded || baseStatus == SVNWCDbStatus.ServerExcluded) {
-            myWCContext.getDb().removeBase(localAbsPath, false, false, SVNRepository.INVALID_REVISION, null, null);
+            myWCContext.getDb().removeBase(localAbsPath, false, false, false, SVNRepository.INVALID_REVISION, null, null);
             if (deletingTarget) {
                 myIsTargetDeleted = true;
             }
@@ -518,9 +518,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         completeConflict(treeConflict, localAbsPath, info.reposRelPath, info.revision, null, info.kind == SVNWCDbKind.Dir ? SVNNodeKind.DIR : SVNNodeKind.FILE, SVNNodeKind.NONE);
 
         if (!deletingTarget && !deletingSwitched) {
-            myWCContext.getDb().removeBase(localAbsPath, keepAsWorking, queueDeletes, -1, treeConflict, null);
+            myWCContext.getDb().removeBase(localAbsPath, keepAsWorking, queueDeletes, false, -1, treeConflict, null);
         } else {
-            myWCContext.getDb().removeBase(localAbsPath, keepAsWorking, queueDeletes, getTargetRevision(), treeConflict, null);
+            myWCContext.getDb().removeBase(localAbsPath, keepAsWorking, queueDeletes, false, getTargetRevision(), treeConflict, null);
             if (deletingTarget) {
                 myIsTargetDeleted = true;
             } else {

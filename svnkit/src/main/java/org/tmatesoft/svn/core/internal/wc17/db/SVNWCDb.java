@@ -3665,7 +3665,7 @@ public class SVNWCDb implements ISVNWCDb {
         pdh.flushEntries(localAbsPath);
     }
 
-    public void removeBase(File localAbsPath, boolean keepAsWorking, boolean queueDeletes, long notPresentRevision, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+    public void removeBase(File localAbsPath, boolean keepAsWorking, boolean queueDeletes, boolean removeLocks, long notPresentRevision, SVNSkel conflict, SVNSkel workItems) throws SVNException {
         assert (isAbsolute(localAbsPath));
         DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadWrite);
         SVNWCDbDir pdh = parseDir.wcDbDir;
@@ -3677,6 +3677,7 @@ public class SVNWCDb implements ISVNWCDb {
         brb.root = pdh.getWCRoot();
         brb.keepAsWorking = keepAsWorking;
         brb.queueDeletes = queueDeletes;
+        brb.removeLocks = removeLocks;
         brb.notPresentRevision = notPresentRevision;
         brb.conflict = conflict;
         brb.workItems = workItems;
@@ -3692,6 +3693,7 @@ public class SVNWCDb implements ISVNWCDb {
 
         public boolean keepAsWorking;
         private boolean queueDeletes;
+        private boolean removeLocks;
 
         public SVNSkel conflict;
         public SVNSkel workItems;
@@ -3711,6 +3713,16 @@ public class SVNWCDb implements ISVNWCDb {
                     keepWorking = selectWorkingNodeStatement.next();
                 } finally {
                     selectWorkingNodeStatement.reset();
+                }
+            }
+
+            if (removeLocks) {
+                SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.DELETE_LOCK_RECURSIVELY);
+                try {
+                    stmt.bindf("is", baseInfo.reposId, baseInfo.reposRelPath);
+                    stmt.done();
+                } finally {
+                    stmt.reset();
                 }
             }
 

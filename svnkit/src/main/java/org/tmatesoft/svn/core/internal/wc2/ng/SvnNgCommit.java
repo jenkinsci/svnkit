@@ -472,11 +472,9 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
             admAbspath = SVNFileUtil.getFileDir(localAbspath);
         }
         getWcContext().writeCheck(admAbspath);
-        
+
         if (nodeInfo.get(NodeInfo.status) == SVNWCDbStatus.Deleted) {
-            getWcContext().getDb().opRemoveNode(localAbspath, 
-                    nodeInfo.is(NodeInfo.haveBase) && !viaRecurse ? newRevnum : -1, 
-                    nodeInfo.<SVNWCDbKind>get(NodeInfo.kind));
+            getWcContext().getDb().removeBase(localAbspath, false, false, true, !viaRecurse ? newRevnum : SVNRepository.INVALID_REVISION, null, null);
             nodeInfo.release();
             return;
         } else if (nodeInfo.get(NodeInfo.status) == SVNWCDbStatus.NotPresent) {
