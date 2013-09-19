@@ -610,6 +610,10 @@ public class SvnNgCommitUtil {
                 }
             }
 
+            if (status.getLock() != null && lockTokens != null && (stateFlags != 0 || justLocked)) {
+                stateFlags |= SvnCommitItem.LOCK;
+            }
+
             if (matchesChangeLists && (stateFlags != 0)) {
                 File reposRelPath = copyMode ? commitRelPath : SVNFileUtil.createFilePath(status.getRepositoryRelativePath());
                 long revision = copyMode ? -1 : nodeRev;
