@@ -3880,7 +3880,7 @@ public class SVNWCDb implements ISVNWCDb {
             SVNSqlJetStatement stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.SELECT_MOVED_TO);
             File dstRelpath;
             try {
-                stmt.bindf("isd", wcRoot.getWcId(), srcRelpath, SVNWCUtils.relpathDepth(srcRelpath));
+                stmt.bindf("isi", wcRoot.getWcId(), srcRelpath, SVNWCUtils.relpathDepth(srcRelpath));
                 stmt.next();
                 dstRelpath = SVNFileUtil.createFilePath(stmt.getColumnString(NODES__Fields.moved_to));
             } finally {
@@ -3889,7 +3889,7 @@ public class SVNWCDb implements ISVNWCDb {
 
             stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.CLEAR_MOVED_HERE_RECURSIVE);
             try {
-                stmt.bindf("isd", wcRoot.getWcId(), dstRelpath, SVNWCUtils.relpathDepth(dstRelpath));
+                stmt.bindf("isi", wcRoot.getWcId(), dstRelpath, SVNWCUtils.relpathDepth(dstRelpath));
                 stmt.done();
             } finally {
                 stmt.reset();
