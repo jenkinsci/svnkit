@@ -185,7 +185,6 @@ public class SvnNgDiffUtil {
             this.context = context;
         }
 
-        @Override
         public void receive(SvnTarget target, SvnStatus status) throws SVNException {
             SvnDiffCallbackResult result = new SvnDiffCallbackResult();
 
