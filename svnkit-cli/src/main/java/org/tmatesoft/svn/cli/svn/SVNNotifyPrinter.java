@@ -117,6 +117,8 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
         } else if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
             myIsChangesReceived = true;
             buffer.append("D    " + path + "\n");
+        } else if (event.getAction() == SVNEventAction.UPDATE_BROKEN_LOCK) {
+            buffer.append("B    " + path + "\n");
         } else if (event.getAction() == SVNEventAction.UPDATE_REPLACE) {
             myIsChangesReceived = true;
             buffer.append("R    " + path + "\n");
