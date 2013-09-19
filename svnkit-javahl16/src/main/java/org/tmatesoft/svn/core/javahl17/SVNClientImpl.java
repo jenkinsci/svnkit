@@ -2454,6 +2454,10 @@ public class SVNClientImpl implements ISVNClient {
             return ConflictDescriptor.Reason.replaced;
         } else if (conflictReason == SVNConflictReason.UNVERSIONED) {
             return ConflictDescriptor.Reason.unversioned;
+        } else if (conflictReason == SVNConflictReason.MOVED_AWAY) {
+            return ConflictDescriptor.Reason.moved_away;
+        } else if (conflictReason == SVNConflictReason.MOVED_HERE) {
+            return ConflictDescriptor.Reason.moved_here;
         } else {
             throw new IllegalArgumentException("Unknown conflict reason: " + conflictReason);
         }
