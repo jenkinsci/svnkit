@@ -1,7 +1,6 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -13,29 +12,17 @@ import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
-import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
+import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ConflictInfo;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbRevert;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.core.wc2.ISvnAddParameters;
-import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc2.*;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition> {
@@ -180,7 +167,7 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
         SVNProperties properties = null;
         
         if (!special) {
-            final Map<?, ?> autoProps = SVNPropertiesManager.computeAutoProperties(getOperation().getOptions(), path, null);
+            final Map<?, ?> autoProps = getAllAutoProperties(getOperation().getOptions(), path);
             if (autoProps != null && !autoProps.isEmpty()) {
                 properties = SVNProperties.wrap(autoProps);
             }
@@ -207,6 +194,99 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
                 SVNEventAction.ADD, 
                 SVNEventAction.ADD, 
                 null, null, 1, 1));
+    }
+
+    private Map getAllAutoProperties(ISVNOptions options, File file) throws SVNException {
+        Map<String, String> allAutoProperties = new HashMap<String, String>();
+        Map configAutoProperties = SVNPropertiesManager.computeAutoProperties(options, file, null);
+        if (configAutoProperties != null) {
+            allAutoProperties.putAll(configAutoProperties);
+        }
+
+        SVNProperties regularProperties;
+        SVNRevision revision = SVNRevision.WORKING;
+
+        File parentFile = SVNFileUtil.getParentFile(file);
+
+        final List<SvnInheritedProperties>[] inheritedConfigAutoProperties = new List[1];
+        do {
+            SvnGetProperties getProperties = getOperation().getOperationFactory().createGetProperties();
+            getProperties.setSingleTarget(SvnTarget.fromFile(parentFile, revision));
+            getProperties.setRevision(revision);
+            getProperties.setDepth(SVNDepth.EMPTY);
+            getProperties.setTargetInheritedPropertiesReceiver(new ISvnObjectReceiver<List<SvnInheritedProperties>>() {
+                public void receive(SvnTarget target, List<SvnInheritedProperties> inheritedProperties) throws SVNException {
+                    inheritedConfigAutoProperties[0] = inheritedProperties;
+                }
+            });
+            try {
+                regularProperties = getProperties.run();
+                break;
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.UNVERSIONED_RESOURCE) {
+                    throw e;
+                }
+                parentFile = findExistingParent(parentFile);
+            }
+        } while (true);
+
+        if (inheritedConfigAutoProperties[0] != null) {
+            for (SvnInheritedProperties inheritedConfigAutoProperty : inheritedConfigAutoProperties[0]) {
+                SVNProperties inheritedProperties = inheritedConfigAutoProperty.getProperties();
+                Map<String, SVNPropertyValue> inheritedPropertiesMap = inheritedProperties.asMap();
+                for (Map.Entry<String, SVNPropertyValue> entry : inheritedPropertiesMap.entrySet()) {
+                    String propertyName = entry.getKey();
+                    if (!SVNProperty.INHERITABLE_AUTO_PROPS.equals(propertyName)) {
+                        continue;
+                    }
+                    SVNPropertyValue propertyValue = entry.getValue();
+                    allAutoProperties = parseAndApply(file, SVNPropertyValue.getPropertyAsString(propertyValue), allAutoProperties);
+                }
+            }
+        }
+        if (regularProperties != null) {
+            Map<String, SVNPropertyValue> regularPropertiesMap = regularProperties.asMap();
+            for (Map.Entry<String, SVNPropertyValue> entry : regularPropertiesMap.entrySet()) {
+                String propertyName = entry.getKey();
+                if (!SVNProperty.INHERITABLE_AUTO_PROPS.equals(propertyName)) {
+                    continue;
+                }
+                SVNPropertyValue propertyValue = entry.getValue();
+                allAutoProperties = parseAndApply(file, SVNPropertyValue.getPropertyAsString(propertyValue), allAutoProperties);
+            }
+        }
+
+        return allAutoProperties;
+    }
+
+    private Map<String, String> parseAndApply(File file, String autoPropertiesString, Map<String, String> target) {
+        target = target == null ? new HashMap<String, String>() : target;
+        if (autoPropertiesString == null) {
+            return target;
+        }
+        String[] lines = autoPropertiesString.split("\n");
+        for (String line : lines) {
+            line = line.trim();
+            if (line.length() == 0) {
+                continue;
+            }
+            int pos = line.indexOf('=');
+            if (pos < 0) {
+                continue;
+            }
+            String key = line.substring(0, pos);
+            String value = line.substring(pos + 1);
+            if (DefaultSVNOptions.matches(key, file.getName())) {
+                pos = value.indexOf('=');
+                if (pos < 0) {
+                    continue;
+                }
+                String propertyName = value.substring(0, pos);
+                String propertyValue = value.substring(pos + 1);
+                target.put(propertyName, propertyValue);
+            }
+        }
+        return target;
     }
 
     private void doRevert(File path) {
