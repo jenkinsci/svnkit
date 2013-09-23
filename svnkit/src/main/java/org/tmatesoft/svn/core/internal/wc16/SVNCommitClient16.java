@@ -1631,13 +1631,14 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         editor.addFile(filePath, null, -1);
+        Map<String, String> matchedAutoProperties = getMatchedAutoProperties(SVNFileUtil.getFileName(file), versionedAutoProperties);
         Map autoProperties = new SVNHashMap();
-        autoProperties.putAll(getMatchedAutoProperties(SVNFileUtil.getFileName(file), versionedAutoProperties));
         if (fileType != SVNFileType.SYMLINK) {
             autoProperties = SVNPropertiesManager.computeAutoProperties(getOptions(), file, autoProperties);
         } else {
             autoProperties.put(SVNProperty.SPECIAL, "*");
         }
+        autoProperties.putAll(matchedAutoProperties);
         String mimeTypeProperty = (String) autoProperties.get(SVNProperty.MIME_TYPE);
         for (Iterator names = autoProperties.keySet().iterator(); names.hasNext();) {
             String name = (String) names.next();
