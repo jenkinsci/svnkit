@@ -167,9 +167,11 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
         SVNProperties properties = null;
         
         if (!special) {
-            final Map<?, ?> autoProps = getAllAutoProperties(getOperation().getOptions(), path);
-            if (autoProps != null && !autoProps.isEmpty()) {
-                properties = SVNProperties.wrap(autoProps);
+            if (getOperation().isApplyAutoProperties()) {
+                final Map<?, ?> autoProps = getAllAutoProperties(getOperation().getOptions(), path);
+                if (autoProps != null && !autoProps.isEmpty()) {
+                    properties = SVNProperties.wrap(autoProps);
+                }
             }
         } else {
             properties = new SVNProperties();

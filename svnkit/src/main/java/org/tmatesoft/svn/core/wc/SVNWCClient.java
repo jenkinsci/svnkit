@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc16.SVNWCClient16;
@@ -1537,6 +1538,80 @@ public class SVNWCClient extends SVNBasicClient {
      * @since 1.3
      */
     public void doAdd(File[] paths, boolean force, boolean mkdir, boolean climbUnversionedParents, SVNDepth depth, boolean depthIsSticky, boolean includeIgnored, boolean makeParents) throws SVNException {
+        doAdd(paths, force, mkdir, climbUnversionedParents, depth, depthIsSticky, includeIgnored, makeParents, true);
+    }
+
+    /**
+     * Schedules working copy <code>paths</code> for addition to the repository.
+     *
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#EMPTY}, adds just
+     * <code>paths</code> and nothing below it. If {@link SVNDepth#FILES}, adds
+     * <code>paths</code> and any file children of <code>paths</code>. If
+     * {@link SVNDepth#IMMEDIATES}, adds <code>paths</code>, any file children,
+     * and any immediate subdirectories (but nothing underneath those
+     * subdirectories). If {@link SVNDepth#INFINITY}, adds <code>paths</code>
+     * and everything under it fully recursively.
+     *
+     * <p/>
+     * <code>paths</code>' parent must be under revision control already (unless
+     * <code>makeParents</code> is <span class="javakeyword">true</span>), but
+     * <code>paths</code> are not.
+     *
+     * <p/>
+     * If <code>force</code> is set, path is a directory, <code>depth</code> is
+     * {@link SVNDepth#INFINITY}, then schedules for addition unversioned files
+     * and directories scattered deep within a versioned tree.
+     *
+     * <p/>
+     * If <code>includeIgnored</code> is <span class="javakeyword">false</span>,
+     * doesn't add files or directories that match ignore patterns.
+     *
+     * <p/>
+     * If <code>makeParents</code> is <span class="javakeyword">true</span>,
+     * recurse up path's directory and look for a versioned directory. If found,
+     * add all intermediate paths between it and the path.
+     *
+     * <p/>
+     * Important: this is a *scheduling* operation. No changes will happen to
+     * the repository until a commit occurs. This scheduling can be removed with
+     * a call to {@link #doRevert(File[], SVNDepth, Collection)}.
+     *
+     * @param paths
+     *            working copy paths to add
+     * @param force
+     *            if <span class="javakeyword">true</span>, this method does not
+     *            throw exceptions on already-versioned items
+     * @param mkdir
+     *            if <span class="javakeyword">true</span>, create a directory
+     *            also at <code>path</code>
+     * @param climbUnversionedParents
+     *            not used; make use of <code>makeParents</code> instead
+     * @param depth
+     *            tree depth
+     * @param depthIsSticky
+     *            if depth should be recorded to the working copy
+     * @param includeIgnored
+     *            if <span class="javakeyword">true</span>, does not apply
+     *            ignore patterns to paths being added
+     * @param makeParents
+     *            if <span class="javakeyword">true</span>, climb upper and
+     *            schedule also all unversioned paths in the way
+     * @param applyAutoProperties
+     *            if <span class="javakeyword">true</span>, applies auto-properties on file addition
+     *            otherwise auto-properties application is disabled
+     * @throws SVNException
+     *             <ul>
+     *             <li/>exception with {@link SVNErrorCode#ENTRY_EXISTS} error
+     *             code - if <code>force</code> is not set and a path is already
+     *             under version <li/>exception with
+     *             {@link SVNErrorCode#CLIENT_NO_VERSIONED_PARENT} error code -
+     *             if <code>makeParents</code> is <span
+     *             class="javakeyword">true</span> but no unversioned paths
+     *             stepping upper from a path are found
+     * @since 1.8
+     */
+    public void doAdd(File[] paths, boolean force, boolean mkdir, boolean climbUnversionedParents, SVNDepth depth, boolean depthIsSticky, boolean includeIgnored, boolean makeParents, boolean applyAutoProperties) throws SVNException {
         SvnScheduleForAddition add = getOperationsFactory().createScheduleForAddition();
         for (int i = 0; i < paths.length; i++) {
             add.addTarget(SvnTarget.fromFile(paths[i]));            
@@ -1548,6 +1623,7 @@ public class SVNWCClient extends SVNBasicClient {
         add.setIncludeIgnored(includeIgnored);
         add.setAddParents(makeParents);
         add.setAddParameters(SvnCodec.addParameters(addParameters));
+        add.setApplyAutoProperties(applyAutoProperties);
         
         add.run();
     }

@@ -931,6 +931,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         return myAuthorOfInterest;
     }
 
+    public boolean isNoAutoProps() {
+        return myIsNoAutoProps;
+    }
+
     public String getRegularExpression() {
         return myRegularExpression;
     }
