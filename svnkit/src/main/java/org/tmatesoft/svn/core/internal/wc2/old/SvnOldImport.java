@@ -29,7 +29,8 @@ public class SvnOldImport extends SvnOldRunner<SVNCommitInfo, SvnImport> {
                 getOperation().getRevisionProperties(), 
                 getOperation().isUseGlobalIgnores(), 
                 getOperation().isForce(), 
-                getOperation().getDepth());
+                getOperation().getDepth(),
+                getOperation().isApplyAutoProperties());
         
         if (info != null) {
             getOperation().receive(getOperation().getFirstTarget(), info);
