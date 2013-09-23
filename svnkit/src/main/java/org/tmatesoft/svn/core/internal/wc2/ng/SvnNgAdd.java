@@ -274,17 +274,30 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
             if (pos < 0) {
                 continue;
             }
-            String key = line.substring(0, pos);
-            String value = line.substring(pos + 1);
-            if (DefaultSVNOptions.matches(key, file.getName())) {
-                pos = value.indexOf('=');
-                if (pos < 0) {
-                    continue;
+            String pattern = line.substring(0, pos).trim();
+            String keyValuePairsString = line.substring(pos + 1).trim();
+
+            if (DefaultSVNOptions.matches(pattern, file.getName())) {
+                String[] keyValuePairs = keyValuePairsString.split(";");
+                for (String keyValuePair : keyValuePairs) {
+                    keyValuePair = keyValuePair.trim();
+                    if (keyValuePair.length() == 0) {
+                        continue;
+                    }
+                    String propertyName;
+                    String propertyValue;
+                    pos = keyValuePair.indexOf('=');
+                    if (pos < 0) {
+                        propertyName = keyValuePair.trim();
+                        propertyValue = "*";
+                    } else {
+                        propertyName = keyValuePair.substring(0, pos).trim();
+                        propertyValue = keyValuePair.substring(pos + 1).trim();
+                    }
+                    target.put(propertyName, propertyValue);
                 }
-                String propertyName = value.substring(0, pos);
-                String propertyValue = value.substring(pos + 1);
-                target.put(propertyName, propertyValue);
             }
+
         }
         return target;
     }
