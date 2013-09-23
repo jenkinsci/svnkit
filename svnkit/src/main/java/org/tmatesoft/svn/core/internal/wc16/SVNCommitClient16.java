@@ -2,14 +2,7 @@ package org.tmatesoft.svn.core.internal.wc16;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -28,18 +21,7 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
-import org.tmatesoft.svn.core.internal.wc.SVNCommitMediator;
-import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNCommitter;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
-import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNImportMediator;
-import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
-import org.tmatesoft.svn.core.internal.wc.SVNStatusEditor;
+import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
@@ -61,6 +43,7 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.wc2.*;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -644,7 +627,87 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      *             </ul>
      * @since 1.2.0, New in SVN 1.5.0
      */
-    public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, SVNProperties revisionProperties, boolean useGlobalIgnores, boolean ignoreUnknownNodeTypes, SVNDepth depth)
+    public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, SVNProperties revisionProperties, boolean useGlobalIgnores, boolean ignoreUnknownNodeTypes, SVNDepth depth) throws SVNException {
+        return doImport(path, dstURL, commitMessage, revisionProperties, useGlobalIgnores, ignoreUnknownNodeTypes, depth, true);
+    }
+    /**
+     * Imports file or directory <code>path</code> into repository directory
+     * <code>dstURL</code> at HEAD revision. If some components of
+     * <code>dstURL</code> do not exist, then creates parent directories as
+     * necessary.
+     * <p/>
+     * If <code>path</code> is a directory, the contents of that directory are
+     * imported directly into the directory identified by <code>dstURL</code>.
+     * Note that the directory <code>path</code> itself is not imported -- that
+     * is, the base name of <code>path<code> is not part of the import.
+     * <p/>
+     * If <code>path</code> is a file, then the parent of <code>dstURL</code> is
+     * the directory receiving the import. The base name of <code>dstURL</code>
+     * is the filename in the repository. In this case if <code>dstURL</code>
+     * already exists, throws {@link SVNException}.
+     * <p/>
+     * If the caller's {@link ISVNEventHandler event handler} is not <span
+     * class="javakeyword">null</span> it will be called as the import
+     * progresses with {@link SVNEventAction#COMMIT_ADDED} action. If the commit
+     * succeeds, the handler will be called with
+     * {@link SVNEventAction#COMMIT_COMPLETED} event action.
+     * <p/>
+     * If non-<span class="javakeyword">null</span>,
+     * <code>revisionProperties</code> holds additional, custom revision
+     * properties (<code>String</code> names mapped to {@link SVNPropertyValue}
+     * values) to be set on the new revision. This table cannot contain any
+     * standard Subversion properties.
+     * <p/>
+     * {@link #getCommitHandler() Commit handler} will be asked for a commit log
+     * message.
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#EMPTY}, imports just
+     * <code>path</code> and nothing below it. If {@link SVNDepth#FILES},
+     * imports <code>path</code> and any file children of <code>path</code>. If
+     * {@link SVNDepth#IMMEDIATES}, imports <code>path</code>, any file
+     * children, and any immediate subdirectories (but nothing underneath those
+     * subdirectories). If {@link SVNDepth#INFINITY}, imports <code>path</code>
+     * and everything under it fully recursively.
+     * <p/>
+     * If <code>useGlobalIgnores</code> is <span
+     * class="javakeyword">false</span>, doesn't add files or directories that
+     * match ignore patterns.
+     * <p/>
+     * If <code>ignoreUnknownNodeTypes</code> is <span
+     * class="javakeyword">false</span>, ignores files of which the node type is
+     * unknown, such as device files and pipes.
+     *
+     * @param path
+     *            path to import
+     * @param dstURL
+     *            import destination url
+     * @param commitMessage
+     *            commit log message
+     * @param revisionProperties
+     *            custom revision properties
+     * @param useGlobalIgnores
+     *            whether matching against global ignore patterns should take
+     *            place
+     * @param ignoreUnknownNodeTypes
+     *            whether to ignore files of unknown node types or not
+     * @param depth
+     *            tree depth to process
+     * @return information about the new committed revision
+     * @throws SVNException
+     *             in the following cases:
+     *             <ul>
+     *             <li/>exception with {@link SVNErrorCode#ENTRY_NOT_FOUND}
+     *             error code - if <code>path</code> does not exist <li/>
+     *             exception with {@link SVNErrorCode#ENTRY_EXISTS} error code -
+     *             if <code>dstURL</code> already exists and <code>path</code>
+     *             is a file <li/>exception with
+     *             {@link SVNErrorCode#CL_ADM_DIR_RESERVED} error code - if
+     *             trying to import an item with a reserved SVN name (like
+     *             <code>'.svn'</code> or <code>'_svn'</code>)
+     *             </ul>
+     * @since SVN 1.8
+     */
+    public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, SVNProperties revisionProperties, boolean useGlobalIgnores, boolean ignoreUnknownNodeTypes, SVNDepth depth, boolean applyAutoProperties)
             throws SVNException {
         SVNRepository repos = null;
         SVNFileType srcKind = SVNFileType.getType(path);
@@ -683,6 +746,12 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
         }
         commitMessage = SVNCommitUtil.validateCommitMessage(commitMessage);
         SVNPropertiesManager.validateRevisionProperties(revisionProperties);
+        Map<String, Map<String, String>> versionedAutoProperties; //pattern->properties
+        if (applyAutoProperties) {
+            versionedAutoProperties = getVersionedAutoProperties(dstURL, reposRoot);
+        } else {
+            versionedAutoProperties = null;
+        }
         ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, revisionProperties, new SVNImportMediator());
         String filePath = "";
         if (srcKind != SVNFileType.DIRECTORY) {
@@ -706,10 +775,10 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
             changed = newPaths.size() > 0;
             SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
             if (srcKind == SVNFileType.DIRECTORY) {
-                changed |= importDir(deltaGenerator, path, newDirPath, useGlobalIgnores, ignoreUnknownNodeTypes, depth, commitEditor);
+                changed |= importDir(deltaGenerator, path, newDirPath, useGlobalIgnores, ignoreUnknownNodeTypes, depth, versionedAutoProperties, commitEditor);
             } else if (srcKind == SVNFileType.FILE || srcKind == SVNFileType.SYMLINK) {
                 if (!useGlobalIgnores || !SVNStatusEditor.isIgnored(ignores, path, "/" + path.getName())) {
-                    changed |= importFile(deltaGenerator, path, srcKind, filePath, commitEditor);
+                    changed |= importFile(deltaGenerator, path, srcKind, filePath, versionedAutoProperties, commitEditor);
                 }
             } else if (srcKind == SVNFileType.NONE || srcKind == SVNFileType.UNKNOWN) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "''{0}'' does not exist", path);
@@ -1508,7 +1577,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
         targets.add(url);
     }
 
-    private boolean importDir(SVNDeltaGenerator deltaGenerator, File dir, String importPath, boolean useGlobalIgnores, boolean ignoreUnknownNodeTypes, SVNDepth depth, ISVNEditor editor)
+    private boolean importDir(SVNDeltaGenerator deltaGenerator, File dir, String importPath, boolean useGlobalIgnores, boolean ignoreUnknownNodeTypes, SVNDepth depth, Map<String, Map<String, String>> versionedAutoProperties, ISVNEditor editor)
             throws SVNException {
         checkCancelled();
         File[] children = SVNFileListUtil.listFiles(dir);
@@ -1539,10 +1608,10 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
                 if (depth == SVNDepth.IMMEDIATES) {
                     depthBelowHere = SVNDepth.EMPTY;
                 }
-                importDir(deltaGenerator, file, path, useGlobalIgnores, ignoreUnknownNodeTypes, depthBelowHere, editor);
+                importDir(deltaGenerator, file, path, useGlobalIgnores, ignoreUnknownNodeTypes, depthBelowHere, versionedAutoProperties, editor);
                 editor.closeDir();
             } else if ((fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) && depth.compareTo(SVNDepth.FILES) >= 0) {
-                changed |= importFile(deltaGenerator, file, fileType, path, editor);
+                changed |= importFile(deltaGenerator, file, fileType, path, versionedAutoProperties, editor);
             } else if (fileType != SVNFileType.DIRECTORY && fileType != SVNFileType.FILE) {
                 if (ignoreUnknownNodeTypes) {
                     SVNEvent skippedEvent = SVNEventFactory.createSVNEvent(file, SVNNodeKind.NONE, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, SVNEventAction.COMMIT_ADDED, null, null);
@@ -1556,13 +1625,14 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
         return changed;
     }
 
-    private boolean importFile(SVNDeltaGenerator deltaGenerator, File file, SVNFileType fileType, String filePath, ISVNEditor editor) throws SVNException {
+    private boolean importFile(SVNDeltaGenerator deltaGenerator, File file, SVNFileType fileType, String filePath, Map<String, Map<String, String>> versionedAutoProperties, ISVNEditor editor) throws SVNException {
         if (fileType == null || fileType == SVNFileType.UNKNOWN) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "unknown or unversionable type for ''{0}''", file);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         editor.addFile(filePath, null, -1);
         Map autoProperties = new SVNHashMap();
+        autoProperties.putAll(getMatchedAutoProperties(SVNFileUtil.getFileName(file), versionedAutoProperties));
         if (fileType != SVNFileType.SYMLINK) {
             autoProperties = SVNPropertiesManager.computeAutoProperties(getOptions(), file, autoProperties);
         } else {
@@ -1619,6 +1689,21 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
         return true;
     }
 
+    private Map<String, String> getMatchedAutoProperties(String fileName, Map<String, Map<String, String>> autoProperties) {
+        if (autoProperties == null) {
+            return Collections.emptyMap();
+        }
+        Map<String, String> matchedAutoProperties = new HashMap<String, String>();
+        for (Map.Entry<String, Map<String, String>> entry : autoProperties.entrySet()) {
+            String pattern = entry.getKey();
+            if (DefaultSVNOptions.matches(pattern, fileName)) {
+                Map<String, String> properties = entry.getValue();
+                matchedAutoProperties.putAll(properties);
+            }
+        }
+        return matchedAutoProperties;
+    }
+
     private static boolean hasProcessedParents(Collection paths, String path) throws SVNException {
         path = SVNPathUtil.removeTail(path);
         if (paths.contains(path)) {
@@ -1637,5 +1722,127 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
         message = message.replaceAll("\r\n", "\n");
         message = message.replace('\r', '\n');
         return message;
+    }
+
+    private Map<String, Map<String, String>> getVersionedAutoProperties(SVNURL url, SVNURL reposRoot) throws SVNException {
+        SVNProperties regularProperties;
+        SVNURL parentUrl = url.removePathTail();
+        if (url.equals(reposRoot)) {
+            return null;
+        }
+
+        final List<SvnInheritedProperties>[] inheritedConfigAutoProperties = new List[1];
+        final SvnOperationFactory operationFactory = new SvnOperationFactory();
+        try {
+            operationFactory.setRepositoryPool(getRepositoryPool());
+            operationFactory.setOptions(getOptions());
+            operationFactory.setEventHandler(getEventDispatcher());
+            operationFactory.setAutoDisposeRepositoryPool(false);
+            operationFactory.setCanceller(getEventDispatcher());
+            do {
+                SvnGetProperties getProperties = operationFactory.createGetProperties();
+                getProperties.setSingleTarget(SvnTarget.fromURL(parentUrl, SVNRevision.HEAD));
+                getProperties.setRevision(SVNRevision.HEAD);
+                getProperties.setDepth(SVNDepth.EMPTY);
+                getProperties.setTargetInheritedPropertiesReceiver(new ISvnObjectReceiver<List<SvnInheritedProperties>>() {
+                    public void receive(SvnTarget target, List<SvnInheritedProperties> inheritedProperties) throws SVNException {
+                        inheritedConfigAutoProperties[0] = inheritedProperties;
+                    }
+                });
+                try {
+                    regularProperties = getProperties.run();
+                    break;
+                } catch (SVNException e) {
+                    if (e.getErrorMessage().getErrorCode() != SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED) {
+                        throw e;
+                    }
+                    if (parentUrl.equals(reposRoot)) {
+                        regularProperties = null;
+                        break;
+                    }
+                    parentUrl = parentUrl.removePathTail();
+                }
+            } while (true);
+
+            Map<String, Map<String ,String>> allAutoProperties = new HashMap<String, Map<String, String>>();
+
+            if (inheritedConfigAutoProperties[0] != null) {
+                for (SvnInheritedProperties inheritedConfigAutoProperty : inheritedConfigAutoProperties[0]) {
+                    SVNProperties inheritedProperties = inheritedConfigAutoProperty.getProperties();
+                    Map<String, SVNPropertyValue> inheritedPropertiesMap = inheritedProperties.asMap();
+                    for (Map.Entry<String, SVNPropertyValue> entry : inheritedPropertiesMap.entrySet()) {
+                        String propertyName = entry.getKey();
+                        if (!SVNProperty.INHERITABLE_AUTO_PROPS.equals(propertyName)) {
+                            continue;
+                        }
+                        SVNPropertyValue propertyValue = entry.getValue();
+                        allAutoProperties = parseAutoProperties(SVNPropertyValue.getPropertyAsString(propertyValue), allAutoProperties);
+                    }
+                }
+            }
+            if (regularProperties != null) {
+                Map<String, SVNPropertyValue> regularPropertiesMap = regularProperties.asMap();
+                for (Map.Entry<String, SVNPropertyValue> entry : regularPropertiesMap.entrySet()) {
+                    String propertyName = entry.getKey();
+                    if (!SVNProperty.INHERITABLE_AUTO_PROPS.equals(propertyName)) {
+                        continue;
+                    }
+                    SVNPropertyValue propertyValue = entry.getValue();
+                    allAutoProperties = parseAutoProperties(SVNPropertyValue.getPropertyAsString(propertyValue), allAutoProperties);
+                }
+            }
+
+            return allAutoProperties;
+
+        } finally {
+            operationFactory.dispose();
+        }
+    }
+
+    private Map<String, Map<String, String>> parseAutoProperties(String autoPropertiesString, Map<String, Map<String, String>> target) {
+        target = target == null ? new HashMap<String, Map<String, String>>() : target;
+        if (autoPropertiesString == null) {
+            return target;
+        }
+        String[] lines = autoPropertiesString.split("\n");
+        for (String line : lines) {
+            line = line.trim();
+            if (line.length() == 0) {
+                continue;
+            }
+            int pos = line.indexOf('=');
+            if (pos < 0) {
+                continue;
+            }
+            String pattern = line.substring(0, pos).trim();
+            String keyValuePairsString = line.substring(pos + 1).trim();
+
+            Map<String, String> properties = target.get(pattern);
+            if (properties == null) {
+                properties = new HashMap<String, String>();
+                target.put(pattern, properties);
+            }
+
+            String[] keyValuePairs = keyValuePairsString.split(";");
+            for (String keyValuePair : keyValuePairs) {
+                keyValuePair = keyValuePair.trim();
+                if (keyValuePair.length() == 0) {
+                    continue;
+                }
+                String propertyName;
+                String propertyValue;
+                pos = keyValuePair.indexOf('=');
+                if (pos < 0) {
+                    propertyName = keyValuePair.trim();
+                    propertyValue = "*";
+                } else {
+                    propertyName = keyValuePair.substring(0, pos).trim();
+                    propertyValue = keyValuePair.substring(pos + 1).trim();
+                }
+                properties.put(propertyName, propertyValue);
+            }
+
+        }
+        return target;
     }
 }
