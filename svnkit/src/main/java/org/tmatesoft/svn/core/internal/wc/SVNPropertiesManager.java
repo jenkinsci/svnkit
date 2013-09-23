@@ -56,6 +56,8 @@ public class SVNPropertiesManager {
     static {
         NOT_ALLOWED_FOR_FILE.add(SVNProperty.IGNORE);
         NOT_ALLOWED_FOR_FILE.add(SVNProperty.EXTERNALS);
+        NOT_ALLOWED_FOR_FILE.add(SVNProperty.INHERITABLE_IGNORES);
+        NOT_ALLOWED_FOR_FILE.add(SVNProperty.INHERITABLE_AUTO_PROPS);
 
         NOT_ALLOWED_FOR_DIR.add(SVNProperty.EXECUTABLE);
         NOT_ALLOWED_FOR_DIR.add(SVNProperty.KEYWORDS);
