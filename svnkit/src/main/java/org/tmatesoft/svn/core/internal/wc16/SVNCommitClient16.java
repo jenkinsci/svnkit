@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgPropertiesManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
@@ -1631,7 +1632,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         editor.addFile(filePath, null, -1);
-        Map<String, String> matchedAutoProperties = getMatchedAutoProperties(SVNFileUtil.getFileName(file), versionedAutoProperties);
+        Map<String, String> matchedAutoProperties = SvnNgPropertiesManager.getMatchedAutoProperties(SVNFileUtil.getFileName(file), versionedAutoProperties);
         Map autoProperties = new SVNHashMap();
         if (fileType != SVNFileType.SYMLINK) {
             autoProperties = SVNPropertiesManager.computeAutoProperties(getOptions(), file, autoProperties);
@@ -1688,21 +1689,6 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
         }
         editor.closeFile(filePath, checksum);
         return true;
-    }
-
-    private Map<String, String> getMatchedAutoProperties(String fileName, Map<String, Map<String, String>> autoProperties) {
-        if (autoProperties == null) {
-            return Collections.emptyMap();
-        }
-        Map<String, String> matchedAutoProperties = new HashMap<String, String>();
-        for (Map.Entry<String, Map<String, String>> entry : autoProperties.entrySet()) {
-            String pattern = entry.getKey();
-            if (DefaultSVNOptions.matches(pattern, fileName)) {
-                Map<String, String> properties = entry.getValue();
-                matchedAutoProperties.putAll(properties);
-            }
-        }
-        return matchedAutoProperties;
     }
 
     private static boolean hasProcessedParents(Collection paths, String path) throws SVNException {
@@ -1777,7 +1763,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
                             continue;
                         }
                         SVNPropertyValue propertyValue = entry.getValue();
-                        allAutoProperties = parseAutoProperties(SVNPropertyValue.getPropertyAsString(propertyValue), allAutoProperties);
+                        allAutoProperties = SvnNgPropertiesManager.parseAutoProperties(propertyValue, allAutoProperties);
                     }
                 }
             }
@@ -1789,7 +1775,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
                         continue;
                     }
                     SVNPropertyValue propertyValue = entry.getValue();
-                    allAutoProperties = parseAutoProperties(SVNPropertyValue.getPropertyAsString(propertyValue), allAutoProperties);
+                    allAutoProperties = SvnNgPropertiesManager.parseAutoProperties(propertyValue, allAutoProperties);
                 }
             }
 
@@ -1798,52 +1784,5 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
         } finally {
             operationFactory.dispose();
         }
-    }
-
-    private Map<String, Map<String, String>> parseAutoProperties(String autoPropertiesString, Map<String, Map<String, String>> target) {
-        target = target == null ? new HashMap<String, Map<String, String>>() : target;
-        if (autoPropertiesString == null) {
-            return target;
-        }
-        String[] lines = autoPropertiesString.split("\n");
-        for (String line : lines) {
-            line = line.trim();
-            if (line.length() == 0) {
-                continue;
-            }
-            int pos = line.indexOf('=');
-            if (pos < 0) {
-                continue;
-            }
-            String pattern = line.substring(0, pos).trim();
-            String keyValuePairsString = line.substring(pos + 1).trim();
-
-            Map<String, String> properties = target.get(pattern);
-            if (properties == null) {
-                properties = new HashMap<String, String>();
-                target.put(pattern, properties);
-            }
-
-            String[] keyValuePairs = keyValuePairsString.split(";");
-            for (String keyValuePair : keyValuePairs) {
-                keyValuePair = keyValuePair.trim();
-                if (keyValuePair.length() == 0) {
-                    continue;
-                }
-                String propertyName;
-                String propertyValue;
-                pos = keyValuePair.indexOf('=');
-                if (pos < 0) {
-                    propertyName = keyValuePair.trim();
-                    propertyValue = "*";
-                } else {
-                    propertyName = keyValuePair.substring(0, pos).trim();
-                    propertyValue = keyValuePair.substring(pos + 1).trim();
-                }
-                properties.put(propertyName, propertyValue);
-            }
-
-        }
-        return target;
     }
 }

@@ -242,7 +242,7 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
                         continue;
                     }
                     SVNPropertyValue propertyValue = entry.getValue();
-                    allAutoProperties = parseAndApply(file, SVNPropertyValue.getPropertyAsString(propertyValue), allAutoProperties);
+                    allAutoProperties.putAll(SvnNgPropertiesManager.getMatchedAutoProperties(file.getName(), SvnNgPropertiesManager.parseAutoProperties(propertyValue, null)));
                 }
             }
         }
@@ -254,54 +254,11 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
                     continue;
                 }
                 SVNPropertyValue propertyValue = entry.getValue();
-                allAutoProperties = parseAndApply(file, SVNPropertyValue.getPropertyAsString(propertyValue), allAutoProperties);
+                allAutoProperties.putAll(SvnNgPropertiesManager.getMatchedAutoProperties(file.getName(), SvnNgPropertiesManager.parseAutoProperties(propertyValue, null)));
             }
         }
 
         return allAutoProperties;
-    }
-
-    private Map<String, String> parseAndApply(File file, String autoPropertiesString, Map<String, String> target) {
-        target = target == null ? new HashMap<String, String>() : target;
-        if (autoPropertiesString == null) {
-            return target;
-        }
-        String[] lines = autoPropertiesString.split("\n");
-        for (String line : lines) {
-            line = line.trim();
-            if (line.length() == 0) {
-                continue;
-            }
-            int pos = line.indexOf('=');
-            if (pos < 0) {
-                continue;
-            }
-            String pattern = line.substring(0, pos).trim();
-            String keyValuePairsString = line.substring(pos + 1).trim();
-
-            if (DefaultSVNOptions.matches(pattern, file.getName())) {
-                String[] keyValuePairs = keyValuePairsString.split(";");
-                for (String keyValuePair : keyValuePairs) {
-                    keyValuePair = keyValuePair.trim();
-                    if (keyValuePair.length() == 0) {
-                        continue;
-                    }
-                    String propertyName;
-                    String propertyValue;
-                    pos = keyValuePair.indexOf('=');
-                    if (pos < 0) {
-                        propertyName = keyValuePair.trim();
-                        propertyValue = "*";
-                    } else {
-                        propertyName = keyValuePair.substring(0, pos).trim();
-                        propertyValue = keyValuePair.substring(pos + 1).trim();
-                    }
-                    target.put(propertyName, propertyValue);
-                }
-            }
-
-        }
-        return target;
     }
 
     private void doRevert(File path) {
