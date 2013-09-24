@@ -527,7 +527,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 rememberSkippedTree(localAbsPath);
             }
         }
-        myWCContext.wqRun(localAbsPath);
+        myWCContext.wqRun(myCurrentDirectory.localAbsolutePath);
         
         if (treeConflict != null) {
             doNotification(localAbsPath, SVNNodeKind.UNKNOWN, SVNEventAction.TREE_CONFLICT, null, null);
