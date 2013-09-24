@@ -1740,7 +1740,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
                     regularProperties = getProperties.run();
                     break;
                 } catch (SVNException e) {
-                    if (e.getErrorMessage().getErrorCode() != SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED) {
+                    if (e.getErrorMessage().getErrorCode() != SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED && e.getErrorMessage().getErrorCode() != SVNErrorCode.ENTRY_NOT_FOUND) {
                         throw e;
                     }
                     if (parentUrl.equals(reposRoot)) {
