@@ -140,7 +140,8 @@ public class SVNMergeInfoCommand extends SVNCommand implements ISVNLogEntryHandl
                 SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Depth specification options valid only with --show-revs option");
                 SVNErrorManager.error(errorMessage, SVNLogType.WC);
             }
-            //TODO: mergeInfoSummary();
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Mergeinfo summary functionality is not yet implemented");
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
         }
     }
     
