@@ -26,10 +26,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
-import org.tmatesoft.svn.core.wc2.SvnLogMergeInfo;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc.SVNRevisionRange;
+import org.tmatesoft.svn.core.wc2.*;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -50,6 +48,11 @@ public class SVNMergeInfoCommand extends SVNCommand implements ISVNLogEntryHandl
         options.add(SVNOption.RECURSIVE);
         options.add(SVNOption.DEPTH);
         return options;
+    }
+
+    @Override
+    public boolean acceptsRevisionRange() {
+        return true;
     }
 
     public void run() throws SVNException {
@@ -88,35 +91,57 @@ public class SVNMergeInfoCommand extends SVNCommand implements ISVNLogEntryHandl
                 tgtPegRevision = SVNRevision.BASE;
             }
         }
-        
-        SVNDiffClient client = getSVNEnvironment().getClientManager().getDiffClient();
-        SvnOperationFactory of = client.getOperationsFactory();
-        SVNDepth depth = getSVNEnvironment().getDepth();
-        if (depth == SVNDepth.UNKNOWN) {
-            depth = SVNDepth.EMPTY;
+
+        List revisionRanges = getSVNEnvironment().getRevisionRanges();
+
+        SVNRevision srcStartRevision = revisionRanges.size() == 0 ? SVNRevision.UNDEFINED : ((SVNRevisionRange)revisionRanges.get(0)).getStartRevision();
+        SVNRevision srcEndRevision = revisionRanges.size() == 0 ? SVNRevision.UNDEFINED : ((SVNRevisionRange)revisionRanges.get(revisionRanges.size() - 1)).getEndRevision();
+
+        if (srcEndRevision == SVNRevision.UNDEFINED) {
+            srcEndRevision = srcStartRevision;
         }
-        SvnLogMergeInfo logMergeInfo = of.createLogMergeInfo();
-        logMergeInfo.setDepth(depth);
-        logMergeInfo.setDiscoverChangedPaths(true);
-        logMergeInfo.setRevisionProperties(null);
-        logMergeInfo.setReceiver(new ISvnObjectReceiver<SVNLogEntry>() {            
-            public void receive(SvnTarget target, SVNLogEntry object) throws SVNException {
-                handleLogEntry(object);
+
+        if (getSVNEnvironment().getShowRevisionType() == SVNShowRevisionType.MERGED || getSVNEnvironment().getShowRevisionType() == SVNShowRevisionType.ELIGIBLE) {
+            SVNDiffClient client = getSVNEnvironment().getClientManager().getDiffClient();
+            SvnOperationFactory of = client.getOperationsFactory();
+            SVNDepth depth = getSVNEnvironment().getDepth();
+            if (depth == SVNDepth.UNKNOWN) {
+                depth = SVNDepth.EMPTY;
             }
-        });
-        logMergeInfo.setFindMerged(getSVNEnvironment().getShowRevisionType() == SVNShowRevisionType.MERGED);
-        if (target.isURL()) {
-            logMergeInfo.setSingleTarget(SvnTarget.fromURL(target.getURL(), tgtPegRevision));
+            SvnLogMergeInfo logMergeInfo = of.createLogMergeInfo();
+            logMergeInfo.addRevisionRange(SvnRevisionRange.create(srcStartRevision, srcEndRevision));
+            logMergeInfo.setDepth(depth);
+            logMergeInfo.setDiscoverChangedPaths(true);
+            logMergeInfo.setRevisionProperties(null);
+            logMergeInfo.setReceiver(new ISvnObjectReceiver<SVNLogEntry>() {
+                public void receive(SvnTarget target, SVNLogEntry object) throws SVNException {
+                    handleLogEntry(object);
+                }
+            });
+            logMergeInfo.setFindMerged(getSVNEnvironment().getShowRevisionType() == SVNShowRevisionType.MERGED);
+            if (target.isURL()) {
+                logMergeInfo.setSingleTarget(SvnTarget.fromURL(target.getURL(), tgtPegRevision));
+            } else {
+                logMergeInfo.setSingleTarget(SvnTarget.fromFile(target.getFile(), tgtPegRevision));
+            }
+            if (source.isURL()) {
+                logMergeInfo.setSource(SvnTarget.fromURL(source.getURL(), srcPegRevision));
+            } else {
+                logMergeInfo.setSource(SvnTarget.fromFile(source.getFile(), srcPegRevision));
+            }
+
+            logMergeInfo.run();
         } else {
-            logMergeInfo.setSingleTarget(SvnTarget.fromFile(target.getFile(), tgtPegRevision));
+            if (srcStartRevision != SVNRevision.UNDEFINED || srcEndRevision != SVNRevision.UNDEFINED) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "--revision (-r) option valid only with --show-revs option");
+                SVNErrorManager.error(errorMessage, SVNLogType.WC);
+            }
+            if (getSVNEnvironment().getDepth() != SVNDepth.UNKNOWN) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Depth specification options valid only with --show-revs option");
+                SVNErrorManager.error(errorMessage, SVNLogType.WC);
+            }
+            //TODO: mergeInfoSummary();
         }
-        if (source.isURL()) {
-            logMergeInfo.setSource(SvnTarget.fromURL(source.getURL(), srcPegRevision));
-        } else {
-            logMergeInfo.setSource(SvnTarget.fromFile(source.getFile(), srcPegRevision));
-        }
-        
-        logMergeInfo.run();
     }
     
     public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
@@ -128,5 +153,4 @@ public class SVNMergeInfoCommand extends SVNCommand implements ISVNLogEntryHandl
         }
         getSVNEnvironment().getOut().println(message);
     }
-    
 }
