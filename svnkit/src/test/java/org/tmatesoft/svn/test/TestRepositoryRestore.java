@@ -494,7 +494,7 @@ public class TestRepositoryRestore {
     }
 
     private void installPristine(SVNWCDbRoot wcRoot, SvnChecksum sha1Checksum, byte[] content) throws SVNException {
-        File pristinePath = SvnWcDbPristines.getPristinePath(wcRoot, sha1Checksum);
+        File pristinePath = SvnWcDbPristines.getPristineFuturePath(wcRoot, sha1Checksum);
         SVNFileUtil.ensureDirectoryExists(SVNFileUtil.getFileDir(pristinePath));
 
         OutputStream outputStream = SVNFileUtil.openFileForWriting(pristinePath);
