@@ -2294,6 +2294,9 @@ public class SVNWCContext {
                         actualProps, serverBaseProps, theirProps, conflictProps);
             }
         }
+        if (mergePropertiesInfo.newActualProperties != null) {
+            mergePropertiesInfo.newActualProperties.removeNullValues();
+        }
         return mergePropertiesInfo;
     }
     
