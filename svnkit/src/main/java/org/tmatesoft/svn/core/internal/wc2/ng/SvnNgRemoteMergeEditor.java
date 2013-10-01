@@ -327,7 +327,10 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
                 processor.fileAdded(mergeResult, SVNFileUtil.createFilePath(fb.path), null, fb.rightSource, null, fb.pathEndRevision, null, rightProps);
             } else {
                 mergeResult.reset();
-                processor.fileChanged(mergeResult, SVNFileUtil.createFilePath(fb.path), fb.leftSource, fb.rightSource, fb.pathEndRevision != null ? fb.pathStartRevision : null, fb.pathEndRevision, fb.pristineProps, rightProps, fb.pathEndRevision != null, fb.propChanges);
+                boolean contentChanged = fb.baseChecksum== null || !fb.baseChecksum.equals(expectedChecksum);
+                File leftFile = fb.pathEndRevision != null && contentChanged ? fb.pathStartRevision : null;
+                File pathEndRevision = contentChanged ? fb.pathEndRevision : null;
+                processor.fileChanged(mergeResult, SVNFileUtil.createFilePath(fb.path), fb.leftSource, fb.rightSource, leftFile, pathEndRevision, fb.pristineProps, rightProps, fb.pathEndRevision != null, fb.propChanges);
             }
         }
         currentFile = null;
@@ -353,6 +356,7 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         }
         currentFile.pathEndRevision = createUniqueFile(SVNPathUtil.tail(path));
         tmpFiles.add(currentFile.pathEndRevision);
+        currentFile.baseChecksum = baseChecksum;
         currentFile.deltaProcessor.applyTextDelta(currentFile.pathStartRevision, currentFile.pathEndRevision, true);
     }
 
@@ -474,6 +478,7 @@ public class SvnNgRemoteMergeEditor implements ISVNEditor {
         private SvnDiffSource rightSource;
         public boolean hasPropChange;
         public SVNProperties propChanges;
+        public String baseChecksum;
         public String resultChecksum;
         public SVNDeltaProcessor deltaProcessor;
 
