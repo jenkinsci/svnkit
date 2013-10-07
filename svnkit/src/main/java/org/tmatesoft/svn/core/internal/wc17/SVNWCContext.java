@@ -2166,7 +2166,7 @@ public class SVNWCContext {
         }
         writeCheck(dirAbsPath);
         SVNSkel workItems = result.workItems;
-        getDb().opSetProps(localAbsPath, result.newActualProperties, null, hasMagicProperty(propChanges), workItems);
+        getDb().opSetProps(localAbsPath, result.newActualProperties, result.conflictSkel, hasMagicProperty(propChanges), workItems);
         wqRun(localAbsPath);
         return result;
     }
@@ -2217,6 +2217,7 @@ public class SVNWCContext {
         mergeInfo.newActualProperties = result.getActualProperties();
         mergeInfo.newBaseProperties = result.getBaseProperties();
         mergeInfo.workItems = defaultMerger.getWorkItems();
+        mergeInfo.conflictSkel = result.getConflictSkel();
         return mergeInfo;
     }
 
