@@ -195,10 +195,10 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
             if (getSVNEnvironment().isXML()) {
                 printXMLFooter("properties");
             }
-            if (errorCode == SVNErrorCode.UNVERSIONED_RESOURCE) {
+            if (errorCode == SVNErrorCode.ENTRY_NOT_FOUND) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Could not display properties of all targets because some targets don't exist");
                 SVNErrorManager.error(err, SVNLogType.CLIENT);
-            } else if (errorCode == SVNErrorCode.ENTRY_NOT_FOUND) {
+            } else if (errorCode == SVNErrorCode.UNVERSIONED_RESOURCE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Could not display properties of all targets because some targets are not versioned");
                 SVNErrorManager.error(err, SVNLogType.CLIENT);
             }

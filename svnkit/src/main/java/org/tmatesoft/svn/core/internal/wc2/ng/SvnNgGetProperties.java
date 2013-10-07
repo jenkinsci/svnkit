@@ -49,7 +49,7 @@ public class SvnNgGetProperties extends SvnNgOperationRunner<SVNProperties, SvnG
 
     protected SVNProperties run(SVNWCContext context, File target) throws SVNException {
         boolean pristine = getOperation().getRevision() == SVNRevision.COMMITTED || getOperation().getRevision() == SVNRevision.BASE;
-        SVNNodeKind kind = context.readKind(target, false);
+        SVNNodeKind kind = context.getDb().readKind(target, false, pristine, false);
         
         if (kind == SVNNodeKind.UNKNOWN || kind == SVNNodeKind.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", target);
