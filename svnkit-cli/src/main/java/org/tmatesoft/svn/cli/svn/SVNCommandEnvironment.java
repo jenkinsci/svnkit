@@ -79,6 +79,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private String myChangelist;
     
     private boolean myIsNonInteractive;
+    private boolean myIsForceInteractive;
     private boolean myIsNoAuthCache;
     private String myUserName;
     private String myPassword;
@@ -289,8 +290,15 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     }
 
     protected void initOptions(SVNCommandLine commandLine) throws SVNException {
-    	super.initOptions(commandLine);
-    	if (getCommand().getClass() != SVNMergeCommand.class && getCommand().getClass() != SVNLogCommand.class) {
+        super.initOptions(commandLine);
+        if (myIsNonInteractive && myIsForceInteractive) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "--non-interactive and --force-interactive " + "are mutually exclusive");
+            SVNErrorManager.error(errorMessage, SVNLogType.CLIENT);
+        } else {
+            myIsNonInteractive = !myIsForceInteractive; //TODO: use System.console() to check if it can be interactive (since JDK 6)
+        }
+
+        if (getCommand().getClass() != SVNMergeCommand.class && getCommand().getClass() != SVNLogCommand.class) {
         	if (myRevisionRanges.size() > 1) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                 		"Multiple revision argument encountered; " +
@@ -522,6 +530,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myIsNoAuthCache = true;
         } else if (option == SVNOption.NON_INTERACTIVE) {
             myIsNonInteractive = true;
+        } else if (option == SVNOption.FORCE_INTERACTIVE) {
+            myIsForceInteractive = true;
         } else if (option == SVNOption.NO_DIFF_DELETED) {
             myIsNoDiffDeleted = true;
         } else if (option == SVNOption.NO_DIFF_ADDED) {

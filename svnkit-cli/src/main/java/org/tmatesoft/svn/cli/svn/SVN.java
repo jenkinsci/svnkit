@@ -139,6 +139,7 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.PASSWORD);
         SVNCommandLine.registerOption(SVNOption.NO_AUTH_CACHE);
         SVNCommandLine.registerOption(SVNOption.NON_INTERACTIVE);
+        SVNCommandLine.registerOption(SVNOption.FORCE_INTERACTIVE);
         SVNCommandLine.registerOption(SVNOption.WITH_ALL_REVPROPS);
         SVNCommandLine.registerOption(SVNOption.SHOW_REVS);
         SVNCommandLine.registerOption(SVNOption.REINTEGRATE);
