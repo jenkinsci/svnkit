@@ -21,7 +21,7 @@ public class SvnNgResolve extends SvnNgOperationRunner<Void, SvnResolve>  {
         }
         File localAbsPath = getFirstTarget();
         File lockAbsPath = context.acquireWriteLockForResolve(localAbsPath);
-        context.resolvedConflict(getFirstTarget(), getOperation().getDepth(), true, null, true, getOperation().getConflictChoice());
+        context.resolvedConflict(getFirstTarget(), getOperation().getDepth(), true, "", true, getOperation().getConflictChoice());
         try {
         context.releaseWriteLock(lockAbsPath);
         } finally {
