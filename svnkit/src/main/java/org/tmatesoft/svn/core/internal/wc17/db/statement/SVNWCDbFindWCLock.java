@@ -38,6 +38,11 @@ public class SVNWCDbFindWCLock extends SVNSqlJetSelectFieldsStatement<SVNWCDbSch
     }
 
     @Override
+    protected String getRowPath() throws SVNException {
+        return getColumnString(SVNWCDbSchema.WC_LOCK__Fields.local_dir_relpath);
+    }
+
+    @Override
     protected String getPathScope() {
         return (String) getBind(2);
     }
