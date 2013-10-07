@@ -82,11 +82,14 @@ public class SvnNgRemove extends SvnNgOperationRunner<Void, SvnScheduleForRemova
                 } else if (!status.isVersioned()) {
                     err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, 
                         "''{0}'' is not under version control", target.getFile());
-                } else if ((status.getNodeStatus() != SVNStatusType.STATUS_NORMAL &&
-                            status.getNodeStatus() != SVNStatusType.STATUS_DELETED &&
-                            status.getNodeStatus() != SVNStatusType.STATUS_MISSING) ||
-                            (status.getPropertiesStatus() != SVNStatusType.STATUS_NONE &&
-                            status.getPropertiesStatus() != SVNStatusType.STATUS_NORMAL)) {
+                } else if ((status.getNodeStatus() == SVNStatusType.STATUS_ADDED ||
+                            status.getNodeStatus() == SVNStatusType.STATUS_REPLACED) &&
+                            status.getTextStatus() == SVNStatusType.STATUS_NORMAL &&
+                            (status.getPropertiesStatus() == SVNStatusType.STATUS_NONE ||
+                            status.getPropertiesStatus() == SVNStatusType.STATUS_NORMAL)) {
+                } else if (status.getNodeStatus() != SVNStatusType.STATUS_NORMAL &&
+                        status.getNodeStatus() != SVNStatusType.STATUS_DELETED &&
+                        status.getNodeStatus() != SVNStatusType.STATUS_MISSING) {
                     err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MODIFIED, 
                     "''{0}'' has local modifications -- commit or revert them first", target.getFile());
                 }
