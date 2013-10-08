@@ -631,7 +631,13 @@ public class SvnNgCommitUtil {
 
             if (matchesChangeLists && ((stateFlags & SvnCommitItem.DELETE) != 0) && !copyMode && SVNRevision.isValidRevisionNumber(nodeRev) && this.lockTokens != null) {
                 Map<SVNURL, String> localRelPathTokens = context.getDb().getNodeLockTokensRecursive(localAbsPath);
-                this.lockTokens.putAll(localRelPathTokens);
+                for (Map.Entry<SVNURL, String> entry : localRelPathTokens.entrySet()) {
+                    SVNURL key = entry.getKey();
+                    String value = entry.getValue();
+                    if (value != null) {
+                        this.lockTokens.put(key, value);
+                    }
+                }
             }
 
             if (matchesChangeLists && (isHarvestRoot || this.changeLists != null) && (stateFlags != 0) && isAdded && this.danglers != null) {
