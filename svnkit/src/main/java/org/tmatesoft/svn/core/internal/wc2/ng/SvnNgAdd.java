@@ -131,7 +131,7 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
         SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
         try {
             if (kind == SVNNodeKind.DIR) {
-                addDirectory(path, getOperation().getDepth());
+                addDirectory(path, getOperation().getDepth(), !getOperation().isIncludeIgnored());
             } else if (kind == SVNNodeKind.FILE) {
                 addFile(path);
             } else if (kind == SVNNodeKind.NONE) {
@@ -274,7 +274,9 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
         } 
     }
 
-    private void addDirectory(File path, SVNDepth depth) throws SVNException {
+    private void addDirectory(File path, SVNDepth depth, boolean refreshIgnores) throws SVNException {
+        boolean entryExists = false;
+
         checkCancelled();
         try {
             addFromDisk(path, null, true);
@@ -282,15 +284,16 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
             if (!(getOperation().isForce() && e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_EXISTS)) {
                 throw e;
             }
+            entryExists = true;
         }
         if (depth.compareTo(SVNDepth.EMPTY) <= 0) {
             return;
         }
         Collection<String> ignorePatterns = null;
-        if (!getOperation().isIncludeIgnored()) {
+        if (refreshIgnores) {
             ignorePatterns = SvnNgPropertiesManager.getEffectiveIgnores(getWcContext(), path, null);
         }
-        
+
         File[] children = SVNFileListUtil.listFiles(path);
         for (int i = 0; children != null && i < children.length; i++) {
             checkCancelled();
@@ -307,7 +310,10 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
                 if (depth == SVNDepth.IMMEDIATES) {
                     depthBelow = SVNDepth.EMPTY;
                 }
-                addDirectory(children[i], depthBelow);
+                if (refreshIgnores && !entryExists) {
+                    refreshIgnores = false;
+                }
+                addDirectory(children[i], depthBelow, refreshIgnores);
             } else if (childKind == SVNNodeKind.FILE && depth.compareTo(SVNDepth.FILES) >= 0) {
                 try {
                     addFile(children[i]);

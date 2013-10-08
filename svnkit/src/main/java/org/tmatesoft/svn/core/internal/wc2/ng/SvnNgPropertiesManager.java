@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
@@ -26,10 +27,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.*;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
-import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -71,6 +71,32 @@ public class SvnNgPropertiesManager {
                         String token = tokens.nextToken().trim();
                         if (token.length() > 0) {
                             allPatterns.add(token);
+                        }
+                    }
+                }
+                ignoreProperty = context.getProperty(absPath, SVNProperty.INHERITABLE_IGNORES);
+                if (ignoreProperty != null) {
+                    for (StringTokenizer tokens = new StringTokenizer(ignoreProperty, "\r\n"); tokens.hasMoreTokens();) {
+                        String token = tokens.nextToken().trim();
+                        if (token.length() > 0) {
+                            allPatterns.add(token);
+                        }
+                    }
+                }
+
+                SVNWCDb db = (SVNWCDb) context.getDb();
+                SVNWCDb.DirParsedInfo parsed = db.parseDir(absPath, SVNSqlJetDb.Mode.ReadOnly);
+                List<Structure<StructureFields.InheritedProperties>> inheritedProperties = SvnWcDbProperties.readInheritedProperties(parsed.wcDbDir.getWCRoot(), parsed.localRelPath, SVNProperty.INHERITABLE_IGNORES);
+                for (Structure<StructureFields.InheritedProperties> inheritedProperty : inheritedProperties) {
+                    SVNProperties properties = inheritedProperty.get(StructureFields.InheritedProperties.properties);
+                    String path = inheritedProperty.get(StructureFields.InheritedProperties.pathOrURL);
+                    ignoreProperty = properties.getStringValue(SVNProperty.INHERITABLE_IGNORES);
+                    if (ignoreProperty != null) {
+                        for (StringTokenizer tokens = new StringTokenizer(ignoreProperty, "\r\n"); tokens.hasMoreTokens();) {
+                            String token = tokens.nextToken().trim();
+                            if (token.length() > 0) {
+                                allPatterns.add(token);
+                            }
                         }
                     }
                 }
