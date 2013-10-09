@@ -290,7 +290,7 @@ public class SvnWcDbExternals extends SvnWcDbShared {
             SVNDate changedDate, String changedAuthor, SvnChecksum newChecksum, SVNProperties davCache, 
             File recordAncestorAbspath, File recordedReposRelPath, long recordedPegRevision, long recordedRevision, 
             boolean updateActualProperties, SVNProperties newActualProperties, boolean keepRecordedInfo, 
-            SVNSkel allWorkItems) throws SVNException {
+            SVNSkel conflictSkel, SVNSkel allWorkItems) throws SVNException {
         SVNWCDb db = (SVNWCDb) context.getDb();
         if (wriAbsPath == null) {
             wriAbsPath = SVNFileUtil.getParentFile(localAbsPath);
@@ -328,6 +328,7 @@ public class SvnWcDbExternals extends SvnWcDbShared {
         externalInfo.set(ExternalNodeInfo.newActualProperties, newActualProperties);
         externalInfo.set(ExternalNodeInfo.keepRecordedInfo, keepRecordedInfo);
 
+        externalInfo.set(ExternalNodeInfo.conflict, conflictSkel);
         externalInfo.set(ExternalNodeInfo.workItems, allWorkItems);
         
         begingWriteTransaction(root);

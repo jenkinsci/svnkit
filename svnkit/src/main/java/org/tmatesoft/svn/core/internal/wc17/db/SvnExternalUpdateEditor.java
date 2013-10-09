@@ -20,12 +20,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.internal.wc17.SVNUpdateEditor17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.MergeInfo;
@@ -74,6 +69,7 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
     private SvnChecksum newSha1Checksum;
     private boolean fileClosed;
     private Map<String, SVNProperties> iprops;
+    private boolean added;
     
     public static ISVNUpdateEditor createEditor(SVNWCContext context, File localAbsPath, File wriAbsPath,
             SVNURL url, SVNURL reposRootUrl, String reposUuid, Map<String, SVNProperties> iprops, boolean useCommitTimes, String[] preservedExts,
@@ -138,6 +134,7 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         originalRevision = SVNWCContext.INVALID_REVNUM;
+        this.added = true;
     }
 
     public void openFile(String path, long revision) throws SVNException {
@@ -210,6 +207,7 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
         SVNProperties actualProperties = null;
         SVNProperties baseProperties = new SVNProperties();
         SVNSkel allWorkItems = null;
+        SVNSkel conflictSkel = null;
         if (!added) {
             newChecksum = originalChecksum;
             baseProperties = context.getDb().getBaseProps(localAbsPath);
@@ -248,15 +246,16 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
             mergeInfo.newActualProperties = new SVNProperties();
             mergeInfo.newBaseProperties = new SVNProperties();
 
+            newPristineProperties = new SVNProperties(baseProperties);
+            newPristineProperties.putAll(regularPropChanges);
+            newPristineProperties.removeNullValues();
+
             mergeInfo = context.mergeProperties2(mergeInfo, localAbsPath, SVNWCDbKind.File, 
                     null, null, null, baseProperties, actualProperties, regularPropChanges, 
                     true, false, context.getOptions().getConflictResolver());
-            if (mergeInfo.workItems != null) {
-                allWorkItems = context.wqMerge(allWorkItems, mergeInfo.workItems);
-            }
             propState = mergeInfo.mergeOutcome;
             newActualProperties = mergeInfo.newActualProperties;
-            newPristineProperties = mergeInfo.newBaseProperties;
+            conflictSkel = mergeInfo.conflictSkel;
         } else {
             newActualProperties = baseProperties;
             newPristineProperties = actualProperties;
@@ -270,7 +269,7 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
             if (kind == SVNNodeKind.NONE) {
                 installPristine = true;
                 contentState = SVNStatusType.CHANGED;
-            } else if (kind != SVNNodeKind.FILE) {
+            } else if (kind != SVNNodeKind.FILE || (this.added && kind == SVNNodeKind.FILE)) {
                 obstructed = true;
                 contentState = SVNStatusType.UNCHANGED;
             } else {
@@ -296,7 +295,12 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
                     if (outcome.workItems != null) {
                         allWorkItems = context.wqMerge(allWorkItems, outcome.workItems);
                     }
-                    contentState = outcome.mergeOutcome;
+                    if (outcome.foundTextConflict) {
+                        contentState = SVNStatusType.CONFLICTED;
+                    } else {
+                        contentState = SVNStatusType.MERGED;
+                    }
+                    conflictSkel = outcome.conflictSkel;
                 }
             }
             
@@ -306,6 +310,14 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
             }
         } else {
             contentState = SVNStatusType.UNCHANGED;
+        }
+
+        if (conflictSkel != null) {
+            SvnWcDbConflicts.conflictSkelOpSwitch(conflictSkel,
+                    new SVNConflictVersion(reposRootUrl, SVNFileUtil.getFilePath(reposRelPath), this.originalRevision, SVNNodeKind.FILE),
+                    new SVNConflictVersion(reposRootUrl, SVNFileUtil.getFilePath(reposRelPath), this.targetRevision, SVNNodeKind.FILE));
+            SVNSkel workItem = SvnWcDbConflicts.createConflictMarkers(context.getDb(), localAbsPath, conflictSkel);
+            allWorkItems = context.wqMerge(allWorkItems, workItem);
         }
         
         if (davPropChanges != null) {
@@ -332,13 +344,14 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
                 true,
                 newActualProperties,
                 false,
+                conflictSkel,
                 allWorkItems);
         this.iprops = null;
         context.wqRun(wriAbsPath);
         
         if (context.getEventHandler() != null) {
             SVNEventAction action = null;
-            if (originalRevision != SVNWCContext.INVALID_REVNUM) {
+            if (!this.added) {
                 action = obstructed ? SVNEventAction.UPDATE_SHADOWED_UPDATE : SVNEventAction.UPDATE_UPDATE;
             } else {
                 action = obstructed ? SVNEventAction.UPDATE_SHADOWED_ADD : SVNEventAction.UPDATE_ADD;
