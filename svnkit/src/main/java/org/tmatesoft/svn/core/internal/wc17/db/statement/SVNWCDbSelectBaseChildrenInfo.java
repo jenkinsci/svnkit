@@ -7,7 +7,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 public class SVNWCDbSelectBaseChildrenInfo extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.NODES__Fields> {
 
     public SVNWCDbSelectBaseChildrenInfo(SVNSqlJetDb sDb) throws SVNException {
-        super(sDb, SVNWCDbSchema.NODES);
+        super(sDb, SVNWCDbSchema.NODES, SVNWCDbSchema.NODES__Indices.I_NODES_PARENT);
     }
 
     @Override
@@ -24,11 +24,11 @@ public class SVNWCDbSelectBaseChildrenInfo extends SVNSqlJetSelectFieldsStatemen
 
     @Override
     protected boolean isFilterPassed() throws SVNException {
-        return getBind(2).equals(getColumnString(SVNWCDbSchema.NODES__Fields.parent_relpath)) && getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) == 0;
+        return getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) == 0;
     }
 
     @Override
     protected Object[] getWhere() throws SVNException {
-        return new Object[] {getBind(1)};
+        return new Object[] {getBind(1), getBind(2)};
     }
 }
