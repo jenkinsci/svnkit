@@ -206,13 +206,15 @@ public class TestRepositoryRestore {
 
                 if (reposKind == SVNNodeKind.NONE) {
                     if (workingCopyKind == SVNNodeKind.FILE) {
-                        commitBuilder.addFile(reposPath, content.get(oldToNewChecksums.get(changedRecord.getChecksum())));
+                        byte[] contents = content.get(oldToNewChecksums.get(changedRecord.getChecksum()));
+                        commitBuilder.addFile(reposPath, contents == null ? new byte[0] : contents);
                     } else {
                         commitBuilder.addDirectory(reposPath);
                     }
                 } else if (reposKind == SVNNodeKind.FILE) {
                     if (workingCopyKind == SVNNodeKind.FILE) {
-                        commitBuilder.changeFile(reposPath, content.get(oldToNewChecksums.get(changedRecord.getChecksum())));
+                        byte[] contents = content.get(oldToNewChecksums.get(changedRecord.getChecksum()));
+                        commitBuilder.changeFile(reposPath, contents == null ? new byte[0] : contents);
                     } else {
                         commitBuilder.delete(reposPath);
                         commitBuilder.addDirectory(reposPath);
