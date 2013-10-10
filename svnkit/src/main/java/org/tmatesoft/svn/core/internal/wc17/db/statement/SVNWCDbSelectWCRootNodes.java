@@ -12,6 +12,19 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.util.SVNLogType;
 
+/*
+ * SELECT l.wc_id, l.local_relpath FROM nodes as l
+ * LEFT OUTER JOIN nodes as r
+ * ON l.wc_id = r.wc_id
+ *    AND r.local_relpath = l.parent_relpath
+ *    AND r.op_depth = 0
+ * WHERE l.op_depth = 0
+ *   AND l.repos_path != ''
+ *   AND ((l.repos_id IS NOT r.repos_id)
+ *        OR (l.repos_path IS NOT RELPATH_SKIP_JOIN(r.local_relpath, r.repos_path, l.local_relpath)))
+ *
+ * @version 1.8
+ */
 public class SVNWCDbSelectWCRootNodes extends SVNSqlJetSelectStatement {
 
     public SVNWCDbSelectWCRootNodes(SVNSqlJetDb sDb) throws SVNException {
@@ -31,7 +44,11 @@ public class SVNWCDbSelectWCRootNodes extends SVNSqlJetSelectStatement {
             final long wcId = getColumnLong(NODES__Fields.wc_id);
             final String localParentRelpath = getColumnString(NODES__Fields.parent_relpath);
             final String childName = localParentRelpath.length() == 0 ? localRelpath : localRelpath.substring(localParentRelpath.length() + 1);
-            final String expectedChildReposPath = SVNPathUtil.append(getNodeReposRelpath(wcId, localParentRelpath), childName);
+            final String nodeReposRelpath = getNodeReposRelpath(wcId, localParentRelpath);
+            if (nodeReposRelpath == null) {
+                return true;
+            }
+            final String expectedChildReposPath = SVNPathUtil.append(nodeReposRelpath, childName);
             if (!expectedChildReposPath.equals(reposRelpath)) {
                 return true;
             }
@@ -56,8 +73,6 @@ public class SVNWCDbSelectWCRootNodes extends SVNSqlJetSelectStatement {
                 }
             }
         }
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "Node ''{0}'' not found.", path);
-        SVNErrorManager.error(err, SVNLogType.WC);
         return null;
     }
     
