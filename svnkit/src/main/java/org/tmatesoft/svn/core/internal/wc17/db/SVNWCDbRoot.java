@@ -73,6 +73,10 @@ public class SVNWCDbRoot {
             try {
                 format = sDb.getDb().getOptions().getUserVersion();
             } catch (SqlJetException e) {
+                if (e.getErrorCode() == SqlJetErrorCode.NOTADB) {
+                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, e);
+                    SVNErrorManager.error(errorMessage, SVNLogType.WC);
+                }
                 SVNSqlJetDb.createSqlJetError(e);
             }
         }
