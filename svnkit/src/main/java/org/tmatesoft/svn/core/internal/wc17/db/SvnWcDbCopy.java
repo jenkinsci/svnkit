@@ -529,13 +529,11 @@ public class SvnWcDbCopy extends SvnWcDbShared {
                     reset(stmt);
                     stmt = dstPdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.INSERT_ACTUAL_NODE);
                     try {
-                        stmt.bindf("issbssssss",
+                        stmt.bindf("issbsb",
                                 dstPdh.getWCRoot().getWcId(),
                                 localDstRelpath,
                                 SVNFileUtil.getFileDir(localDstRelpath),
-                                properties,
-                                null, null, null,
-                                null, changelist, null);
+                                properties, changelist, null);
                         stmt.done();
                     } finally {
                         stmt.reset();
