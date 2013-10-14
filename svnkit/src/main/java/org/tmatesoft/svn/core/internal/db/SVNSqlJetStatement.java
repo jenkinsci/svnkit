@@ -86,8 +86,15 @@ public abstract class SVNSqlJetStatement {
         try {
             if (getCursor() == null) {
                 sDb.beginTransaction(transactionMode);
-                setCursor(openCursor());
-                return !getCursor().eof();
+                try {
+                    setCursor(openCursor());
+                    return !getCursor().eof();
+                } catch (SVNException e) {
+                    if (getCursor() == null) {
+                        sDb.commit();
+                    }
+                    throw e;
+                }
             }
             return getCursor().next();
         } catch (SqlJetException e) {
