@@ -934,10 +934,10 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             if (info.status == SVNWCDbStatus.Normal || info.status == SVNWCDbStatus.Added) {
                 if (info.kind == SVNWCDbKind.File) {
                     if (!info.fileExternal) {
-                        copyVersionedFile(wcContext, childSrcAbsPath, childDstAbsPath, dstOpRootAbsPath, tmpDirAbsPath, metadataOnly, info.conflicted, isMove, true);
+                        copyVersionedFile(wcContext, childSrcAbsPath, childDstAbsPath, dstOpRootAbsPath, tmpDirAbsPath, metadataOnly, info.conflicted, isMove, false);
                     }
                 } else if (info.kind == SVNWCDbKind.Dir) {
-                    copyVersionedDirectory(wcContext, childSrcAbsPath, childDstAbsPath, dstOpRootAbsPath, tmpDirAbsPath, metadataOnly, isMove, notify);
+                    copyVersionedDirectory(wcContext, childSrcAbsPath, childDstAbsPath, dstOpRootAbsPath, tmpDirAbsPath, metadataOnly, isMove, false);
                 } else {
                     SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "cannot handle node kind for '{0}'", childSrcAbsPath);
                     SVNErrorManager.error(errorMessage, SVNLogType.WC);
