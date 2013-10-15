@@ -226,7 +226,9 @@ public class SvnNgRevert extends SvnNgOperationRunner<Void, SvnRevert> {
                         notifier.handleEvent(SVNEventFactory.createSVNEvent(localAbsPath, SVNNodeKind.NONE, null, -1, SVNEventAction.REVERT, 
                                 SVNEventAction.REVERT, null, null, -1, -1), -1);
                     }
-                    SvnWcDbRevert.notifyRevert(context, localAbsPath, notifier);
+                    if (notifier != null) {
+                        SvnWcDbRevert.notifyRevert(context, localAbsPath, notifier);
+                    }
                     return;
                 }
             } else {
