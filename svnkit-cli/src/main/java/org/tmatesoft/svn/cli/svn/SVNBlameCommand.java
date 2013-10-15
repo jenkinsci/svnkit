@@ -125,7 +125,7 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
                     getSVNEnvironment().getErr().println("Skipping binary file: '" + SVNCommandUtil.getLocalPath(targetName) + "'");
                 } else {
                     getSVNEnvironment().handleWarning(e.getErrorMessage(), 
-                            new SVNErrorCode[] {SVNErrorCode.WC_PATH_NOT_FOUND, SVNErrorCode.FS_NOT_FILE, SVNErrorCode.FS_NOT_FOUND}, 
+                            new SVNErrorCode[] {SVNErrorCode.WC_PATH_NOT_FOUND, SVNErrorCode.FS_NOT_FILE, SVNErrorCode.FS_NOT_FOUND, SVNErrorCode.ENTRY_NOT_FOUND},
                             getSVNEnvironment().isQuiet());
                     hasMissingTargets = true;
                 }
