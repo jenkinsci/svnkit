@@ -9,6 +9,7 @@ import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCNodeReposInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.*;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.ExternalNodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
+import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RepositoryInfo;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNLocationSegment;
@@ -409,11 +410,16 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                         return;
                     }
                     SVNWCNodeReposInfo nodeRepositoryInfo = getWcContext().getNodeReposInfo(localAbsPath);
-                    if (nodeRepositoryInfo != null && nodeRepositoryInfo.reposRootUrl != null) {
-                        if (!SVNURLUtil.isAncestor(nodeRepositoryInfo.reposRootUrl, url)) {
+                    SVNURL repositoryRootUrl = nodeRepositoryInfo.reposRootUrl;
+                    if (nodeRepositoryInfo != null && repositoryRootUrl != null) {
+                        if (!SVNURLUtil.isAncestor(repositoryRootUrl, url)) {
+
+                            SVNRepository svnRepository = getRepositoryAccess().createRepository(url, null, true);
+                            SVNURL repositoryRoot = svnRepository.getRepositoryRoot(true);
+
                             SvnRelocate relocate = getOperation().getOperationFactory().createRelocate();
-                            relocate.setToUrl(nodeRepositoryInfo.reposRootUrl);
-                            relocate.setFromUrl(nodeUrl);
+                            relocate.setFromUrl(repositoryRootUrl);
+                            relocate.setToUrl(repositoryRoot);
                             relocate.setSingleTarget(SvnTarget.fromFile(localAbsPath));
                             try {
                                 relocate.run();
@@ -425,11 +431,13 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                                 }
                                 throw e;
                             }
+
+                            repositoryRootUrl = repositoryRoot;
                         }
                         doSwitch(localAbsPath, url, revision, pegRevision, SVNDepth.INFINITY, true, false, false, true, false);
                         getWcContext().getDb().registerExternal(definingPath, localAbsPath, SVNNodeKind.DIR, 
-                                nodeRepositoryInfo.reposRootUrl, nodeRepositoryInfo.reposUuid, 
-                                SVNFileUtil.createFilePath(SVNPathUtil.getPathAsChild(nodeRepositoryInfo.reposRootUrl.getPath(), url.getPath())), 
+                                repositoryRootUrl, nodeRepositoryInfo.reposUuid,
+                                SVNFileUtil.createFilePath(SVNPathUtil.getPathAsChild(repositoryRootUrl.getPath(), url.getPath())),
                                 SVNWCContext.INVALID_REVNUM, 
                                 SVNWCContext.INVALID_REVNUM);
                         return;
