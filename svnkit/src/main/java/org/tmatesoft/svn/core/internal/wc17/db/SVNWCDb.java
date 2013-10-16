@@ -7424,4 +7424,53 @@ public class SVNWCDb implements ISVNWCDb {
         }
         rootDir.getWCRoot().close();
     }
+
+    public void upgradeInsertExternal(File localAbsPath, SVNNodeKind kind, File parentAbsPath, File defLocalAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long defPegRevision, long defRevision) throws SVNException {
+        assert SVNFileUtil.isAbsolute(localAbsPath);
+
+        DirParsedInfo parsed = parseDir(defLocalAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        File defLocalRelPath = parsed.localRelPath;
+
+        verifyDirUsable(pdh);
+
+        long reposId = -1;
+        boolean haveRow = false;
+
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_REPOSITORY);
+        try {
+            stmt.bindf("s", reposRootUrl);
+            haveRow = stmt.next();
+            if (haveRow) {
+                reposId = stmt.getColumnLong(REPOSITORY__Fields.id);
+            }
+        } finally {
+            stmt.reset();
+        }
+        if (!haveRow) {
+            createReposId(pdh.getWCRoot().getSDb(), reposRootUrl, reposUuid);
+        }
+        stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.INSERT_EXTERNAL);
+        try {
+            stmt.bindf("isssssis",
+                    pdh.getWCRoot().getWcId(),
+                    SVNFileUtil.skipAncestor(pdh.getWCRoot().getAbsPath(), localAbsPath),
+                    SVNFileUtil.skipAncestor(pdh.getWCRoot().getAbsPath(), parentAbsPath),
+                    SvnWcDbStatementUtil.getPresenceText(SVNWCDbStatus.Normal),
+                    SvnWcDbStatementUtil.getKindText(kind == SVNNodeKind.DIR ? SVNWCDbKind.Dir : SVNWCDbKind.File),
+                    defLocalRelPath,
+                    reposId,
+                    reposRelPath);
+
+            if (SVNRevision.isValidRevisionNumber(defPegRevision)) {
+                stmt.bindLong(9, defPegRevision);
+            }
+            if (SVNRevision.isValidRevisionNumber(defRevision)) {
+                stmt.bindLong(10, defRevision);
+            }
+            stmt.done();
+        } finally {
+            stmt.reset();
+        }
+    }
 }

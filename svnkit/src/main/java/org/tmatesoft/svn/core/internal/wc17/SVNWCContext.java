@@ -2023,6 +2023,7 @@ public class SVNWCContext {
 
         public SVNURL reposRootUrl;
         public String reposUuid;
+        public File reposRelPath;
     }
 
     public SVNWCNodeReposInfo getNodeReposInfo(File localAbspath) throws SVNException {
@@ -2034,10 +2035,11 @@ public class SVNWCContext {
         SVNWCDbStatus status;
         try {
             // s1
-            WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.reposRootUrl, InfoField.reposUuid);
+            WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.reposRootUrl, InfoField.reposUuid, InfoField.reposRelPath);
             status = readInfo.status;
             info.reposRootUrl = readInfo.reposRootUrl;
             info.reposUuid = readInfo.reposUuid;
+            info.reposRelPath = readInfo.reposRelPath;
         } catch (SVNException e) {
             if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND && e.
                     getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY) {
@@ -2056,26 +2058,28 @@ public class SVNWCContext {
             WCDbDeletionInfo dinfo =db.scanDeletion(localAbspath, DeletionInfoField.baseDelAbsPath, DeletionInfoField.workDelAbsPath);
             if (dinfo.baseDelAbsPath != null) {
                 // s3
-                reposInfo = db.scanBaseRepository(dinfo.baseDelAbsPath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid);
+                reposInfo = db.scanBaseRepository(dinfo.baseDelAbsPath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid, RepositoryInfoField.relPath);
             } else if (dinfo.workDelAbsPath != null) {
                 // s4
                 addInfo = db.scanAddition(SVNFileUtil.getParentFile(dinfo.workDelAbsPath), 
-                        AdditionInfoField.reposRootUrl, AdditionInfoField.reposUuid);
+                        AdditionInfoField.reposRootUrl, AdditionInfoField.reposUuid, AdditionInfoField.reposRelPath);
             }
         } else if (status == SVNWCDbStatus.Added) {
             // s5
             addInfo = db.scanAddition(localAbspath, 
-                    AdditionInfoField.reposRootUrl, AdditionInfoField.reposUuid);
+                    AdditionInfoField.reposRootUrl, AdditionInfoField.reposUuid, AdditionInfoField.reposRelPath);
         } else {
             // s6
-            reposInfo = db.scanBaseRepository(localAbspath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid);
+            reposInfo = db.scanBaseRepository(localAbspath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid, RepositoryInfoField.relPath);
         }
         if (addInfo != null) {
             info.reposRootUrl = addInfo.reposRootUrl;
             info.reposUuid = addInfo.reposUuid;
+            info.reposRelPath = addInfo.reposRelPath;
         } else if (reposInfo != null) {
             info.reposRootUrl = reposInfo.rootUrl;
             info.reposUuid = reposInfo.uuid;
+            info.reposRelPath = reposInfo.relPath;
         }
         return info;
     }

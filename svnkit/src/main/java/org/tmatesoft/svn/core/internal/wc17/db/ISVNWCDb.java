@@ -1705,4 +1705,6 @@ public interface ISVNWCDb {
     }
 
     void dropRoot(File localAbsPath) throws SVNException;
+
+    void upgradeInsertExternal(File localAbsPath, SVNNodeKind kind, File parentAbsPath, File defLocalAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long defPegRevision, long defRevision) throws SVNException;
 }
