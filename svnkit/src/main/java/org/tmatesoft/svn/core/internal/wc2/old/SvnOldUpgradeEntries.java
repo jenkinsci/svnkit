@@ -657,7 +657,7 @@ public class SvnOldUpgradeEntries {
 
             if (parent.reposRelPath != null && child.reposRelPath != null) {
                 File unswitched = SVNFileUtil.createFilePath(parent.reposRelPath, SVNPathUtil.tail(child.localRelPath));
-                if (unswitched.equals(child.reposRelPath)) {
+                if (!SVNFileUtil.getFilePath(unswitched).equals(child.reposRelPath)) {
                     return true;
                 }
             }
