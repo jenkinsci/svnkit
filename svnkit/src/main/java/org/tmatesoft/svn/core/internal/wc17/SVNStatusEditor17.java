@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.wc17;
 
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
@@ -501,7 +502,9 @@ public class SVNStatusEditor17 {
         if (info.movedToAbsPath != null) {
             stat.setMovedToPath(info.movedToAbsPath);
         }
-        
+        if (info.format != -1) {
+            stat.setWorkingCopyFormat(info.format);
+        }
         return stat;
     }
 
@@ -580,6 +583,8 @@ public class SVNStatusEditor17 {
             }
             result.special = properties.getSVNPropertyValue(SVNProperty.SPECIAL) != null;
         }
+        DirParsedInfo parsed = ((SVNWCDb) context.getDb()).parseDir(localAbsPath, Mode.ReadOnly);
+        result.format = parsed.wcDbDir.getWCRoot().getFormat();
         return result;
     }
     
