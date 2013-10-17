@@ -1183,7 +1183,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
 
     private SVNWCContext obtainWcContext(SvnOperation<?> operation) {
         if (wcContext == null) {
-            wcContext = new SVNWCContext(getOptions(), getEventHandler());
+            wcContext = new SVNWCContext(SVNWCDbOpenMode.ReadWrite, getOptions(), false, true, getEventHandler());
         }
         return wcContext;
     }
