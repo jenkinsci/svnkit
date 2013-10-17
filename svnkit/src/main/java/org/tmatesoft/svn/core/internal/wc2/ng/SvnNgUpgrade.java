@@ -61,18 +61,37 @@ public class SvnNgUpgrade extends SvnNgOperationRunner<SvnWcGeneration, SvnUpgra
                                 try {
                                     SVNURL resolvedUrl = external.resolveURL(externalsParentReposRootUrl, externalsParentUrl);
 
+                                    boolean upgradeRequired = false;
                                     SVNNodeKind externalKind;
                                     try {
                                         externalKind = getWcContext().getDb().readKind(externalsAbsPath, true, true, false);
+                                        try {
+                                            SvnGetStatus getStatus = getOperation().getOperationFactory().createGetStatus();
+                                            getStatus.setDepth(SVNDepth.EMPTY);
+                                            getStatus.setSingleTarget(SvnTarget.fromFile(externalsAbsPath));
+                                            SvnStatus status = getStatus.run();
+
+                                            if (status != null) {
+                                                int workingCopyFormat = status.getWorkingCopyFormat();
+                                                if (workingCopyFormat < ISVNWCDb.WC_FORMAT_18) {
+                                                    upgradeRequired = true;
+                                                }
+                                            }
+                                        } catch (SVNException e) {
+                                            //ignore status exceptions
+                                        }
                                     } catch (SVNException e) {
                                         if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UPGRADE_REQUIRED) {
-                                            SvnOperationFactory operationFactory = getOperation().getOperationFactory();
-                                            SvnUpgrade upgrade = operationFactory.createUpgrade();
-                                            upgrade.setSingleTarget(SvnTarget.fromFile(externalsAbsPath));
-                                            upgrade.run();
+                                            upgradeRequired = true;
                                         } else {
                                             throw e;
                                         }
+                                    }
+                                    if (upgradeRequired) {
+                                        SvnOperationFactory operationFactory = getOperation().getOperationFactory();
+                                        SvnUpgrade upgrade = operationFactory.createUpgrade();
+                                        upgrade.setSingleTarget(SvnTarget.fromFile(externalsAbsPath));
+                                        upgrade.run();
                                     }
                                     externalKind = getWcContext().getDb().readKind(externalsAbsPath, true, true, false);
 
