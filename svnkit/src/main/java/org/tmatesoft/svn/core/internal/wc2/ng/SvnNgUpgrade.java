@@ -43,7 +43,6 @@ public class SvnNgUpgrade extends SvnNgOperationRunner<SvnWcGeneration, SvnUpgra
             getProperties.setDepth(SVNDepth.INFINITY);
             getProperties.setSingleTarget(getOperation().getFirstTarget());
             getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
-                @Override
                 public void receive(SvnTarget target, SVNProperties properties) throws SVNException {
                     assert target.isFile();
                     File externalsParentAbsPath = target.getFile();
