@@ -2824,6 +2824,7 @@ public class SVNWCDb implements ISVNWCDb {
                         } else {
                             childItem.opRoot = opDepth == SVNWCUtils.relpathDepth(childRelPath);
                         }
+                        childItem.format = db.getDb().getOptions().getUserVersion();
                         nodes.put(name, childItem);
                     }
                     if (opDepth == 0) {

@@ -333,6 +333,8 @@ public interface ISVNWCDb {
         public boolean fileExternal;
         public boolean copied;
 
+        public int format;
+
         public void load(WCDbInfo info) {
             if (info == null) {
                 return;
@@ -369,6 +371,7 @@ public interface ISVNWCDb {
             movedToAbsPath = info.movedToAbsPath;
 
             fileExternal = false;
+            format = -1;
         }
     }
 
@@ -1162,7 +1165,6 @@ public interface ISVNWCDb {
         
         public boolean movedHere;
         public File movedToAbsPath;
-
     }
 
     /**
