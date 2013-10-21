@@ -189,9 +189,14 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
         v = v == null ? new HashMap<String, Object>() : v;
         try {
             final List<ISqlJetColumnDef> columns = getTable().getDefinition().getColumns();
-            final Object[] values = new Object[columns.size()];
             final Object[] rValues = getCursor().getRowValues();
-            System.arraycopy(rValues, 0, values, 0, rValues.length);
+            final Object[] values;
+            if (rValues.length < columns.size()) {
+                values = new Object[columns.size()];
+                System.arraycopy(rValues, 0, values, 0, rValues.length);
+            } else {
+                values = rValues;
+            }
             for (int i = 0; i < values.length; i++) {
                 v.put(columns.get(i).getName(), values[i]);
             }
