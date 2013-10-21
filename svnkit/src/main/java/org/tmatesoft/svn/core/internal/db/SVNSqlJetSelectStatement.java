@@ -188,11 +188,12 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
     public Map<String, Object> getRowValues2(Map<String, Object> v) throws SVNException {
         v = v == null ? new HashMap<String, Object>() : v;
         try {
-            Object[] values = getCursor().getRowValues();
-            List<ISqlJetColumnDef> columns = getTable().getDefinition().getColumns();
+            final List<ISqlJetColumnDef> columns = getTable().getDefinition().getColumns();
+            final Object[] values = new Object[columns.size()];
+            final Object[] rValues = getCursor().getRowValues();
+            System.arraycopy(rValues, 0, values, 0, rValues.length);
             for (int i = 0; i < values.length; i++) {
-                String colName = columns.get(i).getName();
-                v.put(colName, values[i]);
+                v.put(columns.get(i).getName(), values[i]);
             }
             return v;
         } catch (SqlJetException e) {
@@ -202,12 +203,12 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
     }
 
     public Map<String, Object> getRowValues() throws SVNException {
-        HashMap<String, Object> v = new HashMap<String, Object>();
+        final HashMap<String, Object> v = new HashMap<String, Object>();
         try {
-            List<ISqlJetColumnDef> columns = getTable().getDefinition().getColumns();
+            final List<ISqlJetColumnDef> columns = getTable().getDefinition().getColumns();
             for (ISqlJetColumnDef column : columns) {
-                String colName = column.getName();
-                SqlJetValueType fieldType = getCursor().getFieldType(colName);
+                final String colName = column.getName();
+                final SqlJetValueType fieldType = getCursor().getFieldType(colName);
                 if (fieldType == SqlJetValueType.NULL) {
                     v.put(colName, null);
                 } else if (fieldType == SqlJetValueType.BLOB) {
