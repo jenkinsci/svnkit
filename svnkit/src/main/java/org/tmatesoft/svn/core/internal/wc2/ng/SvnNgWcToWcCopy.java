@@ -890,7 +890,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         }
         wcContext.getDb().opCopy(srcAbsPath, dstAbsPath, dstOpRootAbsPath, isMove, workItems);
 
-        if (wcContext.getEventHandler() != null) {
+        if (notify && wcContext.getEventHandler() != null) {
             SVNEvent event = SVNEventFactory.createSVNEvent(dstAbsPath, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.ADD, SVNEventAction.ADD, null, null);
             if (workItems != null) {
                 wcContext.wqRun(dirAbsPath);
