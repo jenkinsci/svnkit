@@ -485,6 +485,12 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
         } else if (event.getAction() == SVNEventAction.UPGRADED_PATH) {
         	myIsChangesReceived = true;
             buffer.append("Upgraded '" + path + "'\n");
+        } else if (event.getAction() == SVNEventAction.FOREIGN_COPY_BEGIN) {
+            if (event.getMergeRange() == null) {
+                buffer.append("--- Copying from foreign repository URL '");
+                buffer.append(event.getURL());
+                buffer.append("':\n");
+            }
         }
 
         if (buffer.length() > 0) {

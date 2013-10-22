@@ -499,4 +499,9 @@ public class SVNEventAction {
      * @since 1.7, SVN 1.7
      */
     public static final SVNEventAction FAILED_MISSING = createEventAction(75, "failed_conflict");
+
+    /**
+     * @since 1.8, SVN 1.8
+     */
+    public static final SVNEventAction FOREIGN_COPY_BEGIN = createEventAction(76, "foreign_copy_begin");
 }

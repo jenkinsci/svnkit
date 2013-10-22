@@ -361,6 +361,13 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
     }
 
     private long copy(final SvnCopyPair pair, boolean sameRepositories, boolean ignoreExternals, SVNRepository repository) throws SVNException {
+        ISVNEventHandler eventHandler = getOperation().getEventHandler();
+
+        if (!sameRepositories && eventHandler != null) {
+            SVNEvent event = SVNEventFactory.createSVNEvent(pair.sourceFile, pair.srcKind, null, -1, SVNEventAction.FOREIGN_COPY_BEGIN, SVNEventAction.FOREIGN_COPY_BEGIN, null, null);
+            event.setURL(pair.source);
+            eventHandler.handleEvent(event, UNKNOWN);
+        }
         long rev = -1;
         SVNURL oldLocation = repository.getLocation();
         repository.setLocation(pair.source, false);
@@ -410,7 +417,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                         getWcContext().popEventHandler();
                     }
 
-                    ISVNEventHandler eventHandler = getWcContext().getEventHandler();
+                    eventHandler = getWcContext().getEventHandler();
                     getWcContext().setEventHandler(null);
                     new SvnNgWcToWcCopy().copy(getWcContext(), dstPath, pair.dst, true);
                     getWcContext().setEventHandler(eventHandler);
