@@ -750,6 +750,8 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
         Map<String, Map<String, String>> versionedAutoProperties; //pattern->properties
         if (applyAutoProperties) {
             versionedAutoProperties = getVersionedAutoProperties(dstURL, reposRoot);
+            // method above reuses repository and changes its location.
+            repos.setLocation(rootURL, false);
         } else {
             versionedAutoProperties = null;
         }
