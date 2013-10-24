@@ -1,13 +1,21 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
-import org.tmatesoft.svn.core.*;
+import java.io.File;
+
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc17.SVNExternalsStore;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
@@ -16,11 +24,14 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc2.*;
+import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnGetProperties;
+import org.tmatesoft.svn.core.wc2.SvnGetStatus;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnStatus;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.SvnUpgrade;
 import org.tmatesoft.svn.util.SVNLogType;
-
-import java.io.File;
-import java.util.Map;
 
 public class SvnNgUpgrade extends SvnNgOperationRunner<SvnWcGeneration, SvnUpgrade> {
 
@@ -39,7 +50,7 @@ public class SvnNgUpgrade extends SvnNgOperationRunner<SvnWcGeneration, SvnUpgra
             final SVNURL[] lastRepos = {null};
             final String[] lastUuid = {null};
 
-            SvnGetProperties getProperties = getOperation().getOperationFactory().createGetProperties();
+            final SvnGetProperties getProperties = getOperation().getOperationFactory().createGetProperties();
             getProperties.setDepth(SVNDepth.INFINITY);
             getProperties.setSingleTarget(getOperation().getFirstTarget());
             getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
