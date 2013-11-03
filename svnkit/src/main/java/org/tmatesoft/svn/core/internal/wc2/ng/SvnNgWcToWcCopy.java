@@ -700,9 +700,6 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         
         SVNURL srcReposRootUrl = srcInfo.get(NodeInfo.reposRootUrl);
         String srcReposUuid = srcInfo.get(NodeInfo.reposUuid);
-        ISVNWCDb.SVNWCDbKind srcKind = srcInfo.get(NodeInfo.kind);
-        SvnChecksum srcChecksum = srcInfo.get(NodeInfo.checksum);
-        boolean srcConflicted = srcInfo.is(NodeInfo.conflicted);
 
         File dstWcRootAbsPath = context.getDb().getWCRoot(dstDirectory);
 
@@ -868,10 +865,9 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         final SVNURL reposRootUrl = baseInfo.reposRootUrl;
         final String reposUuid = baseInfo.reposUuid;
 
-        final String relativePath = SVNPathUtil.getRelativePath(context.getDb().getWCRoot(source).getAbsolutePath(), source.getAbsolutePath());
 
         context.getDb().opCopyFile(dst, pristineProps, changedRev, changedDate, changedAuthor,
-                new File(relativePath), reposRootUrl, reposUuid, revision, checksum, false, null, null, null);
+                context.getNodeReposRelPath(source.getAbsoluteFile()), reposRootUrl, reposUuid, revision, checksum, false, null, null, null);
 
         final SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.COPY, null, null, null);
         handleEvent(event);
@@ -880,7 +876,6 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
     private void copyVersionedDirectory(SVNWCContext wcContext, File srcAbsPath, File dstAbsPath, File dstOpRootAbsPath, File tmpDirAbsPath, boolean metadataOnly, boolean isMove, boolean notify) throws SVNException {
         SVNSkel workItems = null;
         File dirAbsPath = SVNFileUtil.getParentFile(dstAbsPath);
-        SVNFileType srcType = null;
         SVNNodeKind diskKind = SVNNodeKind.UNKNOWN;
 
         if (!metadataOnly) {
