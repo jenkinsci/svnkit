@@ -1849,7 +1849,7 @@ public class SVNWCDb implements ISVNWCDb {
                 }
     
                 info.wcDbDir = new SVNWCDbDir(localAbspath);
-                info.wcDbDir.setWCRoot(new SVNWCDbRoot(this, localAbspath, sDb, wcId, FORMAT_FROM_SDB, autoUpgrade, true, enforceEmptyWQ));
+                info.wcDbDir.setWCRoot(new SVNWCDbRoot(this, localAbspath, sDb, wcId, FORMAT_FROM_SDB, autoUpgrade, !isDetectWCGeneration, enforceEmptyWQ));
     
             } else {
                 info.wcDbDir = new SVNWCDbDir(localAbspath);

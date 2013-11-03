@@ -40,7 +40,7 @@ public class SvnNgUpgrade extends SvnNgOperationRunner<SvnWcGeneration, SvnUpgra
         ISVNWCDb db = context.getDb();
         if (db != null && db instanceof SVNWCDb) {
             final File localAbsPath = getFirstTarget();
-            SVNWCDb.DirParsedInfo dirParsedInfo = ((SVNWCDb) db).parseDir(localAbsPath, SVNSqlJetDb.Mode.ReadOnly);
+            SVNWCDb.DirParsedInfo dirParsedInfo = ((SVNWCDb) db).parseDir(localAbsPath, SVNSqlJetDb.Mode.ReadOnly, true, false);
             int format = dirParsedInfo.wcDbDir.getWCRoot().getFormat();
 
             if (format < ISVNWCDb.WC_FORMAT_18) {
@@ -55,7 +55,6 @@ public class SvnNgUpgrade extends SvnNgOperationRunner<SvnWcGeneration, SvnUpgra
             getProperties.setSingleTarget(getOperation().getFirstTarget());
             getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
                 public void receive(SvnTarget target, SVNProperties properties) throws SVNException {
-                    assert target.isFile();
                     File externalsParentAbsPath = target.getFile();
                     File externalsParentRelPath = SVNFileUtil.skipAncestor(localAbsPath, externalsParentAbsPath);
 
@@ -89,7 +88,6 @@ public class SvnNgUpgrade extends SvnNgOperationRunner<SvnWcGeneration, SvnUpgra
                                                 }
                                             }
                                         } catch (SVNException e) {
-                                            //ignore status exceptions
                                         }
                                     } catch (SVNException e) {
                                         if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UPGRADE_REQUIRED) {
