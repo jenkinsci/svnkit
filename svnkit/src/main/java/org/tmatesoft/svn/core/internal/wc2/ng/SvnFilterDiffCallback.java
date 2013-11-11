@@ -23,7 +23,7 @@ public class SvnFilterDiffCallback implements ISvnDiffCallback2 {
             result.skip = true;
             return;
         }
-        delegate.dirOpened(result, relPath, leftSource, rightSource, copyFromSource, dirBaton);
+        delegate.fileOpened(result, relPath, leftSource, rightSource, copyFromSource, createDirBaton, dirBaton);
     }
 
     public void fileChanged(SvnDiffCallbackResult result, File relPath, SvnDiffSource leftSource, SvnDiffSource rightSource, File leftFile, File rightFile, SVNProperties leftProps, SVNProperties rightProps, boolean fileModified, SVNProperties propChanges) throws SVNException {
