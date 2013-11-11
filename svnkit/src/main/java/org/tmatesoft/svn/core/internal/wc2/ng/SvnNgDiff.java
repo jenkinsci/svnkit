@@ -231,7 +231,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
 
         ISvnDiffGenerator generator = getDiffGenerator();
         generator.setOriginalTargets(SvnTarget.fromURL(url1), SvnTarget.fromURL(url2));
-        generator.setAnchors(SvnTarget.fromURL(anchor1), SvnTarget.fromURL(anchor2));
+        generator.setAnchors(SvnTarget.fromURL(kind1 == SVNNodeKind.FILE ? anchor1 : url1), SvnTarget.fromURL(kind2 == SVNNodeKind.FILE ? anchor2 : url2));
         if (getOperation().isUseGitDiffFormat()) {
             if (repositoryRoot == null) {
                 repositoryRoot = repository1.getRepositoryRoot(true);
