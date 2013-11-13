@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.ISVNDiffStatusHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -33,7 +34,7 @@ import java.util.*;
 
 public class SvnNgDiffUtil {
 
-    public static void doDiffReposWC(SvnTarget target1, SVNRevision revision1, SVNRevision pegRevision, SvnTarget target2, SVNRevision revision2, boolean reverse, SvnNgRepositoryAccess repositoryAccess, SVNWCContext context, boolean useGitDiffFormat, SVNDepth depth, boolean useAncestry, Collection<String> changelists, boolean showCopiesAsAdds, ISvnDiffGenerator generator, ISvnDiffCallback callback, ISVNCanceller canceller) throws SVNException {
+    public static void doDiffSummarizeReposWC(SvnTarget target1, SVNRevision revision1, SVNRevision pegRevision, SvnTarget target2, SVNRevision revision2, boolean reverse, SvnNgRepositoryAccess repositoryAccess, SVNWCContext context, boolean useGitDiffFormat, SVNDepth depth, boolean useAncestry, Collection<String> changelists, boolean showCopiesAsAdds, ISvnDiffGenerator generator, ISVNDiffStatusHandler handler, ISVNCanceller canceller) throws SVNException {
         assert !target2.isURL();
 
         SVNURL url1 = repositoryAccess.getTargetURL(target1);
@@ -77,6 +78,7 @@ public class SvnNgDiffUtil {
             }
         }
 
+        ISvnDiffCallback callback = new SvnDiffSummarizeCallback(target1.getFile(), reverse, anchorUrl, anchor, handler);
         SVNRepository repository2 = repositoryAccess.createRepository(anchorUrl, null, true);
 
         if (useGitDiffFormat && generator != null) {

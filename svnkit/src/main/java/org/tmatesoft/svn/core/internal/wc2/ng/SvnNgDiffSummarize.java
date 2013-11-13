@@ -3,8 +3,6 @@ package org.tmatesoft.svn.core.internal.wc2.ng;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.*;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslatorInputStream;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
@@ -21,9 +19,6 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
 
 public class SvnNgDiffSummarize extends SvnNgOperationRunner<SvnDiffStatus, SvnDiffSummarize> {
 
@@ -104,12 +99,15 @@ public class SvnNgDiffSummarize extends SvnNgOperationRunner<SvnDiffStatus, SvnD
 
                     SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path1));
                     String target;
+                    SvnTarget baseTarget;
                     if (kind == SVNNodeKind.DIR) {
                         target = "";
+                        baseTarget = target1;
                     } else {
                         target = SVNFileUtil.getFileName(path1);
+                        baseTarget = SvnTarget.fromFile(SVNFileUtil.getParentFile(target1.getFile()), target1.getPegRevision());
                     }
-                    SvnNgDiffUtil.doArbitraryNodesDiff(target1, target2, depth, getWcContext(), new SvnDiffSummarizeCallback(kind == SVNNodeKind.DIR ? path1 : SVNFileUtil.getParentFile(path1), false, handler), getOperation().getEventHandler());
+                    SvnNgDiffUtil.doArbitraryNodesDiff(target1, target2, depth, getWcContext(), new SvnDiffSummarizeCallback(kind == SVNNodeKind.DIR ? path1 : SVNFileUtil.getParentFile(path1), false, getRepositoryAccess().getTargetURL(baseTarget), baseTarget.getFile(), handler), getOperation().getEventHandler());
                 } else {
                     doDiffWCWC(target1, revision1, target2, revision2, depth, useAncestry, handler);
                 }
@@ -227,7 +225,7 @@ public class SvnNgDiffSummarize extends SvnNgOperationRunner<SvnDiffStatus, SvnD
 
         boolean nonDir = kind1 != SVNNodeKind.DIR || kind2 != SVNNodeKind.DIR;
 
-        ISvnDiffCallback oldCallback = new SvnDiffSummarizeCallback(path1 != null ? SVNFileUtil.createFilePath(path1.getParentFile(), target1) : SVNFileUtil.createFilePath(target1), false, handler);
+        ISvnDiffCallback oldCallback = new SvnDiffSummarizeCallback(path1 != null ? SVNFileUtil.createFilePath(path1.getParentFile(), target1) : SVNFileUtil.createFilePath(target1), false, anchor1, basePath, handler);
         ISvnDiffCallback2 callback = new SvnDiffCallbackWrapper(oldCallback, true, nonDir ? basePath.getParentFile() : basePath);
 
         if (kind2 == SVNNodeKind.NONE) {
@@ -281,8 +279,7 @@ public class SvnNgDiffSummarize extends SvnNgOperationRunner<SvnDiffStatus, SvnD
                                SVNRevision pegRevision, boolean reverse, SVNDepth depth, boolean useAncestry,
                                ISVNDiffStatusHandler handler) throws SVNException {//TODO: changelists?
 
-        ISvnDiffCallback callback = new SvnDiffSummarizeCallback(target1.getFile(), reverse, handler);
-        SvnNgDiffUtil.doDiffReposWC(target1, revision1, pegRevision, target2, revision2, reverse, getRepositoryAccess(), getWcContext(), false, depth, useAncestry, getOperation().getApplicableChangelists(), false, null, callback, this);
+        SvnNgDiffUtil.doDiffSummarizeReposWC(target1, revision1, pegRevision, target2, revision2, reverse, getRepositoryAccess(), getWcContext(), false, depth, useAncestry, getOperation().getApplicableChangelists(), false, null, handler, this);
     }
 
     private void doDiffWCWC(SvnTarget target1, SVNRevision revision1,
@@ -302,8 +299,10 @@ public class SvnNgDiffSummarize extends SvnNgOperationRunner<SvnDiffStatus, SvnD
         SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path1));
 
         String targetString1 = (kind == SVNNodeKind.DIR) ? "" : SVNFileUtil.getFileName(path1);
+        File basePath = (kind == SVNNodeKind.DIR) ? path1 : SVNFileUtil.getParentFile(path1);
 
-        ISvnDiffCallback callback = new SvnDiffSummarizeCallback(path1, false, handler);
+        SVNURL baseUrl = kind == SVNNodeKind.DIR ? getRepositoryAccess().getTargetURL(target1) : getRepositoryAccess().getTargetURL(SvnTarget.fromFile(SVNFileUtil.getParentFile(target1.getFile())));
+        ISvnDiffCallback callback = new SvnDiffSummarizeCallback(path1, false, baseUrl, basePath, handler);
 
         SvnNgDiffUtil.doDiffWCWC(path1, getRepositoryAccess(), getWcContext(), depth, useAncestry, getOperation().getApplicableChangelists(), false, false, null, callback, getOperation().getEventHandler());
     }

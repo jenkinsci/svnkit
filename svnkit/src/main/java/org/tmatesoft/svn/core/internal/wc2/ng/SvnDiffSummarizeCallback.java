@@ -3,6 +3,7 @@ package org.tmatesoft.svn.core.internal.wc2.ng;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNDiffStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNDiffStatus;
@@ -19,12 +20,16 @@ public class SvnDiffSummarizeCallback implements ISvnDiffCallback {
     private final ISVNDiffStatusHandler handler;
     private final Set<File> propChanges;
     private final boolean reversed;
+    private final SVNURL baseUrl;
+    private final File baseDirectory;
     private final File target;
 
-    public SvnDiffSummarizeCallback(File targetAbsPath, boolean reversed, ISVNDiffStatusHandler handler) {
+    public SvnDiffSummarizeCallback(File targetAbsPath, boolean reversed, SVNURL baseUrl, File baseDirectory, ISVNDiffStatusHandler handler) {
         this.handler = handler;
         this.reversed = reversed;
         this.target = targetAbsPath;
+        this.baseUrl = baseUrl;
+        this.baseDirectory = baseDirectory;
         this.propChanges = new HashSet<File>();
     }
 
@@ -90,7 +95,8 @@ public class SvnDiffSummarizeCallback implements ISvnDiffCallback {
                 summarizeKind = SVNStatusType.STATUS_ADDED;
             }
         }
-        SVNDiffStatus diffStatus = new SVNDiffStatus(path, null, SVNFileUtil.getFilePath(SVNFileUtil.skipAncestor(this.target, path)), summarizeKind,
+        File relPath = SVNFileUtil.isAbsolute(path) ? SVNFileUtil.skipAncestor(baseDirectory, path): path;
+        SVNDiffStatus diffStatus = new SVNDiffStatus(path, baseUrl == null ? null : baseUrl.appendPath(SVNFileUtil.getFilePath(relPath), false), SVNFileUtil.getFilePath(SVNFileUtil.skipAncestor(this.target, path)), summarizeKind,
                 (summarizeKind == SVNStatusType.STATUS_MODIFIED || summarizeKind == SVNStatusType.STATUS_NORMAL) ? propChanged : false, nodeKind);
         handler.handleDiffStatus(diffStatus);
     }
