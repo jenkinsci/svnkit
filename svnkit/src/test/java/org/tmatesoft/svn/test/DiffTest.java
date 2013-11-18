@@ -868,7 +868,6 @@ public class DiffTest {
             final SvnDiffSummarize diffSummarize = svnOperationFactory.createDiffSummarize();
             diffSummarize.setSources(SvnTarget.fromURL(url, SVNRevision.create(1)), SvnTarget.fromURL(url, SVNRevision.create(2)));
             diffSummarize.setReceiver(new ISvnObjectReceiver<SvnDiffStatus>() {
-                @Override
                 public void receive(SvnTarget target, SvnDiffStatus diffStatus) throws SVNException {
                     SVNURL fileUrl = diffStatus.getUrl();
                     Assert.assertEquals(url.appendPath("file", false), fileUrl);
