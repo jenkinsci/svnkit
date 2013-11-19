@@ -17,14 +17,11 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.*;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbRoot;
-import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.InheritedProperties;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbProperties;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RevisionsPair;
@@ -167,6 +164,10 @@ public class SvnNgGetProperties extends SvnNgOperationRunner<SVNProperties, SvnG
                     if (repositoryRoot == null) {
                         final Structure<NodeInfo> info = context.getDb().readInfo(target, NodeInfo.reposRootUrl);
                         repositoryRoot = info.get(NodeInfo.reposRootUrl);
+                    }
+                    if (repositoryRoot == null) {
+                        ISVNWCDb.WCDbAdditionInfo additionInfo = context.getDb().scanAddition(target, ISVNWCDb.WCDbAdditionInfo.AdditionInfoField.reposRootUrl);
+                        repositoryRoot = additionInfo.reposRootUrl;
                     }
                     result.setTarget(SvnTarget.fromURL(repositoryRoot.appendPath(pathOrURL, false)));
                 }

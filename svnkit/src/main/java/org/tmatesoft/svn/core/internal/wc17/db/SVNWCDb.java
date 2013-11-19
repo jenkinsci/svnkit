@@ -19,19 +19,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.logging.Level;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -3188,9 +3177,32 @@ public class SVNWCDb implements ISVNWCDb {
         final DirParsedInfo wcInfo = obtainWcRoot(localAbsPath, isAdditionMode);
         final File localRelPath = wcInfo.localRelPath;
         final SVNSqlJetDb sDb = wcInfo.wcDbDir.getWCRoot().getSDb();
-        
+
+        if (fields != null) {
+            //if reposRootUrl or reposUuid or originalRootUrl or originalUuid are specified, we need to know corresponding reposId
+            Structure<NodeInfo> fieldsInfo = Structure.obtain(NodeInfo.class, fields);
+            final boolean needsReposId = (fieldsInfo.hasField(NodeInfo.reposRootUrl) || fieldsInfo.hasField(NodeInfo.reposUuid)) && !fieldsInfo.hasField(NodeInfo.reposId);
+            final boolean needsOriginalReposId = (fieldsInfo.hasField(NodeInfo.originalRootUrl) || fieldsInfo.hasField(NodeInfo.originalUuid)) && !fieldsInfo.hasField(NodeInfo.originalReposId);
+
+            if (needsReposId || needsOriginalReposId) {
+                final int modifiedFieldsCount = fields.length + (needsReposId ? 1 : 0) + (needsOriginalReposId ? 1 : 0);
+                final NodeInfo[] modifiedFields = new NodeInfo[modifiedFieldsCount];
+                System.arraycopy(fields, 0, modifiedFields, 0, fields.length);
+                int index = fields.length;
+                if (needsReposId) {
+                    modifiedFields[index] = NodeInfo.reposId;
+                    index++;
+                }
+                if (needsOriginalReposId) {
+                    modifiedFields[index] = NodeInfo.originalReposId;
+                    index++;
+                }
+                fields = modifiedFields;
+            }
+        }
+
         Structure<NodeInfo> info = SvnWcDbShared.readInfo(wcInfo.wcDbDir.getWCRoot(), localRelPath, fields);
-        
+
         if (info.hasField(NodeInfo.reposRootUrl) || info.hasField(NodeInfo.reposUuid)) {
             Structure<RepositoryInfo> reposInfo = fetchRepositoryInfo(sDb, info.lng(NodeInfo.reposId));
             reposInfo.from(RepositoryInfo.reposRootUrl, RepositoryInfo.reposUuid).into(info, NodeInfo.reposRootUrl, NodeInfo.reposUuid);
