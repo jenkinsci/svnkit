@@ -451,6 +451,9 @@ public class SVNPathUtil {
         if (pathChild.compareTo(path) == 0) {
             return null;
         }
+        if (path.length() == 0 && !pathChild.startsWith("/")) {
+            return pathChild;
+        }
 	    if (!path.endsWith("/")) { // We don't want to have /foobar being a child of /foo
 		    path = path + "/";
 	    }
