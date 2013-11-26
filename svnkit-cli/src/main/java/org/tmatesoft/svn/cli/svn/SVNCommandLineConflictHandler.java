@@ -25,14 +25,7 @@ import org.tmatesoft.svn.core.internal.wc.FSMergerBySequence;
 import org.tmatesoft.svn.core.internal.wc.SVNDiffConflictChoiceStyle;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
-import org.tmatesoft.svn.core.wc.SVNConflictAction;
-import org.tmatesoft.svn.core.wc.SVNConflictChoice;
-import org.tmatesoft.svn.core.wc.SVNConflictDescription;
-import org.tmatesoft.svn.core.wc.SVNConflictReason;
-import org.tmatesoft.svn.core.wc.SVNConflictResult;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
-import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import de.regnis.q.sequence.line.QSequenceLineRAData;
@@ -53,12 +46,30 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
         myAccept = accept;
         mySVNEnvironment = environment;
     }
-    
+
     public SVNConflictResult handleConflict(SVNConflictDescription conflictDescription) throws SVNException {
+        SVNConflictResult conflictResult = handleConflictNoStats(conflictDescription);
+        if (conflictResult != null && conflictResult.getConflictChoice() != SVNConflictChoice.POSTPONE) {
+            SVNConflictStats conflictStats = getConflictStats();
+            if (conflictDescription instanceof SVNTextConflictDescription) {
+                conflictStats.incrementTextConflictsResolved(SVNFileUtil.getFilePath(conflictDescription.getPath()));
+            } else if (conflictDescription instanceof SVNPropertyConflictDescription) {
+                conflictStats.incrementPropConflictsResolved(SVNFileUtil.getFilePath(conflictDescription.getPath()));
+            } else if (conflictDescription instanceof SVNTreeConflictDescription) {
+                conflictStats.incrementTreeConflictsResolved(SVNFileUtil.getFilePath(conflictDescription.getPath()));
+            } else {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL, "Invalid conflict kind on ''{0}''", conflictDescription.getPath());
+                SVNErrorManager.error(errorMessage, SVNLogType.WC);
+            }
+        }
+        return conflictResult;
+    }
+
+    public SVNConflictResult handleConflictNoStats(SVNConflictDescription conflictDescription) throws SVNException {
         if (conflictDescription.isTreeConflict()) {
             return null;
         }
-        
+
         SVNMergeFileSet files = conflictDescription.getMergeFiles();
         if (myAccept == SVNConflictAcceptPolicy.POSTPONE) {
             return new SVNConflictResult(SVNConflictChoice.POSTPONE, null);
@@ -79,20 +90,20 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                 if (myIsExternalFailed) {
                     return new SVNConflictResult(SVNConflictChoice.POSTPONE, null);
                 }
-                
+
                 try {
-                    SVNCommandUtil.editFileExternally(mySVNEnvironment, mySVNEnvironment.getEditorCommand(), 
+                    SVNCommandUtil.editFileExternally(mySVNEnvironment, mySVNEnvironment.getEditorCommand(),
                             files.getResultFile().getAbsolutePath());
                 } catch (SVNException svne) {
                     if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.CL_NO_EXTERNAL_EDITOR) {
-                        mySVNEnvironment.getErr().println(svne.getErrorMessage().getMessage() != null ? 
+                        mySVNEnvironment.getErr().println(svne.getErrorMessage().getMessage() != null ?
                                 svne.getErrorMessage().getMessage() : "No editor found, leaving all conflicts.");
                         myIsExternalFailed = true;
                     } else if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.EXTERNAL_PROGRAM) {
-                        String message = svne.getErrorMessage().getMessageTemplate() != null ? svne.getErrorMessage().getMessage() : 
+                        String message = svne.getErrorMessage().getMessageTemplate() != null ? svne.getErrorMessage().getMessage() :
                             "Error running editor, leaving all conflicts.";
                         if (message.startsWith("svn: ")) {
-                            //hack: use the original message template without any prefixes (like 'svn:', 'svn:warning') 
+                            //hack: use the original message template without any prefixes (like 'svn:', 'svn:warning')
                             //added to make update test 42 pass
                             message = message.substring("svn: ".length());
                         }
@@ -113,16 +124,16 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
 
                 boolean[] remainsInConflict = { false };
                 try {
-                    SVNCommandUtil.mergeFileExternally(mySVNEnvironment, files.getBaseFile().getAbsolutePath(), 
-                            files.getRepositoryFile().getAbsolutePath(), files.getLocalFile().getAbsolutePath(), 
+                    SVNCommandUtil.mergeFileExternally(mySVNEnvironment, files.getBaseFile().getAbsolutePath(),
+                            files.getRepositoryFile().getAbsolutePath(), files.getLocalFile().getAbsolutePath(),
                             files.getResultFile().getAbsolutePath(), files.getWCPath(), remainsInConflict);
                 } catch (SVNException svne) {
                     if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.CL_NO_EXTERNAL_MERGE_TOOL) {
-                        mySVNEnvironment.getErr().println(svne.getErrorMessage().getMessage() != null ? 
+                        mySVNEnvironment.getErr().println(svne.getErrorMessage().getMessage() != null ?
                                 svne.getErrorMessage().getMessage() : "No merge tool found.");
                         myIsExternalFailed = true;
                     } else if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.EXTERNAL_PROGRAM) {
-                        mySVNEnvironment.getErr().println(svne.getErrorMessage().getMessage() != null ? 
+                        mySVNEnvironment.getErr().println(svne.getErrorMessage().getMessage() != null ?
                                 svne.getErrorMessage().getMessage() : "Error running merge tool.");
                         myIsExternalFailed = true;
                     }
@@ -132,18 +143,18 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                 if (remainsInConflict[0]) {
                     return new SVNConflictResult(SVNConflictChoice.POSTPONE, null);
                 }
-                 
+
                 return new SVNConflictResult(SVNConflictChoice.MERGED, null);
             }
         }
-        
+
         boolean saveMerged = false;
         SVNConflictChoice choice = SVNConflictChoice.POSTPONE;
-        if ((conflictDescription.getNodeKind() == SVNNodeKind.FILE && 
-                conflictDescription.getConflictAction() == SVNConflictAction.EDIT && 
-                conflictDescription.getConflictReason() == SVNConflictReason.EDITED) || 
+        if ((conflictDescription.getNodeKind() == SVNNodeKind.FILE &&
+                conflictDescription.getConflictAction() == SVNConflictAction.EDIT &&
+                conflictDescription.getConflictReason() == SVNConflictReason.EDITED) ||
                 conflictDescription.isPropertyConflict()) {
-            
+
             boolean performedEdit = false;
             boolean diffAllowed = false;
             boolean knowsSmth = false;
@@ -152,44 +163,44 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
 
             if (conflictDescription.isPropertyConflict()) {
                 String message = "Conflict for property ''{0}'' discovered on ''{1}''.";
-                message = MessageFormat.format(message, new Object[] { conflictDescription.getPropertyName(), 
+                message = MessageFormat.format(message, new Object[] { conflictDescription.getPropertyName(),
                         path });
                 mySVNEnvironment.getErr().println(message);
-                
-                if ((files.getLocalFile() == null && files.getRepositoryFile() != null) || 
+
+                if ((files.getLocalFile() == null && files.getRepositoryFile() != null) ||
                         (files.getLocalFile() != null && files.getRepositoryFile() == null)) {
                     if (files.getLocalFile() != null) {
                         String myVal = SVNFileUtil.readFile(files.getLocalFile());
-                        message = MessageFormat.format("They want to delete the property, you want to change the value to ''{0}''.", 
+                        message = MessageFormat.format("They want to delete the property, you want to change the value to ''{0}''.",
                                 new Object[] { myVal });
                         mySVNEnvironment.getErr().println(message);
                     } else {
                         String reposVal = SVNFileUtil.readFile(files.getRepositoryFile());
-                        message = MessageFormat.format("They want to change the property value to ''{0}'', you want to delete the property.", 
+                        message = MessageFormat.format("They want to change the property value to ''{0}'', you want to delete the property.",
                                 new Object[] { reposVal });
                         mySVNEnvironment.getErr().println(message);
                     }
-                } 
+                }
             } else {
                 String message = "Conflict discovered in ''{0}''.";
                 message = MessageFormat.format(message, new Object[] { path });
                 mySVNEnvironment.getErr().println(message);
             }
-            
+
             if ((files.getResultFile() != null && files.getBaseFile() != null) || (files.getBaseFile() != null &&
                     files.getLocalFile() != null && files.getRepositoryFile() != null)) {
                 diffAllowed = true;
             }
-            
+
             while (true) {
                 String message = "Select: (p) postpone";
                 if (diffAllowed) {
                     message += ", (df) diff-full, (e) edit";
-                    
+
                     if (knowsSmth) {
                         message += ", (r) resolved";
                     }
-                    
+
                     if (!files.isBinary() && !conflictDescription.isPropertyConflict()) {
                         message += ",\n        (mc) mine-conflict, (tc) theirs-conflict";
                     }
@@ -199,11 +210,11 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                     }
                     message += ",\n        (mf) mine-full, (tf) theirs-full";
                 }
-                
+
                 message += ",\n        (s) show all options: ";
-                
+
                 String answer = SVNCommandUtil.prompt(message, mySVNEnvironment);
-                
+
                 if ("s".equals(answer)) {
                     mySVNEnvironment.getErr().println();
                     mySVNEnvironment.getErr().println("  (e)  edit             - change merged file in an editor");
@@ -280,8 +291,8 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                         mySVNEnvironment.getErr().println();
                         continue;
                     }
-                    
-                    //TODO: re-implement in future  
+
+                    //TODO: re-implement in future
                     showConflictedChunks(files);
                     knowsSmth = true;
                     continue;
@@ -291,7 +302,7 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                         mySVNEnvironment.getErr().println();
                         continue;
                     }
-                    
+
                     File path1 = null;
                     File path2 = null;
                     if (files.getResultFile() != null && files.getBaseFile() != null) {
@@ -301,7 +312,7 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                         path1 = files.getRepositoryFile();
                         path2 = files.getLocalFile();
                     }
-                    
+
                     DefaultSVNCommandLineDiffGenerator diffGenerator = new DefaultSVNCommandLineDiffGenerator(path1, path2);
                     diffGenerator.setDiffOptions(new SVNDiffOptions(false, false, true));
                     diffGenerator.displayFileDiff("", path1, path2, null, null, null, null, System.out);
@@ -310,15 +321,15 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                     if (files.getResultFile() != null) {
                         try {
                             String resultPath = files.getResultFile().getAbsolutePath();
-                            SVNCommandUtil.editFileExternally(mySVNEnvironment, mySVNEnvironment.getEditorCommand(), 
+                            SVNCommandUtil.editFileExternally(mySVNEnvironment, mySVNEnvironment.getEditorCommand(),
                                     resultPath);
                             performedEdit = true;
                         } catch (SVNException svne) {
                             if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.CL_NO_EXTERNAL_EDITOR) {
-                                mySVNEnvironment.getErr().println(svne.getErrorMessage().getMessage() != null ? 
+                                mySVNEnvironment.getErr().println(svne.getErrorMessage().getMessage() != null ?
                                         svne.getErrorMessage().getMessage() : "No editor found.");
                             } else if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.EXTERNAL_PROGRAM) {
-                                mySVNEnvironment.getErr().println(svne.getErrorMessage().getMessage() != null ? 
+                                mySVNEnvironment.getErr().println(svne.getErrorMessage().getMessage() != null ?
                                         svne.getErrorMessage().getMessage() : "Error running editor.");
                             } else {
                                 throw svne;
@@ -332,19 +343,19 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                         knowsSmth = true;
                     }
                 } else if ("l".equals(answer)) {
-                    if (files.getBaseFile() != null && files.getLocalFile() != null && files.getRepositoryFile() != null && 
+                    if (files.getBaseFile() != null && files.getLocalFile() != null && files.getRepositoryFile() != null &&
                             files.getResultFile() != null) {
                         try {
-                            SVNCommandUtil.mergeFileExternally(mySVNEnvironment, files.getBasePath(), files.getRepositoryPath(), 
+                            SVNCommandUtil.mergeFileExternally(mySVNEnvironment, files.getBasePath(), files.getRepositoryPath(),
                                     files.getLocalPath(), files.getResultPath(), files.getWCPath(), null);
                             performedEdit = true;
                         } catch (SVNException svne) {
                             if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.CL_NO_EXTERNAL_MERGE_TOOL) {
-                                mySVNEnvironment.getErr().println(svne.getErrorMessage().getMessage() != null ? 
+                                mySVNEnvironment.getErr().println(svne.getErrorMessage().getMessage() != null ?
                                         svne.getErrorMessage().getMessage() : "No merge tool found.");
                                 myIsExternalFailed = true;
                             } else if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.EXTERNAL_PROGRAM) {
-                                mySVNEnvironment.getErr().println(svne.getErrorMessage().getMessage() != null ? 
+                                mySVNEnvironment.getErr().println(svne.getErrorMessage().getMessage() != null ?
                                         svne.getErrorMessage().getMessage() : "Error running merge tool.");
                                 myIsExternalFailed = true;
                             } else {
@@ -359,22 +370,22 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                     if (knowsSmth) {
                         choice = SVNConflictChoice.MERGED;
                         break;
-                    } 
+                    }
                     mySVNEnvironment.getErr().println("Invalid option.");
                     mySVNEnvironment.getErr().println();
-                } 
+                }
             }
-        } else if (conflictDescription.getConflictAction() == SVNConflictAction.ADD && 
+        } else if (conflictDescription.getConflictAction() == SVNConflictAction.ADD &&
                 conflictDescription.getConflictReason() == SVNConflictReason.OBSTRUCTED) {
             String message = "Conflict discovered when trying to add ''{0}''.";
             message = MessageFormat.format(message, new Object[] { files.getWCFile() });
             mySVNEnvironment.getErr().println(message);
             mySVNEnvironment.getErr().println("An object of the same name already exists.");
-            
+
             String prompt = "Select: (p) postpone, (mf) mine-full, (tf) theirs-full, (h) help:";
             while (true) {
                 String answer = SVNCommandUtil.prompt(prompt, mySVNEnvironment);
-                 
+
                 if ("h".equals(answer) || "?".equals(answer)) {
                     mySVNEnvironment.getErr().println("  (p)  postpone    - resolve the conflict later");
                     mySVNEnvironment.getErr().println("  (mf) mine-full   - accept pre-existing item (ignore upstream addition)");
@@ -399,16 +410,16 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
         } else {
             choice = SVNConflictChoice.POSTPONE;
         }
-        
+
         return new SVNConflictResult(choice, null, saveMerged);
     }
-    
+
     private void showConflictedChunks(SVNMergeFileSet files) throws SVNException {
         byte[] conflictStartMarker = "<<<<<<< MINE (select with 'mc')".getBytes();
         byte[] conflictSeparator = "=======".getBytes();
         byte[] conflictEndMarker = ">>>>>>> THEIRS (select with 'tc')".getBytes();
         byte[] conflictOriginalMarker = "||||||| ORIGINAL".getBytes();
-        
+
         SVNDiffOptions options = new SVNDiffOptions(false, false, true);
         FSMergerBySequence merger = new FSMergerBySequence(conflictStartMarker, conflictSeparator, conflictEndMarker, conflictOriginalMarker);
         RandomAccessFile localIS = null;
@@ -431,6 +442,10 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
             SVNFileUtil.closeFile(baseIS);
             SVNFileUtil.closeFile(latestIS);
         }
+    }
+
+    private SVNConflictStats getConflictStats() {
+        return mySVNEnvironment.getConflictStats();
     }
 
 }

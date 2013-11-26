@@ -58,6 +58,7 @@ public class DAVElement {
     public static final String LOG_REVPROPS_OPTION = SVN_DAV_PROPERTY_NAMESPACE + "svn/log-revprops";
     public static final String PARTIAL_REPLAY_OPTION = SVN_DAV_PROPERTY_NAMESPACE + "svn/partial-replay";
     public static final String ATOMIC_REVPROPS_OPTION = SVN_DAV_PROPERTY_NAMESPACE + "svn/atomic-revprops";
+    public static final String INHERITED_PROPS_OPTION = SVN_DAV_PROPERTY_NAMESPACE + "svn/inherited-props";
 
     public static final DAVElement ACTIVITY = getElement(DAV_NAMESPACE, "activity");
     public static final DAVElement VERSION_HISTORY = getElement(DAV_NAMESPACE, "version-history");

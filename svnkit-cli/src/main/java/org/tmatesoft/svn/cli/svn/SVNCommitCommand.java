@@ -54,6 +54,7 @@ public class SVNCommitCommand extends SVNCommand {
         options = SVNOption.addLogMessageOptions(options);
         options.add(SVNOption.CHANGELIST);
         options.add(SVNOption.KEEP_CHANGELISTS);
+        options.add(SVNOption.INCLUDE_EXTERNALS);
         return options;
     }
 
@@ -80,6 +81,7 @@ public class SVNCommitCommand extends SVNCommand {
             depth = SVNDepth.INFINITY;
         }
         SVNCommitClient client = getSVNEnvironment().getClientManager().getCommitClient();
+        client.setIgnoreExternals(!getSVNEnvironment().isIncludeExternals());
         Collection filesList = new ArrayList();
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String targetName = (String) ts.next();

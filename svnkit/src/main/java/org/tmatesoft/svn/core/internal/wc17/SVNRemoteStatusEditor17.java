@@ -70,16 +70,15 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
 
     public void deleteEntry(String path, long revision) throws SVNException {
         final File local_abspath = SVNFileUtil.createFilePath(myAnchorAbsPath, path);
-        final SVNWCDbKind kind = myWCContext.getDb().readKind(local_abspath, false);
-        
-        tweakStatusHash(myDirectoryInfo, new DirectoryInfo(path, myDirectoryInfo), local_abspath, kind == SVNWCDbKind.Dir, SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE,
+
+        tweakStatusHash(myDirectoryInfo, new DirectoryInfo(path, myDirectoryInfo), local_abspath, SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE,
                 SVNRevision.create(revision), null);
         if (myDirectoryInfo.parent != null && myTargetBaseName == null)
-            tweakStatusHash(myDirectoryInfo.parent, myDirectoryInfo, myDirectoryInfo.localAbsPath, kind == SVNWCDbKind.Dir, SVNStatusType.STATUS_MODIFIED, SVNStatusType.STATUS_MODIFIED,
+            tweakStatusHash(myDirectoryInfo.parent, myDirectoryInfo, myDirectoryInfo.localAbsPath, SVNStatusType.STATUS_MODIFIED, SVNStatusType.STATUS_MODIFIED,
                     SVNStatusType.STATUS_NONE, null, null);
     }
 
-    private void tweakStatusHash(DirectoryInfo dirInfo, DirectoryInfo childDir, File localAbsPath, boolean isDir, SVNStatusType reposNodeStatus, SVNStatusType reposTextStatus,
+    private void tweakStatusHash(DirectoryInfo dirInfo, DirectoryInfo childDir, File localAbsPath, SVNStatusType reposNodeStatus, SVNStatusType reposTextStatus,
             SVNStatusType reposPropStatus, SVNRevision deletedRev, SVNLock reposLock) throws SVNException {
 
         Map<File, SvnStatus> statushash = dirInfo.statii;
@@ -130,7 +129,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
          * available.
          */
         if (statstruct.getRepositoryNodeStatus() == SVNStatusType.STATUS_DELETED) {
-            statstruct.setRepositoryKind(isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE);
+            statstruct.setRepositoryKind(statstruct.getKind());
 
             /*
              * Pre 1.5 servers don't provide the revision a path was deleted. So
@@ -219,7 +218,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
                  * ### When we add directory locking, we need to find a ###
                  * directory lock here.
                  */
-                tweakStatusHash(pb, db, db.localAbsPath, true, repos_node_status, repos_text_status, repos_prop_status, null, null);
+                tweakStatusHash(pb, db, db.localAbsPath, repos_node_status, repos_text_status, repos_prop_status, null, null);
             } else {
                 /*
                  * We're editing the root dir of the WC. As its repos status

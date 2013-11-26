@@ -140,8 +140,8 @@ public abstract class SVNPropertiesCommand extends SVNXMLCommand implements ISVN
         return myRevisionProperties;
     }
 
-    protected void printProplist(List props) {
-        for (Iterator plist = props.iterator(); plist.hasNext();) {
+    protected void printProplist(List<SVNPropertyData> props) {
+        for (Iterator<SVNPropertyData> plist = props.iterator(); plist.hasNext();) {
             SVNPropertyData property = (SVNPropertyData) plist.next();
             getSVNEnvironment().getOut().println("  " + property.getName());
             if (getSVNEnvironment().isVerbose()) {

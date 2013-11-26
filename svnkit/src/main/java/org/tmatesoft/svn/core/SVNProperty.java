@@ -94,6 +94,16 @@ public class SVNProperty {
     public static final String MERGE_INFO = SVN_PREFIX + "mergeinfo";
     
     /**
+     * @since SVN 1.8
+     */
+    public static final String INHERITABLE_IGNORES = SVN_PREFIX + "global-ignores";
+
+    /**
+     * @since SVN 1.8
+     */
+    public static final String INHERITABLE_AUTO_PROPS = SVN_PREFIX + "auto-props";
+    
+    /**
      * An <span class="javastring">"svn:entry:revision"</span> SVN untweakable metaproperty.
      */
     public static final String REVISION = SVN_ENTRY_PREFIX + "revision";
@@ -623,7 +633,15 @@ public class SVNProperty {
             }
         }
     }
-    
+
+    public static boolean mimeTypeIsBinary(String mimeType) {
+        int len = mimeType.indexOf(';');
+        if (len == -1) {
+            len = mimeType.indexOf(' ');
+        }
+        return ((!"text/".equals(mimeType.substring(0, 5))) && (len != 15 || "image/x-xbitmap".equals(mimeType.substring(0, len))));
+    }
+
     /**
      * Returns custom mime-types previously added.
      */

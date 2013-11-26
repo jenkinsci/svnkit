@@ -32,6 +32,7 @@ public class NailgunProcessor {
         configureLoggers(testName);
         
         if ("svn".equals(programName)) {
+            System.setProperty("svnkit.wc.17only", "true");
             SVN.main(programArgs);
         } else if ("svnadmin".equals(programName)) {
             SVNAdmin.main(programArgs);

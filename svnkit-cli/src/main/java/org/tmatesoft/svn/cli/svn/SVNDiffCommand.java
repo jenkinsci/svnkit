@@ -64,6 +64,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         options.add(SVNOption.DIFF_CMD);
         options.add(SVNOption.EXTENSIONS);
         options.add(SVNOption.NO_DIFF_DELETED);
+        options.add(SVNOption.NO_DIFF_ADDED);
         options.add(SVNOption.NOTICE_ANCESTRY);
         options.add(SVNOption.SHOW_COPIES_AS_ADDS);
         options.add(SVNOption.SUMMARIZE);
@@ -71,6 +72,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         options.add(SVNOption.FORCE);
         options.add(SVNOption.XML);
         options.add(SVNOption.GIT_DIFF_FORMAT);
+        options.add(SVNOption.PROPERTIES_ONLY);
         return options;
     }
 
@@ -131,7 +133,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
                 end = newTarget.getPegRevision();
             }
             if (start == SVNRevision.UNDEFINED) {
-                start = oldTarget.isURL() ? SVNRevision.HEAD : SVNRevision.BASE;
+                start = oldTarget.isURL() ? SVNRevision.HEAD : (getSVNEnvironment().getNewTarget() != null ? SVNRevision.WORKING : SVNRevision.BASE);
             }
             if (end == SVNRevision.UNDEFINED) {
                 end = newTarget.isURL() ? SVNRevision.HEAD : SVNRevision.WORKING;
@@ -256,11 +258,13 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         }
 
         diffGenerator.setDiffDeleted(!svnEnvironment.isNoDiffDeleted());
+        diffGenerator.setDiffAdded(!svnEnvironment.isNoDiffAdded());
         diffGenerator.setForcedBinaryDiff(svnEnvironment.isForce());
         diffGenerator.setBasePath(new File("").getAbsoluteFile());
         diffGenerator.setFallbackToAbsolutePath(true);
         diffGenerator.setOptions(svnEnvironment.getOptions());
         diffGenerator.setDiffDeleted(!svnEnvironment.isNoDiffDeleted());
+        diffGenerator.setPropertiesOnly(svnEnvironment.isPropertiesOnly());
         return new SvnNewDiffGenerator(diffGenerator);
     }
 

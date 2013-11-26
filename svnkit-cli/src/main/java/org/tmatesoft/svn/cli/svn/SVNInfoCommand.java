@@ -29,11 +29,14 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.SVNConflictAction;
 import org.tmatesoft.svn.core.wc.SVNConflictReason;
@@ -151,6 +154,10 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         }
         buffer.append("URL: " + info.getURL() + "\n");
         if (info.getRepositoryRootURL() != null) {
+            if (info.getURL() != null) {
+                final String relativeURL = SVNURLUtil.getRelativeURL(info.getRepositoryRootURL(), info.getURL(), true);
+                buffer.append("Relative URL: ^/" + relativeURL + "\n");
+            }
             buffer.append("Repository Root: " + info.getRepositoryRootURL() + "\n");
         }
         if (info.getRepositoryUUID() != null) {
@@ -177,6 +184,22 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
             }
             if (info.getCopyFromRevision() != null && info.getCopyFromRevision().getNumber() >= 0) {
                 buffer.append("Copied From Rev: " + info.getCopyFromRevision() + "\n");
+            }
+            if (info.getMovedFromPath() != null) {
+                final File relativePath = SVNWCUtils.skipAncestor(info.getWorkingCopyRoot(), info.getMovedFromPath());
+                if (relativePath != null && !"".equals(relativePath.getPath())) {
+                    buffer.append("Moved From: " + relativePath + "\n");
+                } else {
+                    buffer.append("Moved From: " + info.getMovedFromPath() + "\n");
+                }
+            }
+            if (info.getMovedToPath() != null) {
+                final File relativePath = SVNWCUtils.skipAncestor(info.getWorkingCopyRoot(), info.getMovedToPath());
+                if (relativePath != null && !"".equals(relativePath.getPath())) {
+                    buffer.append("Moved To: " + relativePath + "\n");
+                } else {
+                    buffer.append("Moved To: " + info.getMovedToPath() + "\n");
+                }
             }
         }
         if (info.getAuthor() != null) {
@@ -282,6 +305,10 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         buffer = openCDataTag("url", url, buffer);
         
         String rootURL = info.getRepositoryRootURL() != null ? info.getRepositoryRootURL().toString() : null;
+        if (rootURL != null && url != null) {
+            final String relativeURL = SVNURLUtil.getRelativeURL(info.getRepositoryRootURL(), info.getURL(), true);
+            buffer = openCDataTag("relative-url", "^/" + relativeURL, buffer);
+        }
         String uuid = info.getRepositoryUUID();
         if (rootURL != null || uuid != null) {
             buffer = openXMLTag("repository", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
@@ -320,6 +347,22 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
             }
             buffer = openCDataTag("checksum", info.getChecksum(), buffer);
             buffer = openCDataTag("changelist", info.getChangelistName(), buffer);
+            if (info.getMovedFromPath() != null) {
+                final File relativePath = SVNWCUtils.skipAncestor(info.getWorkingCopyRoot(), info.getMovedFromPath());
+                if (relativePath != null && !"".equals(relativePath.getPath())) {
+                    buffer = openCDataTag("moved-from", relativePath.getPath(), buffer);
+                } else {
+                    buffer = openCDataTag("moved-from", info.getMovedFromPath().getPath(), buffer);
+                }
+            }
+            if (info.getMovedToPath() != null) {
+                final File relativePath = SVNWCUtils.skipAncestor(info.getWorkingCopyRoot(), info.getMovedToPath());
+                if (relativePath != null && !"".equals(relativePath.getPath())) {
+                    buffer = openCDataTag("moved-to", relativePath.getPath(), buffer);
+                } else {
+                    buffer = openCDataTag("moved-to", info.getMovedToPath().getPath(), buffer);
+                }
+            }
             buffer = closeXMLTag("wc-info", buffer);
         }
         if (info.getAuthor() != null || info.getCommittedRevision().isValid() ||

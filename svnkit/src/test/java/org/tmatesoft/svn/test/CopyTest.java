@@ -9,6 +9,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
@@ -286,6 +287,238 @@ public class CopyTest {
 
             Assert.assertEquals(2, commitInfo.getNewRevision());
 
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testCopyAddedDirectoryWithUnversionedFiles() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCopyAddedDirectoryWithUnversionedFiles", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File sourceDirectory = workingCopy.getFile("sourceDirectory");
+            final File targetDirectory = workingCopy.getFile("targetDirectory");
+            final File sourceFile = new File(sourceDirectory, "file");
+            final File targetFile = new File(targetDirectory, "file");
+
+            SVNFileUtil.ensureDirectoryExists(sourceDirectory);
+            workingCopy.add(sourceDirectory);
+            TestUtil.writeFileContentsString(sourceFile, "content");
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(sourceDirectory), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(targetDirectory));
+            copy.run();
+
+            Assert.assertTrue(targetFile.isFile());
+            Assert.assertTrue(sourceFile.isFile());
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
+            Assert.assertEquals(SVNStatusType.STATUS_UNVERSIONED, statuses.get(sourceFile).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_UNVERSIONED, statuses.get(targetFile).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_ADDED, statuses.get(sourceDirectory).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_ADDED, statuses.get(targetDirectory).getNodeStatus());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testCopySymlink() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCopySymlink", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File sourceSymlink = workingCopy.getFile("sourceSymlink");
+            final File targetSymlink = workingCopy.getFile("targetSymlink");
+            SVNFileUtil.createSymlink(sourceSymlink, "target");
+            workingCopy.add(sourceSymlink);
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(sourceSymlink), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(targetSymlink));
+            copy.run();
+
+            Assert.assertEquals(SVNFileType.SYMLINK, SVNFileType.getType(sourceSymlink));
+            Assert.assertEquals(SVNFileType.SYMLINK, SVNFileType.getType(targetSymlink));
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
+            Assert.assertEquals(SVNStatusType.STATUS_ADDED, statuses.get(sourceSymlink).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_ADDED, statuses.get(targetSymlink).getNodeStatus());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+     }
+
+    @Test
+    public void testCopyIntoUnversionedDirectory() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCopyIntoUnversionedDirectory", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addDirectory("directory/subdirectory");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File subdirectory = workingCopy.getFile("directory/subdirectory");
+            final File unversioned = workingCopy.getFile("unversioned");
+            final File unversionedTarget = new File(unversioned, "subdirectory");
+
+            SVNFileUtil.ensureDirectoryExists(unversioned);
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.setMakeParents(true);
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(subdirectory), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(unversionedTarget));
+            copy.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
+            Assert.assertEquals(SVNStatusType.STATUS_ADDED, statuses.get(unversioned).getNodeStatus());
+            Assert.assertFalse(statuses.get(unversioned).isCopied());
+            Assert.assertEquals(SVNStatusType.STATUS_ADDED, statuses.get(unversionedTarget).getNodeStatus());
+            Assert.assertTrue(statuses.get(unversionedTarget).isCopied());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testCopyIntoMissingDirectory() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCopyIntoMissingDirectory", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addDirectory("directory/subdirectory");
+            commitBuilder.addDirectory("missing");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File subdirectory = workingCopy.getFile("directory/subdirectory");
+            final File missing = workingCopy.getFile("missing");
+
+            SVNFileUtil.deleteAll(missing, true);
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.setFailWhenDstExists(false);
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(subdirectory), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(missing));
+            try {
+                copy.run();
+                Assert.fail("An exception should be thrown");
+            } catch (SVNException e) {
+                //expected
+                Assert.assertEquals(SVNErrorCode.WC_MISSING, e.getErrorMessage().getErrorCode());
+                Assert.assertTrue(e.getMessage().contains("is not a directory"));
+            }
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testMarkerFilesNotCopied() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testMarkerFilesNotCopied", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addDirectory("directory");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.addFile("directory/file", "another contents".getBytes());
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+            final File directory = workingCopy.getFile("directory");
+            final File targetDirectory = workingCopy.getFile("targetDirectory");
+            final File file = workingCopy.getFile("directory/file");
+            TestUtil.writeFileContentsString(file, "contents");
+            workingCopy.add(file);
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(directory), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(targetDirectory));
+            copy.run();
+
+            final File mineCopiedFile = new File(targetDirectory, "file.mine");
+            File r0CopiedFile = new File(targetDirectory, "file.r0");
+            File r2CopiedFile = new File(targetDirectory, "file.r2");
+            Assert.assertFalse(mineCopiedFile.exists());
+            Assert.assertFalse(r0CopiedFile.exists());
+            Assert.assertFalse(r2CopiedFile.exists());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testCopyOverExcludedDirectoryShouldFail() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCopyOverExcludedDirectoryShouldFail", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addDirectory("sourceDirectory");
+            commitBuilder.addDirectory("targetDirectory");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File targetDirectory = workingCopy.getFile("targetDirectory");
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setDepthIsSticky(true);
+            update.setDepth(SVNDepth.EXCLUDE);
+            update.setSingleTarget(SvnTarget.fromFile(targetDirectory));
+            update.run();
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromURL(url.appendPath("sourceDirectory", false)), SVNRevision.HEAD));
+            copy.setSingleTarget(SvnTarget.fromFile(targetDirectory));
+            try {
+                copy.run();
+                Assert.fail("An exception should be thrown");
+            } catch (SVNException e) {
+                Assert.assertEquals(SVNErrorCode.WC_OBSTRUCTED_UPDATE, e.getErrorMessage().getErrorCode());
+                Assert.assertTrue(e.getMessage().contains("exists, but is excluded"));
+            }
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();

@@ -15,6 +15,8 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNCharsetOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -24,12 +26,16 @@ public class SvnDiffCallback implements ISvnDiffCallback {
     private OutputStream outputStream;
     private long revision2;
     private long revision1;
+    private boolean noCopyFromOnAdd;
+    private boolean diffTargetIsCopy;
 
-    public SvnDiffCallback(ISvnDiffGenerator generator, long rev1, long rev2, OutputStream outputStream) {
+    public SvnDiffCallback(ISvnDiffGenerator generator, long rev1, long rev2, boolean noCopyFromOnAdd, boolean diffTargetIsCopy, OutputStream outputStream) {
         this.generator = generator;
-        this.outputStream = outputStream;
+        this.noCopyFromOnAdd = noCopyFromOnAdd;
         this.revision1 = rev1;
         this.revision2 = rev2;
+        this.diffTargetIsCopy = diffTargetIsCopy;
+        this.outputStream = outputStream;
     }
 
     public void fileOpened(SvnDiffCallbackResult result, File path, long revision) throws SVNException {
@@ -40,12 +46,35 @@ public class SvnDiffCallback implements ISvnDiffCallback {
             displayContentChanged(path, leftFile, rightFile, rev1, rev2, mimeType1, mimeType2, propChanges, originalProperties, OperationKind.Modified, null);
         }
         if (propChanges != null && !propChanges.isEmpty()) {
-            propertiesChanged(path, revision1, revision2, false, propChanges, originalProperties);
+            propertiesChanged(path, rev1, rev2, false, propChanges, originalProperties);
         }
     }
 
     public void fileAdded(SvnDiffCallbackResult result, File path, File leftFile, File rightFile, long rev1, long rev2, String mimeType1, String mimeType2, File copyFromPath, long copyFromRevision, SVNProperties propChanges, SVNProperties originalProperties) throws SVNException {
         generator.setForceEmpty(true);
+
+        if (diffTargetIsCopy) {
+            if (rev1 == SVNRepository.INVALID_REVISION && this.revision1 != SVNRepository.INVALID_REVISION) {
+                rev1 = this.revision1;
+            }
+
+            if (rev2 == SVNRepository.INVALID_REVISION && this.revision2 != SVNRepository.INVALID_REVISION) {
+                rev2 = this.revision2;
+            }
+        }
+
+        if (noCopyFromOnAdd && (copyFromPath != null || SVNRevision.isValidRevisionNumber(copyFromRevision))) {
+            SVNProperties newChanges = new SVNProperties(originalProperties);
+            newChanges.putAll(propChanges);
+
+            leftFile = null;
+            propChanges = newChanges;
+            originalProperties = new SVNProperties();
+            copyFromRevision = SVNRepository.INVALID_REVISION;
+        }
+
+        //TODO: no diff added?
+
         if (rightFile != null && copyFromPath != null) {
             displayContentChanged(path, leftFile, rightFile, rev1, rev2, mimeType1, mimeType2, propChanges, originalProperties, OperationKind.Copied, copyFromPath);
         } else if (rightFile != null) {
@@ -54,7 +83,7 @@ public class SvnDiffCallback implements ISvnDiffCallback {
 
         if (propChanges != null && !propChanges.isEmpty()) {
             //we do not rev1 and rev2 here because SVN doesn't
-            propertiesChanged(path, revision1, revision2, false, propChanges, originalProperties);
+            propertiesChanged(path, rev1, rev2, false, propChanges, originalProperties);
         }
         generator.setForceEmpty(false);
     }
@@ -81,7 +110,7 @@ public class SvnDiffCallback implements ISvnDiffCallback {
         if (regularDiff == null || regularDiff.isEmpty()) {
             return;
         }
-        generator.displayPropsChanged(getTarget(path), getRevisionString(revision1), getRevisionString(revision2), dirWasAdded, originalProperties, regularDiff, outputStream);
+        generator.displayPropsChanged(getTarget(path), dirWasAdded ? getRevisionString(0) : getRevisionString(revision1), getRevisionString(revision2), dirWasAdded, originalProperties, regularDiff, outputStream);
     }
 
     public void dirClosed(SvnDiffCallbackResult result, File path, boolean dirWasAdded) throws SVNException {

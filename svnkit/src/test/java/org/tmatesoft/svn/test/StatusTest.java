@@ -151,7 +151,7 @@ public class StatusTest {
             TestUtil.writeFileContentsString(addedFile, "contents");
             workingCopy.add(addedFile);
 
-            final int expectedWcFormat = TestUtil.isNewWorkingCopyTest() ? ISVNWCDb.WC_FORMAT_17 : SVNAdminAreaFactory.WC_FORMAT_16;
+            final int expectedWcFormat = TestUtil.isNewWorkingCopyTest() ? ISVNWCDb.WC_FORMAT_18 : SVNAdminAreaFactory.WC_FORMAT_16;
 
             final SVNClientManager clientManager = SVNClientManager.newInstance();
             try {

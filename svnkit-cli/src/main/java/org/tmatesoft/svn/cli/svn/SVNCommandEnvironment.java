@@ -53,12 +53,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
-import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
-import org.tmatesoft.svn.core.wc.SVNCommitItem;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNRevisionRange;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -84,6 +79,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private String myChangelist;
     
     private boolean myIsNonInteractive;
+    private boolean myIsForceInteractive;
     private boolean myIsNoAuthCache;
     private String myUserName;
     private String myPassword;
@@ -127,6 +123,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsNoticeAncestry;
     private boolean myIsSummarize;
     private boolean myIsNoDiffDeleted;
+    private boolean myIsNoDiffAdded;
     private long myLimit;
     private boolean myIsStopOnCopy;
     private boolean myIsChangeOptionUsed;
@@ -144,9 +141,14 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private Map myServersOptions;
     private boolean myIsGitDiffFormat;
     private boolean myIsShowDiff;
+    private boolean myIsPropertiesOnly;
 
     private int myStripCount;
-    
+    private boolean myIsShowInhertiedProps;
+    private boolean myIsIncludeExternals;
+
+    private SVNConflictStats myConflictStats;
+
     public SVNCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
         super(programName, out, err, in);
         myIsDescend = true;
@@ -159,8 +161,9 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         myShowRevsType = SVNShowRevisionType.MERGED;
         myRevisionRanges = new LinkedList();
         myChangelists = new SVNHashSet();
+        myConflictStats = new SVNConflictStats();
     }
-    
+
     public void initClientManager() throws SVNException {
         super.initClientManager();
         getClientManager().setIgnoreExternals(myIsIgnoreExternals);
@@ -287,8 +290,15 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     }
 
     protected void initOptions(SVNCommandLine commandLine) throws SVNException {
-    	super.initOptions(commandLine);
-    	if (getCommand().getClass() != SVNMergeCommand.class && getCommand().getClass() != SVNLogCommand.class) {
+        super.initOptions(commandLine);
+        if (myIsNonInteractive && myIsForceInteractive) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "--non-interactive and --force-interactive " + "are mutually exclusive");
+            SVNErrorManager.error(errorMessage, SVNLogType.CLIENT);
+        } else {
+            myIsNonInteractive = !myIsForceInteractive; //TODO: use System.console() to check if it can be interactive (since JDK 6)
+        }
+
+        if (getCommand().getClass() != SVNMergeCommand.class && getCommand().getClass() != SVNLogCommand.class) {
         	if (myRevisionRanges.size() > 1) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                 		"Multiple revision argument encountered; " +
@@ -520,8 +530,12 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myIsNoAuthCache = true;
         } else if (option == SVNOption.NON_INTERACTIVE) {
             myIsNonInteractive = true;
+        } else if (option == SVNOption.FORCE_INTERACTIVE) {
+            myIsForceInteractive = true;
         } else if (option == SVNOption.NO_DIFF_DELETED) {
             myIsNoDiffDeleted = true;
+        } else if (option == SVNOption.NO_DIFF_ADDED) {
+            myIsNoDiffAdded = true;
         } else if (option == SVNOption.NOTICE_ANCESTRY) {
             myIsNoticeAncestry = true;
         } else if (option == SVNOption.IGNORE_ANCESTRY) {
@@ -530,6 +544,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myIsShowCopiesAsAdds = true;
         } else if (option == SVNOption.GIT_DIFF_FORMAT) {
             myIsGitDiffFormat = true;
+        } else if (option == SVNOption.PROPERTIES_ONLY) {
+            myIsPropertiesOnly = true;
         } else if (option == SVNOption.DIFF) {
             myIsShowDiff = true;
         } else if (option == SVNOption.IGNORE_EXTERNALS) {
@@ -639,6 +655,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myRegularExpression = optionValue.getValue();
         } else if (option == SVNOption.TRUST_SERVER_CERT) {
             myIsTrustServerCertificate = true;
+        } else if (option == SVNOption.SHOW_INHERITED_PROPS) {
+            myIsShowInhertiedProps = true;
+        } else if (option == SVNOption.INCLUDE_EXTERNALS) {
+            myIsIncludeExternals = true;
         } else if(option == SVNOption.STRIP ) {
             final String value = optionValue.getValue();
             try {
@@ -841,6 +861,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         return myIsGitDiffFormat;
     }
 
+    public boolean isPropertiesOnly() {
+        return myIsPropertiesOnly;
+    }
+
     public boolean isShowDiff() {
         return myIsShowDiff;
     }
@@ -900,7 +924,11 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     public boolean isNoDiffDeleted() {
         return myIsNoDiffDeleted;
     }
-    
+
+    public boolean isNoDiffAdded() {
+        return myIsNoDiffAdded;
+    }
+
     public String getOldTarget() {
         return myOldTarget;
     }
@@ -911,6 +939,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
 
     public String getAuthorOfInterest() {
         return myAuthorOfInterest;
+    }
+
+    public boolean isNoAutoProps() {
+        return myIsNoAutoProps;
     }
 
     public String getRegularExpression() {
@@ -963,6 +995,18 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
 
     public boolean isAllowMixedRevisions() {
         return myIsAllowMixedRevisions;
+    }
+    
+    public boolean isShowInheritedProps() {
+        return myIsShowInhertiedProps;
+    }
+
+    public boolean isIncludeExternals() {
+        return myIsIncludeExternals;
+    }
+
+    public SVNConflictStats getConflictStats() {
+        return myConflictStats;
     }
 
     public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {

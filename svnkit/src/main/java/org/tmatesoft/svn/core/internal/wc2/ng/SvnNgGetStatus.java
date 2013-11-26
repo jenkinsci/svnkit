@@ -49,7 +49,7 @@ public class SvnNgGetStatus extends SvnNgOperationRunner<SvnStatus, SvnGetStatus
                     notAWc = true;
                 }
                 if (notAWc) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "''{0}'' is not a working copy", getFirstTarget());
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found", getFirstTarget());
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }

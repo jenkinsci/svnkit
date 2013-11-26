@@ -56,7 +56,7 @@ public class SvnWcDbReader extends SvnWcDbShared {
         pristineProps,
         changedDate,
     }
-    
+
     public static Collection<File> getServerExcludedNodes(SVNWCDb db, File path) throws SVNException {
         DirParsedInfo dirInfo = db.obtainWcRoot(path);
         SVNSqlJetDb sdb = dirInfo.wcDbDir.getWCRoot().getSDb();
