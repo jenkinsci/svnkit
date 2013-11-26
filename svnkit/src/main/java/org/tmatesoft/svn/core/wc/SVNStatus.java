@@ -987,32 +987,7 @@ public class SVNStatus {
         myDepth = depth;
     }
 
-    public static SVNStatusType combineNodeAndContentsStatus(int workingCopyFormat, SVNStatusType nodeStatus, SVNStatusType contentsStatus, boolean versioned, boolean conflicted) {
-        if (workingCopyFormat >= ISVNWCDb.WC_FORMAT_17) {
-            if (nodeStatus == SVNStatusType.STATUS_CONFLICTED) {
-                if (!versioned && conflicted) {
-                    return SVNStatusType.STATUS_MISSING;
-                }
-                return contentsStatus;
-            } else if (nodeStatus == SVNStatusType.STATUS_MODIFIED) {
-                return contentsStatus;
-            }
-            return nodeStatus;
-        } else {
-            return contentsStatus;
-        }
-    }
-
-    public static SVNStatusType combineRemoteNodeAndContentsStatus(int workingCopyFormat, SVNStatusType remoteNodeStatus, SVNStatusType remoteContentsStatus) {
-        if (workingCopyFormat >= ISVNWCDb.WC_FORMAT_17) {
-            if (remoteNodeStatus == SVNStatusType.STATUS_MODIFIED) {
-                return remoteContentsStatus;
-            }
-            return remoteNodeStatus;
-        } else {
-            return remoteContentsStatus;
-        }
-    }
+  
     public void setMovedFromPath(File path) {
         myMovedFromPath = path;
     }

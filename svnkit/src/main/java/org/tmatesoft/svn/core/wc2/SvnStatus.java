@@ -61,8 +61,6 @@ public class SvnStatus extends SvnObject {
     private long repositoryChangedRevision;
     private SVNDate repositoryChangedDate;
     private String repositoryChangedAuthor;
-
-    private int workingCopyFormat = ISVNWCDb.WC_FORMAT_17;
     
     private File movedToPath; 
     private File movedFromPath; 
