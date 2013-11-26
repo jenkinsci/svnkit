@@ -10,6 +10,7 @@ svnkit-cli/src/main/scripts/jsvn eol=lf
 svnkit-distribution/src/main/licenses/LICENSE-ANTLR.txt eol=lf
 svnkit-distribution/src/main/licenses/LICENSE-JAVAHL.txt eol=lf
 svnkit-distribution/src/main/licenses/LICENSE-JNA.txt eol=lf
+svnkit-distribution/src/main/licenses/LICENSE-JSCH.txt eol=lf
 svnkit-distribution/src/main/licenses/LICENSE-SEQUENCE.txt eol=lf
 svnkit-distribution/src/main/licenses/LICENSE-SQLJET.txt eol=lf
 svnkit-distribution/src/main/licenses/LICENSE-TRILEAD.txt eol=lf
