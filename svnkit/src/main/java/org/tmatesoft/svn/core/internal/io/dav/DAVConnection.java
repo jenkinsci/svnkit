@@ -184,7 +184,7 @@ public class DAVConnection {
         return handler.getLocks();
     }
 
-    public SVNLock doLock(String path, DAVRepository repos, String comment, boolean force, long revision) throws SVNException {
+    public SVNLock doLock(String repositoryPath, String path, DAVRepository repos, String comment, boolean force, long revision) throws SVNException {
         beforeCall();
         DAVBaselineInfo info = DAVUtil.getBaselineInfo(this, repos, path, -1, false, true, null);
 
@@ -238,7 +238,7 @@ public class DAVConnection {
                 SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             Date createdDate = created != null ? SVNDate.parseDate(created) : null;
-            return new SVNLock(info.baselinePath, handler.getID(), userName, comment, createdDate, null);
+            return new SVNLock(repositoryPath, handler.getID(), userName, comment, createdDate, null);
         }
 
         if (exception != null) {

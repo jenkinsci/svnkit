@@ -675,7 +675,7 @@ public class DAVRepository extends SVNRepository {
                 SVNErrorMessage error = null;
                 long revisionNumber = revision != null ? revision.longValue() : -1;
                 try {
-                     lock = connection.doLock(path, this, comment, force, revisionNumber);
+                     lock = connection.doLock(repositoryPath, path, this, comment, force, revisionNumber);
                 } catch (SVNException e) {
                     error = null;
                     if (e.getErrorMessage() != null) {
