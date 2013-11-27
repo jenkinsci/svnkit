@@ -124,6 +124,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         this.originalTarget2 = null;
         this.visitedPaths = new HashSet<String>();
         this.diffDeleted = true;
+        this.diffAdded = true;
     }
 
     public void setBaseTarget(SvnTarget baseTarget) {
