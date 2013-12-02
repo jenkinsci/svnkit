@@ -57,7 +57,7 @@ public class DowngradeTest {
             SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
             try {
                 final SvnNgDowngrade svnNgDowngrade = new SvnNgDowngrade();
-                svnNgDowngrade.upgrade(context, workingCopyDirectory);
+                svnNgDowngrade.downgrade(context, workingCopyDirectory);
             } finally {
                 context.close();
             }

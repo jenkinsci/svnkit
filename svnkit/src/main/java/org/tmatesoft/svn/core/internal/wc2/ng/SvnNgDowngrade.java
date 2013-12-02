@@ -5,7 +5,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetUpdateStatement;
-import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
@@ -25,11 +24,11 @@ public class SvnNgDowngrade extends SvnNgOperationRunner<SvnWcGeneration, SvnUpg
     @Override
     protected SvnWcGeneration run(SVNWCContext context) throws SVNException {
         File localAbsPath = getFirstTarget();
-        upgrade(getWcContext(), localAbsPath);
+        downgrade(getWcContext(), localAbsPath);
         return SvnWcGeneration.V17;
     }
 
-    public void upgrade(SVNWCContext context, File localAbsPath) throws SVNException {
+    public void downgrade(SVNWCContext context, File localAbsPath) throws SVNException {
         SVNWCDb db = (SVNWCDb) context.getDb();
 
         SVNWCDb.DirParsedInfo parsed = db.parseDir(localAbsPath, SVNSqlJetDb.Mode.ReadOnly);
