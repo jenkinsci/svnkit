@@ -4,14 +4,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnRevert;
-import org.tmatesoft.svn.core.wc2.SvnStatus;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc2.*;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -377,6 +371,46 @@ public class RevertTest {
             final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
             Assert.assertEquals(SVNStatusType.STATUS_NORMAL, statuses.get(sourceFile).getNodeStatus());
             Assert.assertNull(statuses.get(targetFile));
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testRevertMovedFile() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRevertMovedFile", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("source");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File source = workingCopy.getFile("source");
+            final File target = workingCopy.getFile("target");
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.setMove(true);
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(source), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(target));
+            copy.run();
+
+            final SvnRevert revert = svnOperationFactory.createRevert();
+            revert.setSingleTarget(SvnTarget.fromFile(target));
+            revert.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(source).getNodeStatus());
+            Assert.assertFalse(statuses.get(source).isCopied());
+            Assert.assertNull(statuses.get(source).getMovedFromPath());
+            Assert.assertNull(statuses.get(source).getMovedToPath());
+            Assert.assertNull(statuses.get(target));
 
         } finally {
             svnOperationFactory.dispose();

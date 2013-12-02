@@ -408,7 +408,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         if (commonRoot != null) {
             if (equals(inPath , commonRoot)) {
                 return "";
-            } else if (startsWith(inPath, commonRoot + "/")) {
+            } else if (startsWith(inPath, commonRoot + "/") && !"/".equals(inPath)) {
                 return inPath.substring(commonRoot.length() + 1);
             }
         }

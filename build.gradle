@@ -1,10 +1,10 @@
 group = 'org.tmatesoft.svnkit'
-version = '1.7.10-jenkins-1'
+version = '1.8.0-jenkins-1'
 
 project.ext {
    release = true
    target = '1.5'
-   compatibleSvnVersion = '1.7.9'
+   compatibleSvnVersion = '1.8.1'
 }
 
 apply from: 'build.pom.gradle'
@@ -89,7 +89,7 @@ configure(javaProjects()) {
 project(':svnkit') {
     dependencies {
         compile 'de.regnis.q.sequence:sequence-library:1.0.2'
-        compile 'org.tmatesoft.sqljet:sqljet:1.1.7'
+        compile 'org.tmatesoft.sqljet:sqljet:1.1.9'
         compile 'net.java.dev.jna:jna:3.4.0'
         compile 'com.trilead:trilead-ssh2:1.0.0-build217'
         compile 'com.jcraft:jsch.agentproxy.connector-factory:0.0.6'
@@ -103,9 +103,8 @@ project(':svnkit') {
 project(':svnkit-javahl16') {
     dependencies {
         compile project(path: ':svnkit')
-        compile 'org.apache.subversion:svn-javahl-api:1.7.9'
-
-        testCompile 'org.apache.subversion:svn-javahl-tests:1.7.9'
+        compile 'org.apache.subversion:svn-javahl-api:1.8.1'
+        testCompile 'org.apache.subversion:svn-javahl-tests:1.8.1'
     }
     artifacts { maven jar, sourcesJar, javadocJar }
 }
@@ -160,7 +159,7 @@ project(':svnkit-distribution') {
 
         osgi project(path: ':svnkit-osgi', configuration: 'archives')
         osgi 'com.trilead:trilead-ssh2-osgi:1.0.0-build217'
-        osgi 'org.tmatesoft.sqljet:sqljet-osgi:1.1.7'
+        osgi 'org.tmatesoft.sqljet:sqljet-osgi:1.1.9'
         osgi 'net.java.dev.jna:jna-osgi:3.4.0'
     }
 }
@@ -173,5 +172,4 @@ task publish(dependsOn: [':svnkit-distribution:buildAll']) {
     ant.unzip(src: new File(project(':svnkit-distribution').distsDir, "svnkit-${version}-all.zip"), dest: toDir.absolutePath) {
        cutdirsmapper(dirs: '1')
     }    
-    ant.chmod(dir: new File(toDir, 'bin').absolutePath, perm: 'ugo+rx', includes: '**/**', excludes: '**/*.bat')
-}
+    ant.chmod(dir: new File(toDir, 'bin').absolutePath, perm: 'ugo+rx', includes: '**/**', excludes: '**/*.bat')}

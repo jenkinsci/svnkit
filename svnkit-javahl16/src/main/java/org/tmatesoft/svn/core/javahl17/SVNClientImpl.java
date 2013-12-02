@@ -27,6 +27,7 @@ import org.apache.subversion.javahl.ConflictResult;
 import org.apache.subversion.javahl.ConflictResult.Choice;
 import org.apache.subversion.javahl.DiffSummary;
 import org.apache.subversion.javahl.ISVNClient;
+import org.apache.subversion.javahl.JavaHLObjectFactory;
 import org.apache.subversion.javahl.SubversionException;
 import org.apache.subversion.javahl.callback.BlameCallback;
 import org.apache.subversion.javahl.callback.ChangelistCallback;
@@ -35,7 +36,9 @@ import org.apache.subversion.javahl.callback.CommitCallback;
 import org.apache.subversion.javahl.callback.CommitMessageCallback;
 import org.apache.subversion.javahl.callback.ConflictResolverCallback;
 import org.apache.subversion.javahl.callback.DiffSummaryCallback;
+import org.apache.subversion.javahl.callback.ImportFilterCallback;
 import org.apache.subversion.javahl.callback.InfoCallback;
+import org.apache.subversion.javahl.callback.InheritedProplistCallback;
 import org.apache.subversion.javahl.callback.ListCallback;
 import org.apache.subversion.javahl.callback.LogMessageCallback;
 import org.apache.subversion.javahl.callback.PatchCallback;
@@ -48,8 +51,10 @@ import org.apache.subversion.javahl.types.Checksum;
 import org.apache.subversion.javahl.types.ConflictVersion;
 import org.apache.subversion.javahl.types.CopySource;
 import org.apache.subversion.javahl.types.Depth;
+import org.apache.subversion.javahl.types.DiffOptions;
 import org.apache.subversion.javahl.types.DirEntry;
 import org.apache.subversion.javahl.types.Info;
+import org.apache.subversion.javahl.types.JavaHLTypesObjectFactory;
 import org.apache.subversion.javahl.types.Lock;
 import org.apache.subversion.javahl.types.Mergeinfo;
 import org.apache.subversion.javahl.types.Mergeinfo.LogKind;
@@ -59,6 +64,7 @@ import org.apache.subversion.javahl.types.RevisionRange;
 import org.apache.subversion.javahl.types.Status;
 import org.apache.subversion.javahl.types.Tristate;
 import org.apache.subversion.javahl.types.Version;
+import org.apache.subversion.javahl.types.VersionExtended;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
@@ -1572,7 +1578,9 @@ public class SVNClientImpl implements ISVNClient {
                 getLongDate(status.getRepositoryChangedDate()),
                 getNodeKind(status.getRepositoryKind()),
                 status.getRepositoryChangedAuthor(),
-                status.getChangelist()
+                status.getChangelist(),
+                null,
+                null
         );
     }
 
@@ -1690,9 +1698,13 @@ public class SVNClientImpl implements ISVNClient {
         if (commitable == null) {
             return null;
         }
-        return new CommitItem(getFilePath(commitable.getPath()), getNodeKind(commitable.getKind()), commitable.getFlags(),
-                getUrlString(commitable.getUrl()), getUrlString(commitable.getCopyFromUrl()),
-                commitable.getCopyFromRevision());
+        return JavaHLObjectFactory.createCommitItem(getFilePath(commitable.getPath()), 
+                getNodeKind(commitable.getKind()), 
+                commitable.getFlags(),
+                getUrlString(commitable.getUrl()), 
+                getUrlString(commitable.getCopyFromUrl()),
+                commitable.getCopyFromRevision(),
+                getFilePath(commitable.getMovedFromAbsPath()));
     }
 
     private String getFilePath(File path) {
@@ -2382,10 +2394,12 @@ public class SVNClientImpl implements ISVNClient {
         if (conflictVersion == null) {
             return null;
         }
-        return new ConflictVersion(getUrlString(conflictVersion.getRepositoryRoot()),
+        return JavaHLTypesObjectFactory.createConflictVersion(
+                getUrlString(conflictVersion.getRepositoryRoot()),
+                null, // TODO repos UUID
                 conflictVersion.getPegRevision(),
                 conflictVersion.getPath(),
-                getNodeKind(conflictVersion.getKind()));
+                getNodeKind(conflictVersion.getKind()));                
     }
 
     private SVNConflictResult getSVNConflictResult(ConflictResult conflictResult) {
@@ -2403,8 +2417,7 @@ public class SVNClientImpl implements ISVNClient {
         } else if (conflictAction == SVNConflictAction.EDIT) {
             return ConflictDescriptor.Action.edit;
         } else if (conflictAction == SVNConflictAction.REPLACE) {
-            //TODO: change to REPLACE when available in JavaHL API
-            return ConflictDescriptor.Action.add;
+            return ConflictDescriptor.Action.replace;
         } else {
             throw new IllegalArgumentException("Unknown conflict action: " + conflictAction);
         }
@@ -2425,10 +2438,13 @@ public class SVNClientImpl implements ISVNClient {
         } else if (conflictReason == SVNConflictReason.OBSTRUCTED) {
             return ConflictDescriptor.Reason.obstructed;
         } else if (conflictReason == SVNConflictReason.REPLACED) {
-            //TODO: change to REPLACE when available in JavaHL API
-            return ConflictDescriptor.Reason.added;
+            return ConflictDescriptor.Reason.replaced;
         } else if (conflictReason == SVNConflictReason.UNVERSIONED) {
             return ConflictDescriptor.Reason.unversioned;
+        } else if (conflictReason == SVNConflictReason.MOVED_AWAY) {
+            return ConflictDescriptor.Reason.moved_away;
+        } else if (conflictReason == SVNConflictReason.MOVED_HERE) {
+            return ConflictDescriptor.Reason.moved_here;
         } else {
             throw new IllegalArgumentException("Unknown conflict reason: " + conflictReason);
         }
@@ -2833,5 +2849,69 @@ public class SVNClientImpl implements ISVNClient {
         getEventHandler().setCancelOperation(false);
         getEventHandler().resetPathPrefix();
         resetLog();
+    }
+
+    public VersionExtended getVersionExtended(boolean verbose) {
+        return null;
+    }
+
+    public void add(String path, Depth depth, boolean force, boolean noIgnores, boolean noAutoProps, boolean addParents) throws ClientException {
+    }
+
+    public void move(Set<String> srcPaths, String destPath, boolean force, boolean moveAsChild, boolean makeParents, boolean metadataOnly, boolean allowMixRev, Map<String, String> revpropTable, CommitMessageCallback handler,
+            CommitCallback callback) throws ClientException {
+    }
+
+    public void doImport(String path, String url, Depth depth, boolean noIgnore, boolean noAutoProps, boolean ignoreUnknownNodeTypes, Map<String, String> revpropTable, ImportFilterCallback importFilterCallback,
+            CommitMessageCallback messageHandler, CommitCallback commitCallback) throws ClientException {
+    }
+
+    public void diff(String target1, Revision revision1, String target2, Revision revision2, String relativeToDir, OutputStream outStream, Depth depth, Collection<String> changelists, boolean ignoreAncestry, boolean noDiffDeleted,
+            boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly, DiffOptions options) throws ClientException {
+    }
+
+    public void diff(String target1, Revision revision1, String target2, Revision revision2, String relativeToDir, String outFileName, Depth depth, Collection<String> changelists, boolean ignoreAncestry, boolean noDiffDeleted,
+            boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly, DiffOptions options) throws ClientException {
+    }
+
+    public void diff(String target1, Revision revision1, String target2, Revision revision2, String relativeToDir, OutputStream outStream, Depth depth, Collection<String> changelists, boolean ignoreAncestry, boolean noDiffDeleted,
+            boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly) throws ClientException {
+    }
+
+    public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String relativeToDir, OutputStream outStream, Depth depth, Collection<String> changelists, boolean ignoreAncestry,
+            boolean noDiffDeleted, boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly, DiffOptions options) throws ClientException {
+    }
+
+    public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String relativeToDir, String outFileName, Depth depth, Collection<String> changelists, boolean ignoreAncestry, boolean noDiffDeleted,
+            boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly, DiffOptions options) throws ClientException {
+    }
+
+    public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String relativeToDir, OutputStream outStream, Depth depth, Collection<String> changelists, boolean ignoreAncestry,
+            boolean noDiffDeleted, boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly) throws ClientException {
+    }
+
+    public void properties(String path, Revision revision, Revision pegRevision, Depth depth, Collection<String> changelists, InheritedProplistCallback callback) throws ClientException {
+    }
+
+    public byte[] propertyGet(String path, String name, Revision revision, Revision pegRevision, Collection<String> changelists) throws ClientException {
+        return null;
+    }
+
+    public void merge(String path1, Revision revision1, String path2, Revision revision2, String localPath, boolean force, Depth depth, boolean ignoreMergeinfo, boolean diffIgnoreAncestry, boolean dryRun, boolean recordOnly)
+            throws ClientException {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void merge(String path, Revision pegRevision, List<RevisionRange> revisions, String localPath, boolean force, Depth depth, boolean ignoreMergeinfo, boolean diffIgnoreAncestry, boolean dryRun, boolean recordOnly)
+            throws ClientException {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void getMergeinfoLog(LogKind kind, String pathOrUrl, Revision pegRevision, String mergeSourceUrl, Revision srcPegRevision, Revision srcStartRevision, Revision srcEndRevision, boolean discoverChangedPaths, Depth depth,
+            Set<String> revProps, LogMessageCallback callback) throws ClientException {
+        // TODO Auto-generated method stub
+        
     }
 }

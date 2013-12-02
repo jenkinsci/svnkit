@@ -413,6 +413,34 @@ public class CommitTest {
         }
     }
 
+    @Test
+    public void testCommitAddedFilesLeavesNoModifications() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCommitAddedFilesLeavesNoModifications", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+            final File file = workingCopy.getFile("file");
+            TestUtil.writeFileContentsString(file, "contents");
+            workingCopy.add(file);
+
+            final SvnCommit commit = svnOperationFactory.createCommit();
+            commit.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            commit.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_NORMAL, statuses.get(file).getNodeStatus());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void setIncomplete(SvnOperationFactory svnOperationFactory, File path, long revision, File reposRelpath) throws SVNException {
         SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
         try {

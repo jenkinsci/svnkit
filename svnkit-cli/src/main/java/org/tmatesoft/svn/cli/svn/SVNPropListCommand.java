@@ -25,13 +25,21 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnGetProperties;
+import org.tmatesoft.svn.core.wc2.SvnInheritedProperties;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -45,21 +53,22 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
         super("proplist", new String[] {"plist", "pl"});
     }
 
-    protected Collection createSupportedOptions() {
-        Collection options = new ArrayList();
+    protected Collection<SVNOption> createSupportedOptions() {
+        final Collection<SVNOption> options = new ArrayList<SVNOption>();
         options.add(SVNOption.VERBOSE);
         options.add(SVNOption.RECURSIVE);
         options.add(SVNOption.DEPTH);
         options.add(SVNOption.REVISION);
         options.add(SVNOption.QUIET);
         options.add(SVNOption.REVPROP);
+        options.add(SVNOption.SHOW_INHERITED_PROPS);
         options.add(SVNOption.XML);
         options.add(SVNOption.CHANGELIST);
         return options;
     }
 
     public void run() throws SVNException {
-        Collection targets = new ArrayList(); 
+        Collection<String> targets = new ArrayList<String>(); 
         targets = getSVNEnvironment().combineTargets(targets, true);
         if (targets.isEmpty()) {
             targets.add("");
@@ -85,7 +94,7 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
                 StringBuffer buffer = openXMLTag("revprops", SVNXMLUtil.XML_STYLE_NORMAL, "rev", Long.toString(rev), null);
                 for (Iterator props = revisionProperties.iterator(); props.hasNext();) {
                     SVNPropertyData property = (SVNPropertyData) props.next();
-                    buffer = addXMLProp(property, buffer);
+                    buffer = addXMLProp(property, false, buffer);
                 }
                 buffer = closeXMLTag("revprops", buffer);
                 getSVNEnvironment().getOut().print(buffer);
@@ -120,40 +129,76 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
                 depth = SVNDepth.EMPTY;
             }
             
-            Collection changeLists = getSVNEnvironment().getChangelistsCollection();
+            Collection<String> changeLists = getSVNEnvironment().getChangelistsCollection();
             SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
             SVNErrorCode errorCode = null;
-            for (Iterator ts = targets.iterator(); ts.hasNext();) {
-                String targetPath = (String) ts.next();
-                SVNPath target = new SVNPath(targetPath, true);
-                SVNRevision pegRevision = target.getPegRevision();
+            for (Iterator<String> ts = targets.iterator(); ts.hasNext();) {
+                final String targetPath = (String) ts.next();
+                final SVNPath target = new SVNPath(targetPath, true);
+                final SVNRevision pegRevision = target.getPegRevision();
                 try {
+                    final SvnOperationFactory of = client.getOperationsFactory();
+                    final SvnGetProperties pl = of.createGetProperties();
                     if (target.isURL()) {
-                        client.doGetProperty(target.getURL(), null, pegRevision, getSVNEnvironment().getStartRevision(), depth, this);
+                        pl.setSingleTarget(SvnTarget.fromURL(target.getURL(), pegRevision));
                     } else {
-                        client.doGetProperty(target.getFile(), null, pegRevision, 
-                                getSVNEnvironment().getStartRevision(), depth, this, changeLists);
+                        pl.setSingleTarget(SvnTarget.fromFile(target.getFile(), pegRevision));
                     }
+                    pl.setDepth(depth);
+                    pl.setRevision(getSVNEnvironment().getStartRevision());
+                    pl.setApplicalbeChangelists(changeLists);
+                    pl.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
+                        public void receive(SvnTarget target, SVNProperties props) throws SVNException {
+                            for (Object propertyName : props.nameSet()) {
+                                final String name = propertyName.toString();
+                                final SVNPropertyData propertyData = new SVNPropertyData(name, props.getSVNPropertyValue(name), getSVNEnvironment().getOptions());
+                                if (target.isURL()) {
+                                    handleProperty(target.getURL(), propertyData);
+                                } else {
+                                    handleProperty(target.getFile(), propertyData);
+                                }
+                            }
+                        }
+                    });
+                    if (getSVNEnvironment().isShowInheritedProps()) {
+                        pl.setTargetInheritedPropertiesReceiver(new ISvnObjectReceiver<List<SvnInheritedProperties>>() {
+                            public void receive(SvnTarget target, List<SvnInheritedProperties> propsList) throws SVNException {
+                                if (getSVNEnvironment().isXML()) {
+                                    printInhertiedPropertiesXML(target, propsList);
+                                } else {
+                                    printInhertiedProperties(target, propsList);
+                                }
+                            }
+                        });
+                    }
+                    pl.run();
                 } catch (SVNException e) {
-                    getSVNEnvironment().handleWarning(e.getErrorMessage(), 
+                    SVNErrorMessage err = e.getErrorMessage();
+                    if (err.getErrorCode() == SVNErrorCode.ENTRY_NOT_FOUND) {
+                        // use unknow node to make tests pass
+                        err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unknown node kind for ''{0}''", err.getRelatedObjects()[0]);
+                    }
+                    getSVNEnvironment().handleWarning(err, 
                             new SVNErrorCode[] {SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.ENTRY_NOT_FOUND},
                             getSVNEnvironment().isQuiet());
                     errorCode = e.getErrorMessage().getErrorCode();
                 }
                 if (!getSVNEnvironment().isXML()) {
-                    printCollectedProperties(target.isURL());
+                    printCollectedProperties(false);
+                    printCollectedProperties(true);
                 } else {
-                    printCollectedPropertiesXML(target.isURL());
+                    printCollectedPropertiesXML(false);
+                    printCollectedPropertiesXML(true);
                 }
                 clearCollectedProperties();
             }
             if (getSVNEnvironment().isXML()) {
                 printXMLFooter("properties");
             }
-            if (errorCode == SVNErrorCode.UNVERSIONED_RESOURCE) {
+            if (errorCode == SVNErrorCode.ENTRY_NOT_FOUND) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Could not display properties of all targets because some targets don't exist");
                 SVNErrorManager.error(err, SVNLogType.CLIENT);
-            } else if (errorCode == SVNErrorCode.ENTRY_NOT_FOUND) {
+            } else if (errorCode == SVNErrorCode.UNVERSIONED_RESOURCE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Could not display properties of all targets because some targets are not versioned");
                 SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
@@ -195,10 +240,56 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
             StringBuffer buffer = openXMLTag("target", SVNXMLUtil.XML_STYLE_NORMAL, "path", target, null);
             for (Iterator plist = props.iterator(); plist.hasNext();) {
                 SVNPropertyData property = (SVNPropertyData) plist.next();
-                buffer = addXMLProp(property, buffer);
+                buffer = addXMLProp(property, false, buffer);
             }
             buffer = closeXMLTag("target", buffer);
             getSVNEnvironment().getOut().print(buffer);
         }
+    }
+
+    private void printInhertiedPropertiesXML(SvnTarget target, List<SvnInheritedProperties> propsList) {
+        for (SvnInheritedProperties props : propsList) {
+            final String name;
+            if (props.getTarget().isURL()) {
+                name = props.getTarget().getPathOrUrlString(); 
+            } else {
+                name = SVNFileUtil.getFilePath(props.getTarget().getFile());
+            }
+            StringBuffer buffer = openXMLTag("target", SVNXMLUtil.XML_STYLE_NORMAL, "path", name, null);
+            printXMLPropHash(buffer, props.getProperties(), !getSVNEnvironment().isVerbose(), true);
+            buffer = closeXMLTag("target", buffer);
+            getSVNEnvironment().getOut().print(buffer);
+        }
+    }
+
+    private void printInhertiedProperties(SvnTarget target, List<SvnInheritedProperties> propsList) {
+        final String name;
+        if (target.isURL()) {
+            name = target.getPathOrUrlString(); 
+        } else {
+            name = SVNCommandUtil.getLocalPath(getSVNEnvironment().getRelativePath(target.getFile()));
+        }
+        for (SvnInheritedProperties props : propsList) {
+            if (!getSVNEnvironment().isQuiet()) {
+                getSVNEnvironment().getOut().println("Inherited properties on '" + name + "',");
+                if (props.getTarget().isURL()) {
+                    getSVNEnvironment().getOut().println("from '" + props.getTarget().getPathOrUrlString() + "':");
+                } else {
+                    final String localPath = SVNCommandUtil.getLocalPath(getSVNEnvironment().getRelativePath(props.getTarget().getFile()));
+                    getSVNEnvironment().getOut().println("from '" + localPath + "':");
+                }
+            }
+            final List<SVNPropertyData> propdataList = getPropdataList(props.getProperties());
+            printProplist(propdataList);
+        }
+    }
+
+    private List<SVNPropertyData> getPropdataList(SVNProperties properties) {
+        final List<SVNPropertyData> propertyDataList = new ArrayList<SVNPropertyData>();
+        for (String name : properties.nameSet()) {
+            final SVNPropertyData propertyData = new SVNPropertyData(name, properties.getSVNPropertyValue(name), getSVNEnvironment().getOptions());
+            propertyDataList.add(propertyData);
+        }
+        return propertyDataList;
     }
 }

@@ -129,7 +129,7 @@ public class SvnWcDbChangelist extends SvnWcDbShared {
 	            else {
 	            	stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.DELETE_ACTUAL_EMPTIES);
                     try {
-                        stmt.bindf("i", wcRoot.getWcId());
+                        stmt.bindf("i", wcRoot.getWcId(), localRelPath);
                         stmt.done();
                     } finally {
                         stmt.reset();

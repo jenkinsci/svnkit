@@ -10,6 +10,7 @@ import junit.framework.Assert;
 import org.junit.Test;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -64,63 +65,6 @@ public class SvnLockTest {
     }
 
     @Test
-    public void testSvnRepositoryGetLock() throws Exception {
-        final TestOptions options = TestOptions.getInstance();
-
-        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup(getClass().getSimpleName() + ".testSvnRepositoryGetLock", options);
-        try {
-            final SVNURL url = sandbox.createSvnRepository();
-
-            final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.addFile("directory/file");
-            commitBuilder.commit();
-
-            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
-            final File file = workingCopy.getFile("directory/file");
-
-            final String expectedLockMessage = "Lock message";
-            final String expectedLockOwner = "owner";
-
-            final SvnSetLock setLock = svnOperationFactory.createSetLock();
-            svnOperationFactory.setAuthenticationManager(new BasicAuthenticationManager(expectedLockOwner, null));
-            setLock.setSingleTarget(SvnTarget.fromFile(file));
-            setLock.setLockMessage(expectedLockMessage);
-            setLock.setStealLock(true);
-            setLock.run();
-
-            //svnlook-like way to obtain lock, requires access to FSFS repository
-            final SvnRepositoryGetLock getLock = svnOperationFactory.createRepositoryGetLock();
-            getLock.setRepositoryRoot(new File(url.getPath()));
-            getLock.setPath("directory/file");
-            SVNLock lock = getLock.run();
-
-            checkLockOwnerAndMessage(expectedLockMessage, expectedLockOwner, lock);
-
-            //svn info-like way to obtain lock, requires only working copy (even working copy is not mandatory, one can use SvnTarget#fromURL)
-            final SvnGetInfo getInfo = svnOperationFactory.createGetInfo();
-            getInfo.setSingleTarget(SvnTarget.fromFile(file));
-            final SvnInfo info = getInfo.run();
-
-            lock = info.getLock();
-            checkLockOwnerAndMessage(expectedLockMessage, expectedLockOwner, lock);
-
-        } finally {
-            svnOperationFactory.dispose();
-            sandbox.dispose();
-        }
-    }
-
-    private void checkLockOwnerAndMessage(String expectedLockMessage, String expectedLockOwner, SVNLock lock) {
-        String actualLockOwner = lock == null ? null : lock.getOwner();
-        String actualLockMessage = lock == null ? null : lock.getComment();
-
-        Assert.assertEquals(expectedLockOwner, actualLockOwner);
-        Assert.assertEquals(expectedLockMessage, actualLockMessage);
-    }
-
-    
-    @Test
     public void testRecursiveInfoGetsFileLock() throws Exception {
         final TestOptions options = TestOptions.getInstance();
 
@@ -159,6 +103,51 @@ public class SvnLockTest {
             Assert.assertNotNull(lock[0]);
             Assert.assertEquals("/directory/file", lock[0].getPath());
             Assert.assertEquals(lockMessage, lock[0].getComment());
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testLocksUnderRemovedDirectoryAreRemoved() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testLocksUnderRemovedDirectoryAreRemoved", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("directory/file");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+            final File directory = workingCopy.getFile("directory");
+            final File file = workingCopy.getFile("directory/file");
+
+            final SvnSetLock setLock = svnOperationFactory.createSetLock();
+            setLock.setSingleTarget(SvnTarget.fromFile(file));
+            setLock.run();
+
+            workingCopy.delete(directory);
+            workingCopy.commit("");
+
+            SVNFileUtil.ensureDirectoryExists(directory);
+            TestUtil.writeFileContentsString(file, "");
+
+            final SvnScheduleForAddition scheduleForAddition = svnOperationFactory.createScheduleForAddition();
+            scheduleForAddition.setAddParents(true);
+            scheduleForAddition.setSingleTarget(SvnTarget.fromFile(file));
+            scheduleForAddition.run();
+
+            workingCopy.commit("");
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            final SvnStatus status = statuses.get(file);
+            Assert.assertNull(status.getLock());
+
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();

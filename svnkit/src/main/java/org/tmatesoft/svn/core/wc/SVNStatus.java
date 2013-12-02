@@ -155,6 +155,9 @@ public class SVNStatus {
 
     private boolean myIsVersioned;
     private SVNDepth myDepth;
+    
+    private File myMovedToPath;
+    private File myMovedFromPath;
 
     /**
      * Constructs an <b>SVNStatus</b> object filling it with status information
@@ -811,6 +814,14 @@ public class SVNStatus {
     public SVNDepth getDepth() {
         return myDepth;
     }
+    
+    public File getMovedToPath() {
+        return myMovedToPath;
+    }
+
+    public File getMovedFromPath() {
+        return myMovedFromPath;
+    }
 
     public void setRemoteNodeStatus(SVNStatusType remoteNodeStatus) {
         myRemoteNodeStatus = remoteNodeStatus;
@@ -976,6 +987,15 @@ public class SVNStatus {
         myDepth = depth;
     }
 
+  
+    public void setMovedFromPath(File path) {
+        myMovedFromPath = path;
+    }
+    
+    public void setMovedToPath(File path) {
+        myMovedToPath = path;
+    }
+
     public static SVNStatusType combineNodeAndContentsStatus(int workingCopyFormat, SVNStatusType nodeStatus, SVNStatusType contentsStatus, boolean versioned, boolean conflicted) {
         if (workingCopyFormat >= ISVNWCDb.WC_FORMAT_17) {
             if (nodeStatus == SVNStatusType.STATUS_CONFLICTED) {
@@ -993,7 +1013,7 @@ public class SVNStatus {
     }
 
     public static SVNStatusType combineRemoteNodeAndContentsStatus(int workingCopyFormat, SVNStatusType remoteNodeStatus, SVNStatusType remoteContentsStatus) {
-        if (workingCopyFormat >= ISVNWCDb.WC_FORMAT_17) {
+        if (workingCopyFormat >= ISVNWCDb.WC_FORMAT_18) {
             if (remoteNodeStatus == SVNStatusType.STATUS_MODIFIED) {
                 return remoteContentsStatus;
             }

@@ -3,6 +3,7 @@ package org.tmatesoft.svn.test;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -365,7 +366,7 @@ public class CommitBuilder {
     }
 
     private SortedSet<String> getDirectoriesToVisit() {
-        final SortedSet<String> directoriesToVisit = new TreeSet<String>();
+        final SortedSet<String> directoriesToVisit = new TreeSet<String>(SVNPathUtil.PATH_COMPARATOR);
         for (String directory : directoriesToAdd) {
             addDirectoryToVisit(directory, directoriesToVisit);
         }

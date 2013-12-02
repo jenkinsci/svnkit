@@ -55,6 +55,8 @@ public class SVNCapability {
      * preexisting values when modifying revprops.
      */
     public static final SVNCapability ATOMIC_REVPROPS = new SVNCapability("atomic-revprops");
+
+    public static final SVNCapability INHERITED_PROPS = new SVNCapability("inherited-props");
 	
 	private String myName;
 	

@@ -54,6 +54,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
+import org.tmatesoft.svn.core.io.ISVNInheritedPropertiesHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationSegmentHandler;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
@@ -1640,7 +1641,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             Object[] buffer = new Object[] { "get-deleted-rev", path, srev, erev };
             write("(w(snn))", buffer);
             authenticate();
-            List values = read("r", null, false);
+            List<?> values = read("r", null, false);
             return SVNReader.getLong(values, 0);
         } catch (SVNException e) {
             closeSession();
@@ -1670,6 +1671,48 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             return SVNDepthFilterEditor.getDepthFilterEditor(depth, editor, hasTarget);
         }
         return editor;
+    }
+
+    protected void getInheritedPropertiesImpl(String path, long revision, String propertyName, ISVNInheritedPropertiesHandler handler) throws SVNException {
+        try {
+            openConnection();
+            path = getLocationRelativePath(path);
+            write("(w(s(n)))", new Object[] { "get-iprops", path, revision });
+            authenticate();
+            List<?> items = read("l", null, false);            
+            items = (List<?>) items.get(0);
+
+            for(int i = 0; i < items.size(); i++) {
+                final SVNItem ipropsItem = (SVNItem) items.get(i);
+                final List<?> pathAndProperties = SVNReader.parseTuple("sl", ipropsItem.getItems(), null);
+                String parentRelPath = SVNReader.getString(pathAndProperties, 0);
+                if (!parentRelPath.startsWith("/")) {
+                    parentRelPath = "/" + parentRelPath;
+                }
+                final List<?> propslist = SVNReader.getList(pathAndProperties, 1);
+                final SVNProperties properties = new SVNProperties();
+                for(int j = 0; j < propslist.size(); j++) {
+                    final SVNItem property = (SVNItem) propslist.get(j);
+                    final List<?> propNameAndValue = SVNReader.parseTuple("sb", property.getItems(), null);
+                    final String propName = (String) propNameAndValue.get(0);
+                    properties.put(propName, SVNPropertyValue.create(propName, SVNReader.getBytes(propNameAndValue, 1)));
+                }
+                if (!properties.isEmpty() && handler != null) {
+                    if (propertyName != null && properties.containsName(propertyName)) {
+                        final SVNProperties filtered = new SVNProperties();
+                        filtered.put(propertyName, properties.getSVNPropertyValue(propertyName));
+                        handler.handleInheritedProperites(parentRelPath, filtered);
+                    } else if (propertyName == null) {
+                        handler.handleInheritedProperites(parentRelPath, properties);
+                    }
+                }
+            }
+        } catch (SVNException e) {
+            closeSession();
+            handleUnsupportedCommand(e, "'get-iprops' not implemented");
+        } finally {
+            closeConnection();
+        }
     }
 
 }

@@ -10,6 +10,7 @@ import java.util.Set;
 import org.apache.subversion.javahl.ClientException;
 import org.apache.subversion.javahl.ISVNRepos;
 import org.apache.subversion.javahl.SubversionException;
+import org.apache.subversion.javahl.callback.ReposFreezeAction;
 import org.apache.subversion.javahl.callback.ReposNotifyCallback;
 import org.apache.subversion.javahl.types.Depth;
 import org.apache.subversion.javahl.types.Lock;
@@ -423,5 +424,14 @@ public class SVNReposImpl {
     private void afterOperation() {
         cancelOperation = false;
         getAdminClient().setEventHandler(null);
+    }
+
+    public void freeze(ReposFreezeAction action, File... paths) {
+    }
+
+    public void hotcopy(File path, File targetPath, boolean cleanLogs, boolean incremental) {
+    }
+
+    public void load(File path, InputStream dataInput, Revision start, Revision end, boolean ignoreUUID, boolean forceUUID, boolean usePostCommitHook, boolean usePostCommitHook2, String relativePath, ReposNotifyCallback callback) {
     }
 }

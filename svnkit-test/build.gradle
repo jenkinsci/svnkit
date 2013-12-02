@@ -9,8 +9,8 @@ dependencies {
     pythonTests16 'org.tigris.subversion:svn-python-tests:1.6.18-v2@tgz'
     if (!project.hasProperty('svn.binaries.local')) { svnBinaries16 'org.tigris.subversion:svn-binaries:1.6.18-v2@tgz' }
 
-    pythonTests17 'org.apache.subversion:svn-python-tests:1.7.9@tgz'
-    if (!project.hasProperty('svn.binaries.local')) { svnBinaries17 'org.apache.subversion:svn-binaries:1.7.9@tgz' }
+    pythonTests17 'org.apache.subversion:svn-python-tests:1.8.1@tgz'
+    if (!project.hasProperty('svn.binaries.local')) { svnBinaries17 'org.apache.subversion:svn-binaries:1.8.1@tgz' }
 }
 
 sourceSets {
@@ -56,7 +56,7 @@ test.doFirst {
     // create wc.h file at build/libsvn_wc/wc.h
     File wcHeader = new File(buildDir, "libsvn_wc/wc.h");
     wcHeader.getParentFile().mkdirs();
-    wcHeader << "\n#define SVN_WC__VERSION 29\n";
+    wcHeader << "\n#define SVN_WC__VERSION 31\n";
 
     try {
         runPythonTests()

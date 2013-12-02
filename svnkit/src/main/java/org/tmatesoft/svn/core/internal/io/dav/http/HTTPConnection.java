@@ -480,6 +480,7 @@ public class HTTPConnection implements IHTTPConnection {
                         request.dispatch(method, path, header, ok1, ok2, context);
                         break;
                     } catch (EOFException pe) {
+                        myRepository.getDebugLog().logFine(SVNLogType.NETWORK, pe);
                         // retry, EOF always means closed connection.
                         if (retryCount > 0) {
                             close();
@@ -499,13 +500,14 @@ public class HTTPConnection implements IHTTPConnection {
             } catch (SSLHandshakeException ssl) {
                 myRepository.getDebugLog().logFine(SVNLogType.NETWORK, ssl);
                 close();
-	            if (ssl.getCause() instanceof SVNSSLUtil.CertificateNotTrustedException) {
+	            if (ssl.getCause() instanceof SVNSSLUtil.CertificateNotTrustedException 
+	                    || ssl.getCause() instanceof SVNSSLUtil.CertificateDoesNotConformConstraints) {
 		            SVNErrorManager.cancel(ssl.getCause().getMessage(), SVNLogType.NETWORK);
 	            }
                 SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", new Object[] { ssl.getMessage() }, SVNErrorMessage.TYPE_ERROR, ssl);
-		            if (keyManager != null) {
-			            keyManager.acknowledgeAndClearAuthentication(sslErr);
-		            }
+	            if (keyManager != null) {
+		            keyManager.acknowledgeAndClearAuthentication(sslErr);
+	            }
                 err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, ssl);
 	            // continue; http://svnkit.com/tracker/view.php?id=301 - Kohsuke
             } catch (IOException e) {
