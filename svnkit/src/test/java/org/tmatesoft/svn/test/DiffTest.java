@@ -883,6 +883,44 @@ public class DiffTest {
         }
     }
 
+    @Test
+    public void testDiffSummarizeOnFile() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDiffSummarizeOnFile", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("file");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.changeFile("file", "contents".getBytes());
+            commitBuilder2.commit();
+
+            final SVNURL fileUrl = url.appendPath("file", false);
+
+            final int[] count = {0};
+            final SvnDiffSummarize diffSummarize = svnOperationFactory.createDiffSummarize();
+            diffSummarize.setSources(SvnTarget.fromURL(fileUrl, SVNRevision.create(1)), SvnTarget.fromURL(fileUrl, SVNRevision.create(2)));
+            diffSummarize.setReceiver(new ISvnObjectReceiver<SvnDiffStatus>() {
+                public void receive(SvnTarget target, SvnDiffStatus diffStatus) throws SVNException {
+                    SVNURL url = diffStatus.getUrl();
+                    Assert.assertEquals(fileUrl, url);
+                    count[0]++;
+                }
+            });
+            diffSummarize.run();
+            Assert.assertEquals(1, count[0]);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void diffFiles(SVNURL url, final SVNRevision fromVersion, final SVNRevision toVersion, final ISVNDiffGenerator diffGenerator) throws SVNException {
         DefaultSVNOptions options = SVNWCUtil.createDefaultOptions(true);
         final DefaultSVNRepositoryPool pool = new DefaultSVNRepositoryPool(SVNWCUtil.createDefaultAuthenticationManager(), options);
