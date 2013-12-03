@@ -295,7 +295,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "--non-interactive and --force-interactive " + "are mutually exclusive");
             SVNErrorManager.error(errorMessage, SVNLogType.CLIENT);
         } else {
-            myIsNonInteractive = !myIsForceInteractive; //TODO: use System.console() to check if it can be interactive (since JDK 6)
+            //TODO: use System.console() to check if it can be interactive (since JDK 6)
+            if (myIsForceInteractive) {
+                myIsNonInteractive = false;
+            }
         }
 
         if (getCommand().getClass() != SVNMergeCommand.class && getCommand().getClass() != SVNLogCommand.class) {
