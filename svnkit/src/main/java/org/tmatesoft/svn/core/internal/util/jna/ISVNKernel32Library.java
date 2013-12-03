@@ -70,4 +70,6 @@ interface ISVNKernel32Library extends StdCallLibrary {
     public int MoveFileExW(WString src, WString dst, NativeLong flags);
     
     public int GetVersionExW(Pointer pInfo);
+    
+    public int GetLastError();
 }

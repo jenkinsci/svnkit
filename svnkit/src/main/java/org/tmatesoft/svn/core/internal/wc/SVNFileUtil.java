@@ -64,7 +64,7 @@ public class SVNFileUtil {
     public static final boolean is64Bit;
 
     public static final int STREAM_CHUNK_SIZE = 16384;
-    private static final int FILE_CREATION_ATTEMPTS_COUNT;
+    public static final int FILE_CREATION_ATTEMPTS_COUNT;
 
     public final static OutputStream DUMMY_OUT = new OutputStream() {
 
@@ -701,11 +701,15 @@ public class SVNFileUtil {
                 }
             } else if (SVNJNAUtil.moveFile(src, dst)) {
                 renamed = true;
-            }
+            } 
             if (!renamed) {
                 boolean wasRO = dst.exists() && !dst.canWrite();
                 setReadonly(src, false);
                 setReadonly(dst, false);
+                // try simple atomic rename first
+                if (src.renameTo(dst)) {
+                    return;
+                }
                 // use special loop on windows.
                 long sleep = 1;
                 for (int i = 0; i < FILE_CREATION_ATTEMPTS_COUNT; i++) {
