@@ -90,10 +90,11 @@ project(':svnkit') {
     dependencies {
         compile 'de.regnis.q.sequence:sequence-library:1.0.2'
         compile 'org.tmatesoft.sqljet:sqljet:1.1.9'
-        compile 'net.java.dev.jna:jna:3.4.0'
+        compile 'net.java.dev.jna:jna:3.5.2'
+        compile 'net.java.dev.jna:platform:3.5.2'
         compile 'com.trilead:trilead-ssh2:1.0.0-build217'
-        compile 'com.jcraft:jsch.agentproxy.connector-factory:0.0.6'
-        compile 'com.jcraft:jsch.agentproxy.svnkit-trilead-ssh2:0.0.6'
+        compile 'com.jcraft:jsch.agentproxy.connector-factory:0.0.7'
+        compile 'com.jcraft:jsch.agentproxy.svnkit-trilead-ssh2:0.0.7'
  
         testCompile 'junit:junit:4.8'
     }
@@ -161,7 +162,7 @@ project(':svnkit-distribution') {
         osgi project(path: ':svnkit-osgi', configuration: 'archives')
         osgi 'com.trilead:trilead-ssh2-osgi:1.0.0-build217'
         osgi 'org.tmatesoft.sqljet:sqljet-osgi:1.1.9'
-        osgi 'net.java.dev.jna:jna-osgi:3.4.0'
+        osgi 'net.java.dev.jna:jna-osgi:3.5.2'
     }
 }
 task publish(dependsOn: [':svnkit-distribution:buildAll']) {
