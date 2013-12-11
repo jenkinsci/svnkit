@@ -1920,7 +1920,7 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     private DiffSummary getDiffSummary(SvnDiffStatus diffStatus) {
-        return new DiffSummary(diffStatus.getPath(), getDiffKind(diffStatus.getModificationType()), diffStatus.isPropertiesModified(), getNodeKind(diffStatus.getKind()));
+        return new DiffSummary(diffStatus.getPath() == null ? diffStatus.getUrl().toString() : diffStatus.getPath(), getDiffKind(diffStatus.getModificationType()), diffStatus.isPropertiesModified(), getNodeKind(diffStatus.getKind()));
     }
 
     private DiffSummary.DiffKind getDiffKind(SVNStatusType type) {
