@@ -180,7 +180,7 @@ public class SVNWCContext {
     public static final String WC_ADM_NONEXISTENT_PATH = "nonexistent-path";
     public static final String WC_NON_ENTRIES_STRING = "12\n";
     
-    private static final String WC17_SUPPORT_ENABLED_PROPERTY = "svnkit.wc17.enabled";
+    private static final String WC17_SUPPORT_ENABLED_PROPERTY = "svnkit.wc.17.enabled";
 
     public TreeLocalModsInfo hasLocalMods(File localAbspath, File anchorAbspath) throws SVNException {
         final TreeLocalModsInfo modsInfo = new TreeLocalModsInfo();
