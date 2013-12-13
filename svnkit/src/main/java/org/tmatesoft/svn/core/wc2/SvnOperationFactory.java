@@ -1185,6 +1185,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         if (wcContext == null) {
             wcContext = new SVNWCContext(SVNWCDbOpenMode.ReadWrite, getOptions(), false, true, getEventHandler());
         }
+        wcContext.setOperation(operation);
         return wcContext;
     }
 

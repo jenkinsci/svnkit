@@ -13,7 +13,15 @@ package org.tmatesoft.svn.core.internal.wc17;
 
 import static org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.isAbsolute;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,7 +37,18 @@ import java.util.Stack;
 import java.util.logging.Level;
 
 import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.ISVNCanceller;
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
@@ -45,7 +64,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
-import org.tmatesoft.svn.core.internal.wc17.db.*;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
@@ -61,19 +80,47 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbWorkQueueInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.ReposInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.AdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.DeletionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.WalkerChildInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbConflicts;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbPristines;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader.InstallInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.*;
-import org.tmatesoft.svn.core.wc2.*;
+import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.ISVNMerger;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNConflictAction;
+import org.tmatesoft.svn.core.wc.SVNConflictChoice;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNConflictReason;
+import org.tmatesoft.svn.core.wc.SVNConflictResult;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
+import org.tmatesoft.svn.core.wc.SVNOperation;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.core.wc2.ISvnMerger;
+import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnChecksum;
+import org.tmatesoft.svn.core.wc2.SvnMergeResult;
+import org.tmatesoft.svn.core.wc2.SvnOperation;
+import org.tmatesoft.svn.core.wc2.SvnStatus;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -132,6 +179,8 @@ public class SVNWCContext {
     public static final String WC_ADM_PRISTINE = "pristine";
     public static final String WC_ADM_NONEXISTENT_PATH = "nonexistent-path";
     public static final String WC_NON_ENTRIES_STRING = "12\n";
+    
+    private static final String WC17_SUPPORT_ENABLED_PROPERTY = "svnkit.wc17.enabled";
 
     public TreeLocalModsInfo hasLocalMods(File localAbspath, File anchorAbspath) throws SVNException {
         final TreeLocalModsInfo modsInfo = new TreeLocalModsInfo();
@@ -275,11 +324,16 @@ public class SVNWCContext {
         }
 
     }
+    
+    private static boolean isWC17SupportEnabled() {
+        return Boolean.parseBoolean(System.getProperty(WC17_SUPPORT_ENABLED_PROPERTY, "false"));
+    }
 
     private ISVNWCDb db;
     private boolean closeDb;
     private Stack<ISVNEventHandler> eventHandler;
     private List<CleanupHandler> cleanupHandlers = new LinkedList<CleanupHandler>();
+    private SvnOperation<?> operation;
 
     public SVNWCContext(ISVNOptions config, ISVNEventHandler eventHandler) {
         this(SVNWCDbOpenMode.ReadWrite, config, true, true, eventHandler);
@@ -299,6 +353,20 @@ public class SVNWCContext {
 
         this.eventHandler = new Stack<ISVNEventHandler>();
         this.eventHandler.push(eventHandler);
+    }
+    
+    public void setOperation(SvnOperation<?> operation) {
+        if (isWC17SupportEnabled()) {
+            final SvnOperation<?> oldOperation = this.operation;
+            this.operation = operation;
+            if (oldOperation != null 
+                    && oldOperation.isChangesWorkingCopy() 
+                    && !this.operation.isChangesWorkingCopy()) {
+                // clean cached roots that might be for wc17.
+                this.db.close();
+            }
+            ((SVNWCDb) db).setWC17SupportEnabled(!this.operation.isChangesWorkingCopy());
+        }
     }
     
     public ISVNEventHandler getEventHandler() {

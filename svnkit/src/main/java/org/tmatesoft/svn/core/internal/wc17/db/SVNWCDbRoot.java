@@ -96,15 +96,15 @@ public class SVNWCDbRoot {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
 
-        if (failOnVersionsMismatch) {
-            if (format > ISVNWCDb.WC_FORMAT_18) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "This client is too old to work with the working copy at\n" + "''{0}'' (format ''{1}'').", new Object[] {
-                        absPath, format
-                });
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-
+        if (format > ISVNWCDb.WC_FORMAT_18) {
             /* If this working copy is from a future version, then bail out. */
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "This client is too old to work with the working copy at\n" + "''{0}'' (format ''{1}'').", new Object[] {
+                    absPath, format
+            });
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        if (failOnVersionsMismatch) {
             if (format < ISVNWCDb.WC_FORMAT_18) {
                 if (autoUpgrade) {
                     format = SvnNgUpgradeSDb.upgrade(absPath, db, sDb, format);

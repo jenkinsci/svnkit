@@ -11,16 +11,47 @@
  */
 package org.tmatesoft.svn.core.internal.wc17.db;
 
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.*;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.*;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.begingReadTransaction;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.commitTransaction;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.doesNodeExists;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.getDepthInfo;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.getMovedFromInfo;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBlob;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBoolean;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnChecksum;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnDepth;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnProperties;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnRevNum;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnText;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getKindText;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getPresenceText;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getTranslatedSize;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.hasColumnProperties;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.isColumnNull;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.parseDepth;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.logging.Level;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -34,8 +65,12 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.db.*;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetTransaction;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetUpdateStatement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
@@ -47,8 +82,12 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
-import org.tmatesoft.svn.core.internal.wc17.*;
+import org.tmatesoft.svn.core.internal.wc17.SVNExternalsStore;
+import org.tmatesoft.svn.core.internal.wc17.SVNTreeConflictEditor;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCConflictDescription17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCConflictDescription17.ConflictKind;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
@@ -61,15 +100,35 @@ import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.RepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbConflicts.ConflictInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbConflicts.TextConflictInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbConflicts.TreeConflictInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.*;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbCreateSchema;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbInsertDeleteList;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.DELETE_LIST__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.PRISTINE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.REPOSITORY__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.WC_LOCK__Fields;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectCommittableExternalsImmediatelyBelow;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectDeletionInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectMinMaxRevisions;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectOpDepthMovedPair;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNConflictAction;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNConflictReason;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
+import org.tmatesoft.svn.core.wc.SVNOperation;
+import org.tmatesoft.svn.core.wc.SVNPropertyConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNTextConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -102,8 +161,17 @@ public class SVNWCDb implements ISVNWCDb {
     private boolean enforceEmptyWQ;
     private Map<String, SVNWCDbDir> dirData;
     private SqlJetPagerJournalMode journalMode;
+    private boolean isAllowWC17Access;
     
     public SVNWCDb() {
+    }
+    
+    public void setWC17SupportEnabled(boolean allowed) {
+        this.isAllowWC17Access = allowed;
+    }
+    
+    public boolean isWC17AccessEnabled() {
+        return isAllowWC17Access;
     }
 
     public void open(final SVNWCDbOpenMode mode, final ISVNOptions config, final boolean autoUpgrade, final boolean enforceEmptyWQ) {
@@ -1838,7 +1906,8 @@ public class SVNWCDb implements ISVNWCDb {
                 }
     
                 info.wcDbDir = new SVNWCDbDir(localAbspath);
-                info.wcDbDir.setWCRoot(new SVNWCDbRoot(this, localAbspath, sDb, wcId, FORMAT_FROM_SDB, autoUpgrade, !isDetectWCGeneration, enforceEmptyWQ));
+                final boolean allowWc17Access = isWC17AccessEnabled() || isDetectWCGeneration;
+                info.wcDbDir.setWCRoot(new SVNWCDbRoot(this, localAbspath, sDb, wcId, FORMAT_FROM_SDB, autoUpgrade, !allowWc17Access, enforceEmptyWQ));
     
             } else {
                 info.wcDbDir = new SVNWCDbDir(localAbspath);
