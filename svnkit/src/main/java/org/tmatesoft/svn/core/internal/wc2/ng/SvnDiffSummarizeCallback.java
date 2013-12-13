@@ -96,7 +96,8 @@ public class SvnDiffSummarizeCallback implements ISvnDiffCallback {
             }
         }
         File relPath = SVNFileUtil.isAbsolute(path) ? SVNFileUtil.skipAncestor(baseDirectory, path): path;
-        SVNDiffStatus diffStatus = new SVNDiffStatus(path, baseUrl == null ? null : baseUrl.appendPath(SVNFileUtil.getFilePath(relPath), false), SVNFileUtil.getFilePath(SVNFileUtil.skipAncestor(this.target, path)), summarizeKind,
+        File realRelPath = this.target == null ? relPath : SVNFileUtil.skipAncestor(this.target, relPath);
+        SVNDiffStatus diffStatus = new SVNDiffStatus(path, baseUrl == null ? null : baseUrl.appendPath(SVNFileUtil.getFilePath(relPath), false), SVNFileUtil.getFilePath(realRelPath), summarizeKind,
                 (summarizeKind == SVNStatusType.STATUS_MODIFIED || summarizeKind == SVNStatusType.STATUS_NORMAL) ? propChanged : false, nodeKind);
         handler.handleDiffStatus(diffStatus);
     }
