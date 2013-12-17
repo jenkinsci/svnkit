@@ -2433,7 +2433,7 @@ public class SVNWCDb implements ISVNWCDb {
                 stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_ACTUAL_CONFLICT_DATA);
                 stmt.bindf("is", wcRoot.getWcId(), localRelPath);
                 if (localRelPath.getPath().length() > 0) {
-                   stmt.bindString(4, SVNPathUtil.removeTail(localRelPath.getPath()));
+                   stmt.bindString(4, SVNPathUtil.removeTail(SVNFileUtil.getFilePath(localRelPath)));
                 }
             }
             final byte[] conflictData = conflictSkel.unparse();
