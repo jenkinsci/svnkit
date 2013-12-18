@@ -224,7 +224,7 @@ public class SvnWcDbStatementUtil {
     }
 
     public static SVNStatusType getColumnStatusType(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
-        return SVNStatusType.getStatusById((int) stmt.getColumnLong(f));
+        return SVNStatusType.getEventStatusById((int) stmt.getColumnLong(f));
     }
 
     public static SVNNodeKind getColumnNodeKind(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
