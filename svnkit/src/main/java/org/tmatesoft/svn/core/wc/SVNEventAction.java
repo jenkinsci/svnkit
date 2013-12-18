@@ -249,7 +249,7 @@ public class SVNEventAction {
      * (for instance, in a console client can be used to print out the
      * committed revision).
      */
-    public static final SVNEventAction COMMIT_COMPLETED = createEventAction(32, "commit_completed");
+    public static final SVNEventAction COMMIT_COMPLETED = createEventAction(-3, "commit_completed");
 
     /**
      * Denotes that file blaming is started.
@@ -473,12 +473,12 @@ public class SVNEventAction {
     /**
      * @since 1.8, SVN 1.8
      */
-    public static final SVNEventAction RESOLVER_STARTING = createEventAction(70, "update_broken_lock");
+    public static final SVNEventAction RESOLVER_STARTING = createEventAction(70, "resolver_starting");
 
     /**
      * @since 1.8, SVN 1.8
      */
-    public static final SVNEventAction RESOLVER_DONE = createEventAction(71, "update_broken_lock");
+    public static final SVNEventAction RESOLVER_DONE = createEventAction(71, "resolver_done");
 
     /**
      * @since 1.8, SVN 1.8
@@ -498,7 +498,7 @@ public class SVNEventAction {
     /**
      * @since 1.7, SVN 1.7
      */
-    public static final SVNEventAction FAILED_MISSING = createEventAction(75, "failed_conflict");
+    public static final SVNEventAction FAILED_MISSING = createEventAction(75, "failed_missing");
 
     /**
      * @since 1.8, SVN 1.8
