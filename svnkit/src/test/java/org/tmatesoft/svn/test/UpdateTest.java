@@ -17,8 +17,10 @@ import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgDowngrade;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.*;
 
@@ -1166,6 +1168,56 @@ public class UpdateTest {
             Assert.assertTrue(statuses.get(subdirectory).isConflicted());
             Assert.assertEquals(SVNStatusType.STATUS_OBSTRUCTED, statuses.get(subdirectory).getNodeStatus());
             Assert.assertEquals(SVNStatusType.STATUS_MISSING, statuses.get(file).getNodeStatus());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testCheckoutWC18InsideWC17() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCheckoutWC18InsideWC17", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+
+            final SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
+            try {
+                final SvnNgDowngrade svnNgDowngrade = new SvnNgDowngrade();
+                svnNgDowngrade.downgrade(context, workingCopyDirectory);
+            } finally {
+                context.close();
+            }
+
+            final File directory = workingCopy.getFile("directory/subdirectory/subsubdirectory");
+            SVNFileUtil.ensureDirectoryExists(directory);
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(directory));
+            checkout.run();
+
+            final SvnGetStatus getStatus17 = svnOperationFactory.createGetStatus();
+            getStatus17.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            getStatus17.setReportAll(true);
+            getStatus17.setDepth(SVNDepth.EMPTY);
+            final SvnStatus status17 = getStatus17.run();
+
+            final SvnGetStatus getStatus18 = svnOperationFactory.createGetStatus();
+            getStatus18.setSingleTarget(SvnTarget.fromFile(directory));
+            getStatus18.setReportAll(true);
+            getStatus18.setDepth(SVNDepth.EMPTY);
+            final SvnStatus status18 = getStatus18.run();
+
+            Assert.assertEquals(ISVNWCDb.WC_FORMAT_17, status17.getWorkingCopyFormat());
+            Assert.assertEquals(ISVNWCDb.WC_FORMAT_18, status18.getWorkingCopyFormat());
 
         } finally {
             svnOperationFactory.dispose();
