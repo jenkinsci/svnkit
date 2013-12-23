@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
@@ -114,6 +115,46 @@ public class ExternalsTest {
             } finally {
                 workingCopy.dispose();
             }
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testStatusOnFileExternalReportsIt() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testStatusOnFileExternalReportsIt", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final SVNExternal external = new SVNExternal("external", url.appendPath("file", false).toString(), SVNRevision.HEAD, SVNRevision.HEAD, false, false, true);
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file");
+            commitBuilder.setDirectoryProperty("", SVNProperty.EXTERNALS, SVNPropertyValue.create(external.toString()));
+            commitBuilder.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.setIgnoreExternals(false);
+            checkout.run();
+
+            final File file = new File(workingCopyDirectory, "external");
+
+            final SvnGetStatus getStatus = svnOperationFactory.createGetStatus();
+            getStatus.setSingleTarget(SvnTarget.fromFile(file));
+            final SvnStatus status = getStatus.run();
+
+            Assert.assertTrue(status.isFileExternal());
 
         } finally {
             svnOperationFactory.dispose();
