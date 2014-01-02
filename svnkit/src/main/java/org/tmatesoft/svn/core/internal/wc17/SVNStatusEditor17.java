@@ -574,8 +574,10 @@ public class SVNStatusEditor17 {
             baseInfo = context.getDb().getBaseInfo(localAbsPath, BaseInfoField.lock, BaseInfoField.updateRoot);
             result.lock = baseInfo.lock;
         }
-        if (result.kind == SVNWCDbKind.File && baseInfo == null) {
-            baseInfo = context.getDb().getBaseInfo(localAbsPath, BaseInfoField.lock, BaseInfoField.updateRoot);
+        if (result.kind == SVNWCDbKind.File) {
+            if (baseInfo == null) {
+                baseInfo = context.getDb().getBaseInfo(localAbsPath, BaseInfoField.lock, BaseInfoField.updateRoot);
+            }
             result.fileExternal = baseInfo.updateRoot;
         } else {
             result.fileExternal = false;
