@@ -574,7 +574,7 @@ public class SVNStatusEditor17 {
             baseInfo = context.getDb().getBaseInfo(localAbsPath, BaseInfoField.lock, BaseInfoField.updateRoot);
             result.lock = baseInfo.lock;
         }
-        if (result.kind == SVNWCDbKind.File) {
+        if (result.haveBase && result.kind == SVNWCDbKind.File) {
             if (baseInfo == null) {
                 baseInfo = context.getDb().getBaseInfo(localAbsPath, BaseInfoField.lock, BaseInfoField.updateRoot);
             }
