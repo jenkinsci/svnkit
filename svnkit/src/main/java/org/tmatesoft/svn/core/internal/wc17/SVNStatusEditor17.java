@@ -569,11 +569,17 @@ public class SVNStatusEditor17 {
         result.load(readInfo);
         
         result.locked = context.getDb().isWCLocked(localAbsPath);
-        WCDbBaseInfo baseInfo = context.getDb().getBaseInfo(localAbsPath, BaseInfoField.lock, BaseInfoField.updateRoot);
+        WCDbBaseInfo baseInfo = null;
         if (result.haveBase && (result.status == SVNWCDbStatus.Added || result.status == SVNWCDbStatus.Deleted)) {
+            baseInfo = context.getDb().getBaseInfo(localAbsPath, BaseInfoField.lock, BaseInfoField.updateRoot);
             result.lock = baseInfo.lock;
         }
-        result.fileExternal = baseInfo.updateRoot && (result.kind == SVNWCDbKind.File);
+        if (result.kind == SVNWCDbKind.File && baseInfo == null) {
+            baseInfo = context.getDb().getBaseInfo(localAbsPath, BaseInfoField.lock, BaseInfoField.updateRoot);
+            result.fileExternal = baseInfo.updateRoot;
+        } else {
+            result.fileExternal = false;
+        }
         result.hasChecksum = readInfo.checksum != null;
         result.copied = readInfo.originalReposRelpath != null;
         if (result.kind == SVNWCDbKind.File && (result.hadProps || result.propsMod)) {
