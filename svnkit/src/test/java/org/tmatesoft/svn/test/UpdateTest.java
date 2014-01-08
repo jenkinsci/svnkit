@@ -1225,6 +1225,60 @@ public class UpdateTest {
         }
     }
 
+    @Test
+    public void testSetImmediatesDepthOnEmptyDepthDirectory() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testSetImmediatesDepthOnEmptyDepthDirectory", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("directory/subdirectory/file");
+            commitBuilder.addDirectory("directory/subdirectory/directory");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File parentDirectory = workingCopy.getFile("directory");
+            final File subdirectory = workingCopy.getFile("directory/subdirectory");
+            final File directory = workingCopy.getFile("directory/subdirectory/directory");
+            final File file = workingCopy.getFile("directory/subdirectory/file");
+
+            final SvnUpdate update1 = svnOperationFactory.createUpdate();
+            update1.setSingleTarget(SvnTarget.fromFile(subdirectory));
+            update1.setDepthIsSticky(true);
+            update1.setDepth(SVNDepth.EMPTY);
+            update1.run();
+
+            final EventsHandler eventHandler = new EventsHandler();
+            svnOperationFactory.setEventHandler(eventHandler);
+
+            final SvnUpdate update2 = svnOperationFactory.createUpdate();
+            update2.setSingleTarget(SvnTarget.fromFile(subdirectory));
+            update2.setDepthIsSticky(true);
+            update2.setDepth(SVNDepth.IMMEDIATES);
+            update2.run();
+
+            final List<SVNEvent> events = eventHandler.getEvents();
+            Assert.assertEquals(subdirectory, events.get(0).getFile());
+            Assert.assertEquals(SVNEventAction.UPDATE_STARTED, events.get(0).getAction());
+            Assert.assertEquals(file, events.get(1).getFile());
+            Assert.assertEquals(SVNEventAction.UPDATE_ADD, events.get(1).getAction());
+            Assert.assertEquals(directory, events.get(2).getFile());
+            Assert.assertEquals(SVNEventAction.UPDATE_ADD, events.get(2).getAction());
+            Assert.assertEquals(subdirectory, events.get(3).getFile());
+            Assert.assertEquals(SVNEventAction.UPDATE_UPDATE, events.get(3).getAction());
+            Assert.assertEquals(parentDirectory, events.get(4).getFile());
+            Assert.assertEquals(SVNEventAction.UPDATE_UPDATE, events.get(4).getAction());
+            Assert.assertEquals(subdirectory, events.get(5).getFile());
+            Assert.assertEquals(SVNEventAction.UPDATE_COMPLETED, events.get(5).getAction());
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertDavPropertiesAreCleaned(WorkingCopy workingCopy) throws SqlJetException, SVNException {
         final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
         try {
