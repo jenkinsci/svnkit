@@ -109,7 +109,7 @@ public class SvnNgUpgrade extends SvnNgOperationRunner<SvnWcGeneration, SvnUpgra
                                     String reposUuid = reposInfo.reposUuid;
                                     File reposRelPath = reposInfo.reposRelPath;
 
-                                    if (!resolvedUrl.equals(reposRootUrl.appendPath(SVNFileUtil.getFilePath(reposRelPath), false))) {
+                                    if (resolvedUrl != null && reposRootUrl != null && !resolvedUrl.equals(reposRootUrl.appendPath(SVNFileUtil.getFilePath(reposRelPath), false))) {
                                         SVNWCDb.ReposInfo fetchedReposInfo = fetchReposInfo(resolvedUrl, lastRepos[0], lastUuid[0]);
                                         lastRepos[0] = SVNURL.parseURIEncoded(fetchedReposInfo.reposRootUrl);
                                         lastUuid[0] = fetchedReposInfo.reposUuid;
