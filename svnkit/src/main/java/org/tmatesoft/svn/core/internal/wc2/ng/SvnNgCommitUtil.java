@@ -211,6 +211,7 @@ public class SvnNgCommitUtil {
         commitStatusWalker.checkUrlCallback = urlKindCallback;
         commitStatusWalker.context = context;
         commitStatusWalker.eventHandler = eventHandler;
+        commitStatusWalker.externalsStorage = externalsStorage;
 
         SVNStatusEditor17 editor = new SVNStatusEditor17(localAbsPath, context, context.getOptions(), false, copyModeRelPath != null, depth, commitStatusWalker);
         editor.walkStatus(localAbsPath, depth, copyModeRelPath != null, false, false, null);
@@ -458,6 +459,7 @@ public class SvnNgCommitUtil {
         public SVNWCContext context;
         public File skipBelowAbsPath;
         public Map<SVNURL, String> lockTokens;
+        public Map<File, String> externalsStorage;
 
         public SvnCommitPacket committables;
 
@@ -522,6 +524,15 @@ public class SvnNgCommitUtil {
                 }
                 SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "Node ''{0}'' has unexpectedly changed kind", localAbsPath);
                 SVNErrorManager.error(errorMessage, SVNLogType.WC);
+            }
+            if (this.externalsStorage != null && matchesChangeLists) {
+                SVNProperties properties = context.getActualProps(localAbsPath);
+                if (properties != null) {
+                    String externalsProperty = properties.getStringValue(SVNProperty.EXTERNALS);
+                    if (externalsProperty != null) {
+                        externalsStorage.put(localAbsPath, externalsProperty);
+                    }
+                }
             }
             if (status.isFileExternal() && !isHarvestRoot) {
                 return;

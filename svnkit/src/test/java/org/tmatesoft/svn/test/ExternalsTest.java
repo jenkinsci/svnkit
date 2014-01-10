@@ -12,8 +12,11 @@ import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.*;
+import org.tmatesoft.svn.core.wc2.hooks.ISvnExternalsHandler;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ExternalsTest {
 
@@ -162,11 +165,73 @@ public class ExternalsTest {
         }
     }
 
+    @Test
+    public void testRemoteCopyCallExternalsHandler() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRemoteCopyCallExternalsHandler", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final SVNExternal external = new SVNExternal("external", url.appendPath("trunk/directory", false).toString(), SVNRevision.HEAD, SVNRevision.HEAD, false, false, true);
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("trunk/directory/file");
+            commitBuilder.setDirectoryProperty("trunk", SVNProperty.EXTERNALS, SVNPropertyValue.create(external.toString()));
+            commitBuilder.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url.appendPath("trunk", false)));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.setIgnoreExternals(false);
+            checkout.run();
+
+            ExternalsHandler externalsHandler = new ExternalsHandler();
+
+            final SvnRemoteCopy remoteCopy = svnOperationFactory.createRemoteCopy();
+            remoteCopy.setDisableLocalModifications(true);
+            remoteCopy.setExternalsHandler(externalsHandler);
+            remoteCopy.setSingleTarget(SvnTarget.fromURL(url.appendPath("branches", false)));
+            remoteCopy.setMove(false);
+            remoteCopy.setFailWhenDstExists(true);
+            remoteCopy.setMakeParents(true);
+            remoteCopy.setCommitMessage("");
+            remoteCopy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(workingCopyDirectory), SVNRevision.WORKING));
+            remoteCopy.run();
+
+            Assert.assertEquals(1, externalsHandler.externals.size());
+            Assert.assertEquals(new File(workingCopyDirectory, "external"), externalsHandler.externals.keySet().iterator().next());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertTableIsEmpty(WorkingCopy workingCopy, String tableName) throws SqlJetException {
         Assert.assertEquals(0, TestUtil.getTableSize(workingCopy, tableName));
     }
 
     private String getTestName() {
         return "ExternalsTest";
+    }
+
+    private static class ExternalsHandler implements ISvnExternalsHandler {
+        private final Map<File, SVNURL> externals;
+
+        private ExternalsHandler() {
+            this.externals = new HashMap<File, SVNURL>();
+        }
+
+        @Override
+        public SVNRevision[] handleExternal(File externalPath, SVNURL externalURL, SVNRevision externalRevision, SVNRevision externalPegRevision, String externalsDefinition, SVNRevision externalsWorkingRevision) {
+            this.externals.put(externalPath, externalURL);
+            return new SVNRevision[] {externalRevision, externalPegRevision};
+        }
     }
 }
