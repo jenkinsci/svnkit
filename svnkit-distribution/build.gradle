@@ -37,7 +37,7 @@ task buildAll << {
     }
     File destfileNoJNA = new File(distsDir, "svnkit-nojna-${version}-all.zip")
     ant.zip(destfile: destfileNoJNA.absolutePath) {
-        zipfileset(dir: dstDir.absolutePath, excludes: '**/bin/**,**/jna*,**/LICENSE-JNA.txt')
+        zipfileset(dir: dstDir.absolutePath, excludes: '**/bin/**,**/jna*,**/platform*,**/jsch*,**/LICENSE-JNA.txt,**/LICENSE-JSCH.txt')
         zipfileset(dir: dstDir.absolutePath, includes: '**/bin/**', excludes: '**/bin/*.bat', filemode: '755')
         zipfileset(dir: dstDir.absolutePath, includes: '**/bin/*.bat')
     }

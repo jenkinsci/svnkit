@@ -33,7 +33,8 @@ public class SVNSSHPrivateKeyUtil {
             final Class<?> proxyClass = Class.forName(TRILEAD_AGENT_PROXY_CLASS);
             return (AgentProxy) proxyClass.getConstructor(connectorClass).newInstance(connector);
         } catch (Throwable th) {
-            
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "Failed to load TrileadAgentProxy");            
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th);            
         }
         return null;
     }
