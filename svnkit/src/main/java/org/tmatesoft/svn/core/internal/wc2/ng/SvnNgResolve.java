@@ -20,12 +20,18 @@ public class SvnNgResolve extends SvnNgOperationRunner<Void, SvnResolve>  {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         File localAbsPath = getFirstTarget();
-        File lockAbsPath = context.acquireWriteLockForResolve(localAbsPath);
-        context.resolvedConflict(getFirstTarget(), getOperation().getDepth(), true, "", true, getOperation().getConflictChoice());
+        File lockAbsPath  = null;
         try {
-        context.releaseWriteLock(lockAbsPath);
+            lockAbsPath = context.acquireWriteLockForResolve(localAbsPath);
+            context.resolvedConflict(getFirstTarget(), getOperation().getDepth(), true, "", true, getOperation().getConflictChoice());
         } finally {
-            sleepForTimestamp();
+            try {
+                if (lockAbsPath != null) {
+                    context.releaseWriteLock(lockAbsPath);
+                }
+            } finally {
+                sleepForTimestamp();
+            }
         }
     	return null;
     }
