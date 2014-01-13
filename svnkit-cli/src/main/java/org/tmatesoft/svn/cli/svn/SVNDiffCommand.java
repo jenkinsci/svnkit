@@ -45,6 +45,8 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandler {
 
+    private SVNPath anchor;
+
     public SVNDiffCommand() {
         super("diff", new String[] {"di"});
     }
@@ -191,6 +193,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
                 SVNPath target1 = new SVNPath(SVNPathUtil.append(oldTarget.getTarget(), targetName));
                 SVNPath target2 = new SVNPath(SVNPathUtil.append(newTarget.getTarget(), targetName));
                 if (getSVNEnvironment().isSummarize()) {
+                    this.anchor = target1;
                     if (target1.isURL() && target2.isURL()) {
                         client.doDiffStatus(target1.getURL(), start, target2.getURL(), end, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), this);
                     } else if (target1.isURL()) {
@@ -225,6 +228,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
                     pegRevision = target.isURL() ? SVNRevision.HEAD : SVNRevision.WORKING;
                 }
                 if (getSVNEnvironment().isSummarize()) {
+                    this.anchor = target;
                     if (target.isURL()) {
                         client.doDiffStatus(target.getURL(), start, end, pegRevision, getSVNEnvironment().getDepth(), getSVNEnvironment().isNoticeAncestry(), this);
                     } else {
@@ -273,19 +277,22 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
                 !diffStatus.isPropertiesModified()) {
             return;
         }
+        SVNPath anchor = this.anchor;
         String path = diffStatus.getPath();
-        
-        if (diffStatus.getFile() != null) {
-            path = getSVNEnvironment().getRelativePath(diffStatus.getFile());
-            path = SVNCommandUtil.getLocalPath(path);
-        } else if (diffStatus.getURL() != null) {
-            path = diffStatus.getURL().toString();
-        } else {
-            path = diffStatus.getPath();
-            if (!SVNCommandUtil.isURL(path)) {
+
+        if (anchor != null) {
+            if (anchor.isURL()) {
+                if (diffStatus.getURL() != null) {
+                    path = diffStatus.getURL().toString();
+                } else {
+                    path = SVNPathUtil.append(anchor.getTarget(), diffStatus.getPath());
+                }
+            } else {
+                path = getSVNEnvironment().getRelativePath(diffStatus.getFile());
                 path = SVNCommandUtil.getLocalPath(path);
             }
         }
+
         if (getSVNEnvironment().isXML()) {
             StringBuffer buffer = new StringBuffer();
             Map attrs = new SVNHashMap();
