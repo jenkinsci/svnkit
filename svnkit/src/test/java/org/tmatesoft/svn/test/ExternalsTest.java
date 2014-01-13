@@ -228,7 +228,6 @@ public class ExternalsTest {
             this.externals = new HashMap<File, SVNURL>();
         }
 
-        @Override
         public SVNRevision[] handleExternal(File externalPath, SVNURL externalURL, SVNRevision externalRevision, SVNRevision externalPegRevision, String externalsDefinition, SVNRevision externalsWorkingRevision) {
             this.externals.put(externalPath, externalURL);
             return new SVNRevision[] {externalRevision, externalPegRevision};
