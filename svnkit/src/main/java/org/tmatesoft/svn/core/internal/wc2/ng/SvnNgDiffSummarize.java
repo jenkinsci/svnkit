@@ -229,7 +229,7 @@ public class SvnNgDiffSummarize extends SvnNgOperationRunner<SvnDiffStatus, SvnD
             basePath = nonDir ? new File(SVNPathUtil.tail(url1.toDecodedString())).getAbsoluteFile() : new File("").getAbsoluteFile();
         }
 
-        ISvnDiffCallback oldCallback = new SvnDiffSummarizeCallback(path1 != null ? SVNFileUtil.createFilePath(path1.getParentFile(), target1) : SVNFileUtil.createFilePath(target1), false, anchor1, nonDir ? basePath.getParentFile() : basePath, handler);
+        ISvnDiffCallback oldCallback = new SvnDiffSummarizeCallback(path1 != null ? SVNFileUtil.createFilePath(path1.getParentFile(), target1) : SVNFileUtil.createFilePath(new File("").getAbsolutePath(), target1), false, anchor1, nonDir ? basePath.getParentFile() : basePath, handler);
         ISvnDiffCallback2 callback = new SvnDiffCallbackWrapper(oldCallback, true, nonDir ? basePath.getParentFile() : basePath);
 
         if (kind2 == SVNNodeKind.NONE) {
