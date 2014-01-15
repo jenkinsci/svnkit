@@ -24,7 +24,6 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc16.SVNWCClient16;
@@ -2572,10 +2571,13 @@ public class SVNWCClient extends SVNBasicClient {
      * only. Nor does it change any user's versioned data. Changes are made only
      * in administrative version control files.
      * 
+     * <p> 
+     * Once upgraded to 1.7 format (12) working copy format could not be downgraded.
+     * 
      * @param directory
      *            working copy directory
      * @param format
-     *            format to set, supported formats are: 12 (SVN 1.6), 9 (SVN 1.5), 8 (SVN 1.4)
+     *            format to set, supported formats are: 12 (SVN 1.7), 10 (SVN 1.6), 9 (SVN 1.5), 8 (SVN 1.4)
      *            and 4 (SVN 1.2)
      * @throws SVNException
      * @since 1.2
