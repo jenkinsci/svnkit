@@ -374,7 +374,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
     }
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
-        myFileInfo.text_changed = true;
+        myFileInfo.baseChecksum = baseChecksum;
     }
 
     public void changeFileProperty(String path, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
@@ -402,6 +402,10 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
         SVNStatusType repos_text_status;
         SVNStatusType repos_prop_status;
         SVNLock repos_lock = null;
+
+        if (myFileInfo.baseChecksum != null && textChecksum != null) {
+            myFileInfo.text_changed = !myFileInfo.baseChecksum.equals(textChecksum);
+        }
 
         /* If nothing has changed, return. */
         if (!(myFileInfo.added || myFileInfo.prop_changed || myFileInfo.text_changed))
@@ -493,6 +497,9 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
+        if (diffWindow != SVNDiffWindow.EMPTY) {
+            myFileInfo.text_changed = true;
+        }
         return null;
     }
 
@@ -649,6 +656,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
         private boolean added;
         private boolean text_changed;
         private boolean prop_changed;
+        private String baseChecksum;
 
         public FileInfo(DirectoryInfo parent, String path, boolean added) {
             this.localAbsPath = SVNFileUtil.createFilePath(myAnchorAbsPath, path);
