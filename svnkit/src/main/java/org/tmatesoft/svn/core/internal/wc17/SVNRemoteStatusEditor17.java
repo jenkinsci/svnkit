@@ -374,6 +374,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
     }
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
+        myFileInfo.text_changed = true;
         myFileInfo.baseChecksum = baseChecksum;
     }
 
