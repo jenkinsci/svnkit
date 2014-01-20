@@ -243,7 +243,7 @@ public class JavaHLObjectFactory {
             path = path.replace(File.separatorChar, '/');
         }
         
-        long reposRev = status.getRemoteRevision() != null ? status.getRemoteRevision().getNumber() : -1;
+        long reposRev = (status.getRemoteRevision() != null && status.getRemoteRevision() == SVNRevision.UNDEFINED) ? status.getRemoteRevision().getNumber() : -1;
         long reposDate = status.getRemoteDate() != null ? status.getRemoteDate().getTime() * 1000 : -1;
         String reposAuthor = status.getRemoteAuthor();
         int reposKind = getNodeKind(status.getRemoteKind());
