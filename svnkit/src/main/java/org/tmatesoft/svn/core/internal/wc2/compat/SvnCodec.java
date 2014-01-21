@@ -255,7 +255,7 @@ public class SvnCodec {
     }
     
     public static long revisionNumber(SVNRevision revision) {
-        if (revision == null) {
+        if (revision == null || revision == SVNRevision.UNDEFINED) {
             return SVNWCContext.INVALID_REVNUM;
         }
         return revision.getNumber();
