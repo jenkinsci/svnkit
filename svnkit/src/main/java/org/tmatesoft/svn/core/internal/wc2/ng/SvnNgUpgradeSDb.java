@@ -9,11 +9,7 @@ import java.util.Map;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
@@ -21,12 +17,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetUpdateStatement;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNExternal;
-import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
+import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
@@ -37,8 +28,8 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NO
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade;
-import org.tmatesoft.svn.core.wc.SVNOperation;
-import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.util.SVNLogType;
  
 public class SvnNgUpgradeSDb {
@@ -61,7 +52,7 @@ public class SvnNgUpgradeSDb {
       return "(unreleased development version)";
     }
     
-    public static int upgrade(final File wcRootAbsPath, SVNWCDb db, final SVNSqlJetDb sDb, int startFormat) throws SVNException {
+    public static int upgrade(final File wcRootAbsPath, SVNWCDb db, final SVNSqlJetDb sDb, int startFormat, ISVNEventHandler eventHandler) throws SVNException {
         int resultFormat = 0;
         if (startFormat < SVNWCContext.WC_NG_VERSION /* 12 */) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Working copy ''{0}'' is too old (format {1}, created by Subversion {2})", 
@@ -146,6 +137,11 @@ public class SvnNgUpgradeSDb {
  
       /* Zap anything that might be remaining or escaped our notice.  */
       SvnOldUpgrade.wipeObsoleteFiles(wcRootAbsPath);
+
+      if (resultFormat != 0 && eventHandler != null) {
+          SVNEvent event = SVNEventFactory.createSVNEvent(wcRootAbsPath, SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPGRADED_PATH, SVNEventAction.UPGRADED_PATH, null, null);
+          eventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
+      }
  
       return resultFormat;
     }

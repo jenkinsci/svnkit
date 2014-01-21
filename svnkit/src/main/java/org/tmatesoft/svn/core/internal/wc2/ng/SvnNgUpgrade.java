@@ -44,7 +44,7 @@ public class SvnNgUpgrade extends SvnNgOperationRunner<SvnWcGeneration, SvnUpgra
             int format = dirParsedInfo.wcDbDir.getWCRoot().getFormat();
 
             if (format < ISVNWCDb.WC_FORMAT_18) {
-                SvnNgUpgradeSDb.upgrade(localAbsPath, (SVNWCDb) db, db.getSDb(dirParsedInfo.wcDbDir.getWCRoot().getAbsPath()), format);
+                SvnNgUpgradeSDb.upgrade(localAbsPath, (SVNWCDb) db, db.getSDb(dirParsedInfo.wcDbDir.getWCRoot().getAbsPath()), format, context.getEventHandler());
             }
 
             final SVNURL[] lastRepos = {null};

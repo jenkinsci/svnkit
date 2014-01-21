@@ -9,22 +9,22 @@ import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgDowngrade;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class UpgradeTest {
@@ -235,6 +235,53 @@ public class UpgradeTest {
             cat.run();
 
             Assert.assertEquals("contents", byteArrayOutputStream.toString());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testUpgradeFromWC17() throws Exception {
+        //SVNKIT-447
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpgradeFromWC17", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file", "contents".getBytes());
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
+            try {
+                new SvnNgDowngrade().downgrade(context, workingCopyDirectory);
+            } finally {
+                context.close();
+            }
+
+            final List<SVNEvent> events = new ArrayList<SVNEvent>();
+            svnOperationFactory.setEventHandler(new ISVNEventHandler() {
+                public void handleEvent(SVNEvent event, double progress) throws SVNException {
+                    events.add(event);
+                }
+                public void checkCancelled() throws SVNCancelException {
+                }
+            });
+
+            final SvnUpgrade upgrade = svnOperationFactory.createUpgrade();
+            upgrade.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            upgrade.run();
+
+            Assert.assertEquals(1, events.size());
+            Assert.assertEquals(workingCopyDirectory, events.get(0).getFile());
+            Assert.assertEquals(SVNEventAction.UPGRADED_PATH, events.get(0).getAction());
 
         } finally {
             svnOperationFactory.dispose();
