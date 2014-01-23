@@ -607,7 +607,7 @@ public class SvnNgCommitUtil {
                     if (((stateFlags & SvnCommitItem.ADD) != 0) && (stateFlags & SvnCommitItem.COPY) == 0) {
                         textMod = true;
                     } else {
-                        textMod = status.getNodeStatus() != SVNStatusType.STATUS_NORMAL;
+                        textMod = status.getTextStatus() != SVNStatusType.STATUS_NORMAL;
                     }
                 }
 
