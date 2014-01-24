@@ -343,6 +343,54 @@ public class StatusTest {
         }
     }
 
+    @Test
+    public void testConflictGeneratedFilesAreReported() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testConflictGeneratedFilesAreReported", options);
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            // Create file
+            CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("conflict.txt");
+            commitBuilder.commit();
+
+            // WC 1 - will have the conflict
+            WorkingCopy wc1 = sandbox.checkoutNewWorkingCopy(url);
+            File file1 = wc1.getFile("conflict.txt");
+            TestUtil.writeFileContentsString(file1, "wc1");
+
+            // WC 2 - used to generate the conflict
+            WorkingCopy wc2 = sandbox.checkoutNewWorkingCopy(url);
+            File file2 = wc2.getFile("conflict.txt");
+            TestUtil.writeFileContentsString(file2, "wc2");
+            wc2.commit("test");
+
+            // Get conflict
+            try {
+                wc1.updateToRevision(-1);
+            } catch (Throwable t) {
+                // Throws a runtime exception, didn't study it, but the conflict is generated
+            }
+
+            // We use old API
+            SVNClientManager scm = SVNClientManager.newInstance();
+            SVNStatus status = scm.getStatusClient().doStatus(file1, false);
+            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, status.getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, status.getContentsStatus());
+
+            Assert.assertEquals(wc1.getFile("conflict.txt.r2"), status.getConflictNewFile());
+            Assert.assertEquals(wc1.getFile("conflict.txt.r1"), status.getConflictOldFile());
+            Assert.assertEquals(wc1.getFile("conflict.txt.mine"), status.getConflictWrkFile());
+
+        } finally {
+            sandbox.dispose();
+            svnOperationFactory.dispose();
+        }
+    }
+
     private String getTestName() {
         return "StatusTest";
     }

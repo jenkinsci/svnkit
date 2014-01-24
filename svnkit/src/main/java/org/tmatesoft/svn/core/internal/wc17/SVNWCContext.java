@@ -1170,7 +1170,7 @@ public class SVNWCContext {
                         done = true;
                     }
                 }
-                if (!done && cdf.getRepositoryFile() != null) {
+                if (cdf.getRepositoryFile() != null) {
                     final File path = SVNFileUtil.isAbsolute(cdf.getRepositoryFile()) ? cdf.getRepositoryFile() : SVNFileUtil.createFilePath(dir_path, cdf.getRepositoryFile());
                     final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
                     if (kind == SVNNodeKind.FILE) {
@@ -1179,7 +1179,7 @@ public class SVNWCContext {
                         done = true;
                     }
                 }
-                if (!done && cdf.getLocalFile() != null) {
+                if (cdf.getLocalFile() != null) {
                     final File path = SVNFileUtil.isAbsolute(cdf.getLocalFile()) ? cdf.getLocalFile() : SVNFileUtil.createFilePath(dir_path, cdf.getLocalFile());
                     final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
                     if (kind == SVNNodeKind.FILE) {
