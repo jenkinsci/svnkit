@@ -3,6 +3,10 @@ package org.tmatesoft.svn.core.internal.wc2.ng;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.internal.wc17.*;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbExternals;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCapability;
@@ -154,6 +158,14 @@ public class SvnNgGetStatus extends SvnNgOperationRunner<SvnStatus, SvnGetStatus
             for (int i = 0; i < externals.length; i++) {
                 SVNExternal external = externals[i];
                 File fullPath = new File(path, external.getPath());
+
+                Structure<StructureFields.ExternalNodeInfo> externalInfo = SvnWcDbExternals.readExternal(getWcContext(), fullPath, fullPath, StructureFields.ExternalNodeInfo.kind);
+                ISVNWCDb.SVNWCDbKind externalKind = externalInfo.get(StructureFields.ExternalNodeInfo.kind);
+
+                if (externalKind != ISVNWCDb.SVNWCDbKind.Dir) {
+                    continue;
+                }
+
                 if (SVNFileType.getType(fullPath) != SVNFileType.DIRECTORY) {
                     continue;
                 }

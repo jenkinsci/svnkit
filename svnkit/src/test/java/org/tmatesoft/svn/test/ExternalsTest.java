@@ -8,14 +8,19 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.*;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnExternalsHandler;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ExternalsTest {
@@ -206,6 +211,61 @@ public class ExternalsTest {
 
             Assert.assertEquals(1, externalsHandler.externals.size());
             Assert.assertEquals(new File(workingCopyDirectory, "external"), externalsHandler.externals.keySet().iterator().next());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testExternalObstructionIsReportedOnce() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testExternalObstructionIsReportedOnce", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final SVNExternal external = new SVNExternal("external", url.appendPath("file", false).toString(), SVNRevision.HEAD, SVNRevision.HEAD, false, false, true);
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file");
+            commitBuilder.setDirectoryProperty("", SVNProperty.EXTERNALS, SVNPropertyValue.create(external.toString()));
+            commitBuilder.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.setIgnoreExternals(false);
+            checkout.run();
+
+            final File externalFile = new File(workingCopyDirectory, "external");
+            SVNFileUtil.deleteAll(externalFile, null);
+            SVNFileUtil.ensureDirectoryExists(externalFile);
+
+            final List<SvnStatus> statuses = new ArrayList<SvnStatus>();
+
+            final SvnGetStatus getStatus = svnOperationFactory.createGetStatus();
+            getStatus.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            getStatus.setReceiver(new ISvnObjectReceiver<SvnStatus>() {
+                public void receive(SvnTarget target, SvnStatus status) throws SVNException {
+                    final String path = target.getPathOrUrlString();
+                    if (path.endsWith("external")) {
+                        statuses.add(status);
+                    }
+                }
+            });
+            getStatus.run();
+
+            Assert.assertEquals(1, statuses.size());
+            Assert.assertEquals(SVNStatusType.STATUS_OBSTRUCTED, statuses.get(0).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_NORMAL, statuses.get(0).getTextStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_NONE, statuses.get(0).getPropertiesStatus());
 
         } finally {
             svnOperationFactory.dispose();
