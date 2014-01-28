@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.*;
@@ -400,6 +401,10 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
 
     private void switchDirExternal(File localAbsPath, SVNURL url, SVNRevision revision, SVNRevision pegRevision, File definingPath) throws SVNException {
         SVNFileType fileKind = SVNFileType.getType(localAbsPath);
+
+        SVNWCDb.DirParsedInfo parsed = ((SVNWCDb) (getWcContext().getDb())).parseDir(localAbsPath, SVNSqlJetDb.Mode.ReadOnly);
+        int workingCopyFormat = parsed.wcDbDir.getWCRoot().getFormat();
+
         if (fileKind == SVNFileType.DIRECTORY) {
             SVNURL nodeUrl = null;
             try {
@@ -426,7 +431,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                             } catch (SVNException e) {
                                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_INVALID_RELOCATION 
                                         || e.getErrorMessage().getErrorCode() == SVNErrorCode.CLIENT_INVALID_RELOCATION) {
-                                    relegateExternal(localAbsPath, url, revision, pegRevision, definingPath, fileKind);
+                                    relegateExternal(localAbsPath, url, revision, pegRevision, definingPath, fileKind, workingCopyFormat);
                                     return;
                                 }
                                 throw e;
@@ -450,17 +455,17 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             }
         }
         
-        relegateExternal(localAbsPath, url, revision, pegRevision, definingPath, fileKind);
+        relegateExternal(localAbsPath, url, revision, pegRevision, definingPath, fileKind, workingCopyFormat);
     }
 
-    private void relegateExternal(File localAbsPath, SVNURL url, SVNRevision revision, SVNRevision pegRevision, File definingPath, SVNFileType fileKind) throws SVNException {
+    private void relegateExternal(File localAbsPath, SVNURL url, SVNRevision revision, SVNRevision pegRevision, File definingPath, SVNFileType fileKind, int targetWorkingCopyFormat) throws SVNException {
         if (fileKind == SVNFileType.DIRECTORY) {
             getWcContext().acquireWriteLock(localAbsPath, false, false);
             relegateExternalDir(definingPath, localAbsPath);
         } else {
             SVNFileUtil.ensureDirectoryExists(localAbsPath);
         }
-        checkout(url, localAbsPath, pegRevision, revision, SVNDepth.INFINITY, false, false, false);
+        checkout(url, localAbsPath, pegRevision, revision, SVNDepth.INFINITY, false, false, false, targetWorkingCopyFormat);
         
         SVNWCNodeReposInfo nodeRepositoryInfo = getWcContext().getNodeReposInfo(localAbsPath);
         getWcContext().getDb().registerExternal(definingPath, localAbsPath, SVNNodeKind.DIR, 
@@ -747,7 +752,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         return editor.getTargetRevision();
     }
 
-    protected long checkout(SVNURL url, File localAbspath, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean ignoreExternals, boolean allowUnversionedObstructions, boolean sleepForTimestamp) throws SVNException {
+    protected long checkout(SVNURL url, File localAbspath, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean ignoreExternals, boolean allowUnversionedObstructions, boolean sleepForTimestamp, int targetWorkingCopyFormat) throws SVNException {
         Structure<RepositoryInfo> repositoryInfo = getRepositoryAccess().createRepositoryFor(
                 SvnTarget.fromURL(url), 
                 revision, 
@@ -775,7 +780,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         
         if (fileKind == SVNFileType.NONE) {
             SVNFileUtil.ensureDirectoryExists(localAbspath);
-            getWcContext().initializeWC(localAbspath, url, rootUrl, uuid, revnum, depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth);
+            getWcContext().initializeWC(localAbspath, url, rootUrl, uuid, revnum, depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth, targetWorkingCopyFormat);
         } else if (fileKind == SVNFileType.DIRECTORY) {
             int formatVersion = getWcContext().checkWC(localAbspath);
             if (formatVersion >= SVNWCDb.WC_FORMAT_17 && SvnOperationFactory.isVersionedDirectory(localAbspath)) {
@@ -788,7 +793,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                 }
             } else {
                 depth = depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth;
-                getWcContext().initializeWC(localAbspath, url, rootUrl, uuid, revnum, depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth);
+                getWcContext().initializeWC(localAbspath, url, rootUrl, uuid, revnum, depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth, targetWorkingCopyFormat);
             }
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NODE_KIND_CHANGE, "''{0}'' already exists and is not a directory", localAbspath);

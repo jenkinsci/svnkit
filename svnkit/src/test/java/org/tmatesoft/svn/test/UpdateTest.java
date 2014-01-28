@@ -1,5 +1,10 @@
 package org.tmatesoft.svn.test;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Ignore;
@@ -9,25 +14,56 @@ import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgDowngrade;
-import org.tmatesoft.svn.core.wc.*;
-import org.tmatesoft.svn.core.wc2.*;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNConflictAction;
+import org.tmatesoft.svn.core.wc.SVNConflictChoice;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNConflictReason;
+import org.tmatesoft.svn.core.wc.SVNConflictResult;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNOperation;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.core.wc2.SvnCheckout;
+import org.tmatesoft.svn.core.wc2.SvnCommit;
+import org.tmatesoft.svn.core.wc2.SvnCopy;
+import org.tmatesoft.svn.core.wc2.SvnCopySource;
+import org.tmatesoft.svn.core.wc2.SvnGetInfo;
+import org.tmatesoft.svn.core.wc2.SvnGetProperties;
+import org.tmatesoft.svn.core.wc2.SvnGetStatus;
+import org.tmatesoft.svn.core.wc2.SvnInfo;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnRevert;
+import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
+import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
+import org.tmatesoft.svn.core.wc2.SvnSetLock;
+import org.tmatesoft.svn.core.wc2.SvnSetProperty;
+import org.tmatesoft.svn.core.wc2.SvnStatus;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.SvnUnlock;
+import org.tmatesoft.svn.core.wc2.SvnUpdate;
 
 public class UpdateTest {
 
@@ -1273,6 +1309,101 @@ public class UpdateTest {
             Assert.assertEquals(SVNEventAction.UPDATE_UPDATE, events.get(4).getAction());
             Assert.assertEquals(subdirectory, events.get(5).getFile());
             Assert.assertEquals(SVNEventAction.UPDATE_COMPLETED, events.get(5).getAction());
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testTextConflictWC17() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testTextConflictWC17", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("file", "base".getBytes());
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.changeFile("file", "theirs".getBytes());
+            commitBuilder2.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setRevision(SVNRevision.create(1));
+            checkout.setTargetWorkingCopyFormat(ISVNWCDb.WC_FORMAT_17);
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.run();
+
+            final File file = new File(workingCopyDirectory, "file");
+            TestUtil.writeFileContentsString(file, "ours");
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, statuses.get(file).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, statuses.get(file).getTextStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_NONE, statuses.get(file).getPropertiesStatus());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+
+    @Test
+    public void testPropertyConflictWC17() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testPropertyConflictWC17", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("file");
+            commitBuilder1.setFileProperty("file", "propertyName", SVNPropertyValue.create("base"));
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.setFileProperty("file", "propertyName", SVNPropertyValue.create("theirs"));
+            commitBuilder2.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setRevision(SVNRevision.create(1));
+            checkout.setTargetWorkingCopyFormat(ISVNWCDb.WC_FORMAT_17);
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.run();
+
+            final File file = new File(workingCopyDirectory, "file");
+
+            final SvnSetProperty setProperty = svnOperationFactory.createSetProperty();
+            setProperty.setPropertyName("propertyName");
+            setProperty.setPropertyValue(SVNPropertyValue.create("ours"));
+            setProperty.setSingleTarget(SvnTarget.fromFile(file));
+            setProperty.run();
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, statuses.get(file).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_NORMAL, statuses.get(file).getTextStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, statuses.get(file).getPropertiesStatus());
+
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();

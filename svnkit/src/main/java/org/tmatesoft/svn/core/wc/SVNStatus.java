@@ -1012,7 +1012,7 @@ public class SVNStatus {
     }
 
     public static SVNStatusType combineRemoteNodeAndContentsStatus(int workingCopyFormat, SVNStatusType remoteNodeStatus, SVNStatusType remoteContentsStatus) {
-        if (workingCopyFormat >= ISVNWCDb.WC_FORMAT_18) {
+        if (workingCopyFormat >= ISVNWCDb.WC_FORMAT_17) {
             if (remoteNodeStatus == SVNStatusType.STATUS_MODIFIED) {
                 return remoteContentsStatus;
             }

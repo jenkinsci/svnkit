@@ -615,7 +615,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
     }
 
     private void removeNodeConflictMarkers(ISVNWCDb db, File srcAbsPath, File nodeAbsPath) throws SVNException {
-        SVNSkel conflict = SvnWcDbConflicts.readConflict((SVNWCDb) db, srcAbsPath);
+        SVNSkel conflict = db.readConflict(srcAbsPath);
         if (conflict != null) {
             File srcDir = SVNFileUtil.getParentFile(srcAbsPath);
             File dstDir = SVNFileUtil.getParentFile(nodeAbsPath);

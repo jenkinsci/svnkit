@@ -26,6 +26,107 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
     private static final String CONFLICT_OP_SWITCH = "switch";
     private static final String CONFLICT_OP_MERGE = "merge";
 
+    public static SVNSkel convertToConflictSkel(File wcRootAbsPath, SVNWCDb db, String localRelpath, String conflictOld, String conflictWorking, String conflictNew, String propReject, byte[] treeConflictData) throws SVNException {
+        SVNSkel conflictData = null;
+        if (conflictOld != null || conflictNew != null || conflictWorking != null) {
+            conflictData = createConflictSkel();
+            File oldAbsPath = null;
+            File newAbsPath = null;
+            File wrkAbsPath = null;
+            if (conflictOld != null) {
+                oldAbsPath = SVNFileUtil.createFilePath(wcRootAbsPath, conflictOld);
+            }
+            if (conflictNew != null) {
+                newAbsPath = SVNFileUtil.createFilePath(wcRootAbsPath, conflictNew);
+            }
+            if (conflictWorking != null) {
+                wrkAbsPath = SVNFileUtil.createFilePath(wcRootAbsPath, conflictWorking);
+            }
+
+            addTextConflict(conflictData, db, wcRootAbsPath, wrkAbsPath, oldAbsPath, newAbsPath);
+        }
+        if (propReject != null) {
+            if (conflictData == null) {
+                conflictData = createConflictSkel();
+            }
+            File prejAbsPath = SVNFileUtil.createFilePath(wcRootAbsPath, propReject);
+            addPropConflict(conflictData, db, wcRootAbsPath, prejAbsPath, null, null, null, Collections.<String>emptySet());
+        }
+
+        if (treeConflictData != null) {
+            if (conflictData == null) {
+                conflictData = createConflictSkel();
+            }
+            final SVNSkel tcSkel = SVNSkel.parse(treeConflictData);
+            final File localAbsPath = SVNFileUtil.createFilePath(wcRootAbsPath, localRelpath);
+            final SVNTreeConflictDescription tcDesc = SVNTreeConflictUtil.readSingleTreeConflict(tcSkel, localAbsPath);
+
+            addTreeConflict(conflictData, db, wcRootAbsPath, tcDesc.getConflictReason(), tcDesc.getConflictAction(), null);
+            if (tcDesc.getOperation() != null && tcDesc.getOperation() != SVNOperation.NONE) {
+                setConflictOperation(conflictData, tcDesc.getOperation(), tcDesc.getSourceLeftVersion(), tcDesc.getSourceRightVersion());
+            }
+        } else if (conflictData != null) {
+            setConflictOperation(conflictData, SVNOperation.UPDATE, null, null);
+        }
+        return conflictData;
+    }
+
+    public static List<SVNWCConflictDescription17> convertFromSkel(SVNWCDb db, File localAbsPath, boolean createTempFiles, SVNSkel conflictSkel) throws SVNException {
+        final List<SVNWCConflictDescription17> conflicts = new ArrayList<SVNWCConflictDescription17>();
+        if (conflictSkel == null) {
+            return conflicts;
+        }
+        final Structure<ConflictInfo> conflictInfo = readConflictInfo(conflictSkel);
+        final List<SVNConflictVersion> locations = conflictInfo.get(ConflictInfo.locations);
+        SVNConflictVersion leftVersion = null;
+        SVNConflictVersion rightVersion = null;
+        if (locations != null && locations.size() > 0) {
+            leftVersion = locations.get(0);
+        }
+        if (locations != null && locations.size() > 1) {
+            rightVersion = locations.get(1);
+        }
+
+        if (conflictInfo.is(ConflictInfo.propConflicted)) {
+            readPropertyConflicts(conflicts, db, localAbsPath, conflictSkel, createTempFiles, (SVNOperation) conflictInfo.get(ConflictInfo.conflictOperation), leftVersion, rightVersion);
+        }
+        if (conflictInfo.is(ConflictInfo.textConflicted)) {
+            final Structure<TextConflictInfo> textConflictInfo = readTextConflict(db, localAbsPath, conflictSkel);
+            final SVNWCConflictDescription17 description = SVNWCConflictDescription17.createText(localAbsPath);
+
+            description.setOperation(conflictInfo.<SVNOperation>get(ConflictInfo.conflictOperation));
+            description.setSrcLeftVersion(leftVersion);
+            description.setSrcRightVersion(rightVersion);
+            description.setTheirFile(textConflictInfo.<File>get(TextConflictInfo.theirAbsPath));
+            description.setBaseFile(textConflictInfo.<File>get(TextConflictInfo.theirOldAbsPath));
+            description.setMyFile(textConflictInfo.<File>get(TextConflictInfo.mineAbsPath));
+            description.setMergedFile(localAbsPath);
+
+            conflicts.add(description);
+        }
+
+        if (conflictInfo.is(ConflictInfo.treeConflicted)) {
+            final Structure<TreeConflictInfo> treeConflictInfo = readTreeConflict(db, localAbsPath, conflictSkel);
+            final SVNNodeKind tcKind;
+            if (leftVersion != null) {
+                tcKind = leftVersion.getKind();
+            } else if (rightVersion != null) {
+                tcKind = rightVersion.getKind();
+            } else {
+                tcKind = SVNNodeKind.FILE;
+            }
+            final SVNWCConflictDescription17 description = SVNWCConflictDescription17.createTree(localAbsPath,
+                    tcKind,
+                    conflictInfo.<SVNOperation>get(ConflictInfo.conflictOperation),
+                    leftVersion,
+                    rightVersion);
+            description.setReason(treeConflictInfo.<SVNConflictReason>get(TreeConflictInfo.localChange));
+            description.setAction(treeConflictInfo.<SVNConflictAction>get(TreeConflictInfo.incomingChange));
+            conflicts.add(description);
+        }
+        return conflicts;
+    }
+
     public enum ConflictInfo {
         conflictOperation,
         locations,

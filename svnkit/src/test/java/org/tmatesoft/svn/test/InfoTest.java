@@ -3,17 +3,20 @@ package org.tmatesoft.svn.test;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNConflictAction;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnGetInfo;
-import org.tmatesoft.svn.core.wc2.SvnInfo;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.*;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class InfoTest {
     @Test
@@ -165,6 +168,69 @@ public class InfoTest {
             final SvnInfo info = getInfo.run();
 
             Assert.assertEquals(1, info.getRevision());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testUnversiondeObstructionWC17() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUnversiondeObstructionWC17", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addDirectory("directory");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.addFile("directory/file");
+            commitBuilder2.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.setTargetWorkingCopyFormat(ISVNWCDb.WC_FORMAT_17);
+            checkout.setRevision(SVNRevision.create(1));
+            checkout.run();
+
+            final File directory = new File(workingCopyDirectory, "directory");
+            final File file = new File(directory, "file");
+
+            SVNFileUtil.deleteFile(file);
+            SVNFileUtil.ensureDirectoryExists(file);
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Map<File,SvnInfo> infos = new HashMap<File, SvnInfo>();
+
+            final SvnGetInfo getInfo = svnOperationFactory.createGetInfo();
+            getInfo.setFetchActualOnly(true);
+            getInfo.setDepth(SVNDepth.INFINITY);
+            getInfo.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            getInfo.setReceiver(new ISvnObjectReceiver<SvnInfo>() {
+                public void receive(SvnTarget target, SvnInfo info) throws SVNException {
+                    infos.put(target.getFile(), info);
+                }
+            });
+            getInfo.run();
+
+            Assert.assertEquals(3, infos.size());
+            final Collection<SVNConflictDescription> conflicts = infos.get(file).getWcInfo().getConflicts();
+            Assert.assertEquals(1, conflicts.size());
+            final SVNConflictDescription conflictDescription = conflicts.iterator().next();
+            Assert.assertTrue(conflictDescription.isTreeConflict());
+            Assert.assertEquals(SVNConflictReason.UNVERSIONED, conflictDescription.getConflictReason());
+            Assert.assertEquals(SVNConflictAction.ADD, conflictDescription.getConflictAction());
 
         } finally {
             svnOperationFactory.dispose();

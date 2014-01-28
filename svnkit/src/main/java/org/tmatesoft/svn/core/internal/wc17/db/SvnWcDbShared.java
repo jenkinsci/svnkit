@@ -312,7 +312,7 @@ public class SvnWcDbShared {
         final Structure<MovedFromInfo> result = Structure.obtain(MovedFromInfo.class);
         SVNSqlJetStatement stmt = null;
         try {
-            stmt = root.getSDb().getStatement(SVNWCDbStatements.SELECT_MOVED_FROM_RELPATH);
+            stmt = root.getSDb().getStatement(root.getFormat() == ISVNWCDb.WC_FORMAT_17 ? SVNWCDbStatements.SELECT_MOVED_FROM_RELPATH_17 : SVNWCDbStatements.SELECT_MOVED_FROM_RELPATH);
             stmt.bindf("is", root.getWcId(), movedToOpRootRelPath);
             if (!stmt.next()) {
                 return result;
@@ -643,7 +643,15 @@ public class SvnWcDbShared {
                 }
                 if (info.hasField(NodeInfo.conflicted)) {
                     if (haveActual) {
-                        info.set(NodeInfo.conflicted, !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data));
+                        if (wcRoot.getFormat() == ISVNWCDb.WC_FORMAT_17) {
+                            info.set(NodeInfo.conflicted, !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data) ||
+                                    !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.prop_reject) ||
+                                    !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old) ||
+                                    !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_new) ||
+                                    !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working));
+                        } else {
+                            info.set(NodeInfo.conflicted, !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data));
+                        }
                     } else {
                         info.set(NodeInfo.conflicted, false);
                     }
@@ -687,7 +695,12 @@ public class SvnWcDbShared {
                     }
                 }
             } else if (haveActual) {
-                if (isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data)) {
+                if (isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data) &&
+                        isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data) &&
+                        isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.prop_reject) &&
+                        isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old) &&
+                        isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_new) &&
+                        isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Corrupt data for ''{0}''", wcRoot.getAbsPath(localRelPath));
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }

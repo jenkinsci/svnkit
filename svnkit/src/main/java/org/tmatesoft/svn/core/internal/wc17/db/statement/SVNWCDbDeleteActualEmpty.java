@@ -45,6 +45,21 @@ public class SVNWCDbDeleteActualEmpty extends SVNSqlJetDeleteStatement {
         if (!isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data)) {
             return false;
         }
+        if (!isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data)) {
+            return false;
+        }
+        if (!isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.prop_reject)) {
+            return false;
+        }
+        if (!isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old)) {
+            return false;
+        }
+        if (!isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_new)) {
+            return false;
+        }
+        if (!isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working)) {
+            return false;
+        }
         if (!isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.changelist)) {
             return false;
         }

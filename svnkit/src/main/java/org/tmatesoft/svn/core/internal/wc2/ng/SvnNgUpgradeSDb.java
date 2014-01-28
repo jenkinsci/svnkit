@@ -1,7 +1,6 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
  
 import java.io.File;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -9,7 +8,12 @@ import java.util.Map;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
@@ -17,7 +21,13 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetUpdateStatement;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
-import org.tmatesoft.svn.core.internal.wc.*;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
+import org.tmatesoft.svn.core.internal.wc.SVNExternal;
+import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
@@ -29,7 +39,10 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fi
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
  
 public class SvnNgUpgradeSDb {
@@ -813,7 +826,7 @@ public class SvnNgUpgradeSDb {
                             continue;
                         }
                         final String localRelpath = actulaNode.getString(ACTUAL_NODE__Fields.local_relpath.toString());
-                        final SVNSkel conflictData = createConflictSkel(wcRootAbsPath, db, localRelpath, conflictOld, conflictWorking, conflictNew, propReject, treeConflictData);
+                        final SVNSkel conflictData = SvnWcDbConflicts.convertToConflictSkel(wcRootAbsPath, db, localRelpath, conflictOld, conflictWorking, conflictNew, propReject, treeConflictData);
                         
                         final Map<String, Object> newRowValues = new HashMap<String, Object>();
                         if (conflictData != null) {
@@ -835,52 +848,6 @@ public class SvnNgUpgradeSDb {
             } 
             setVersion(sDb, 30);
         }
-
-        private SVNSkel createConflictSkel(File wcRootAbsPath, SVNWCDb db, String localRelpath, String conflictOld, String conflictWorking, String conflictNew, String propReject, byte[] treeConflictData) throws SVNException {
-            SVNSkel conflictData = null;
-            if (conflictOld != null || conflictNew != null || conflictWorking != null) {
-                conflictData = SvnWcDbConflicts.createConflictSkel();
-                File oldAbsPath = null;
-                File newAbsPath = null;
-                File wrkAbsPath = null;
-                if (conflictOld != null) {
-                    oldAbsPath = SVNFileUtil.createFilePath(wcRootAbsPath, conflictOld);
-                }
-                if (conflictNew != null) {
-                    newAbsPath = SVNFileUtil.createFilePath(wcRootAbsPath, conflictNew);
-                }
-                if (conflictWorking != null) {
-                    wrkAbsPath = SVNFileUtil.createFilePath(wcRootAbsPath, conflictWorking);
-                }
-                
-                SvnWcDbConflicts.addTextConflict(conflictData, db, wcRootAbsPath, wrkAbsPath, oldAbsPath, newAbsPath);
-            }
-            if (propReject != null) {
-                if (conflictData == null) {
-                    conflictData = SvnWcDbConflicts.createConflictSkel();
-                }
-                File prejAbsPath = SVNFileUtil.createFilePath(wcRootAbsPath, propReject);
-                SvnWcDbConflicts.addPropConflict(conflictData, db, wcRootAbsPath, prejAbsPath, null, null, null, Collections.<String>emptySet());
-            }
-            
-            if (treeConflictData != null) {
-                if (conflictData == null) {
-                    conflictData = SvnWcDbConflicts.createConflictSkel();
-                }
-                final SVNSkel tcSkel = SVNSkel.parse(treeConflictData);
-                final File localAbsPath = SVNFileUtil.createFilePath(wcRootAbsPath, localRelpath);
-                final SVNTreeConflictDescription tcDesc = SVNTreeConflictUtil.readSingleTreeConflict(tcSkel, localAbsPath);
-                
-                SvnWcDbConflicts.addTreeConflict(conflictData, db, wcRootAbsPath, tcDesc.getConflictReason(), tcDesc.getConflictAction(), null);
-                if (tcDesc.getOperation() != null && tcDesc.getOperation() != SVNOperation.NONE) {
-                    SvnWcDbConflicts.setConflictOperation(conflictData, tcDesc.getOperation(), tcDesc.getSourceLeftVersion(), tcDesc.getSourceRightVersion());
-                }
-            } else if (conflictData != null) {
-                SvnWcDbConflicts.setConflictOperation(conflictData, SVNOperation.UPDATE, null, null);
-            }
-            return conflictData;
-        }
-        
     }
 
     private static class bumpTo31 implements Bumpable {

@@ -105,7 +105,7 @@ public class SVNWCDbRoot {
         }
 
         if (failOnVersionsMismatch) {
-            if (format < ISVNWCDb.WC_FORMAT_18) {
+            if (format < ISVNWCDb.WC_FORMAT_17) {
                 if (autoUpgrade) {
                     format = SvnNgUpgradeSDb.upgrade(absPath, db, sDb, format, null);
                 } else {

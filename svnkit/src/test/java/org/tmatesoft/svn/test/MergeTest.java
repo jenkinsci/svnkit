@@ -11,6 +11,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.wc.*;
@@ -1096,6 +1097,58 @@ public class MergeTest {
 
                 Assert.assertFalse(conflicted);
             }
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testMergeWC17() throws Exception {
+        //SVNKIT-430
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testMergeWC17", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("trunk/file");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.addDirectoryByCopying("branches/branch", "trunk");
+            commitBuilder2.commit();
+
+            final CommitBuilder commitBuilder3 = new CommitBuilder(url);
+            commitBuilder3.changeFile("trunk/file", "ours".getBytes());
+            commitBuilder3.changeFile("branches/branch/file", "theirs".getBytes());
+            commitBuilder3.commit();
+
+            final SVNURL trunkUrl = url.appendPath("trunk", false);
+            final SVNURL branchUrl = url.appendPath("branches/branch", false);
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+            final File file = new File(workingCopyDirectory, "file");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(trunkUrl));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.setTargetWorkingCopyFormat(ISVNWCDb.WC_FORMAT_17);
+            checkout.run();
+
+            final SvnMerge merge = svnOperationFactory.createMerge();
+            merge.addRevisionRange(SvnRevisionRange.create(SVNRevision.create(0), SVNRevision.HEAD));
+            merge.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            merge.setSource(SvnTarget.fromURL(branchUrl), false);
+            merge.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            final SvnStatus fileStatus = statuses.get(file);
+
+            Assert.assertTrue(fileStatus.isConflicted());
+            Assert.assertEquals(ISVNWCDb.WC_FORMAT_17, fileStatus.getWorkingCopyFormat());
 
         } finally {
             svnOperationFactory.dispose();

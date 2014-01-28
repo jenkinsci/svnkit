@@ -62,16 +62,9 @@ public class DowngradeTest {
                 context.close();
             }
             context = new SVNWCContext(ISVNWCDb.SVNWCDbOpenMode.ReadOnly, svnOperationFactory.getOptions(), false, false, svnOperationFactory.getEventHandler());
-            try {
-                SVNWCDb db = (SVNWCDb) (context.getDb());
-                SVNWCDb.DirParsedInfo parsed = db.parseDir(workingCopyDirectory, SVNSqlJetDb.Mode.ReadOnly);
-                Assert.fail("An exception should be thrown");
-            } catch (SVNException e) {
-                //expected
-                Assert.assertEquals(SVNErrorCode.WC_UPGRADE_REQUIRED, e.getErrorMessage().getErrorCode());
-            } finally {
-                context.close();
-            }
+            SVNWCDb db = (SVNWCDb) (context.getDb());
+            SVNWCDb.DirParsedInfo parsed = db.parseDir(workingCopyDirectory, SVNSqlJetDb.Mode.ReadOnly);
+            Assert.assertEquals(ISVNWCDb.WC_FORMAT_17, parsed.wcDbDir.getWCRoot().getFormat());
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
