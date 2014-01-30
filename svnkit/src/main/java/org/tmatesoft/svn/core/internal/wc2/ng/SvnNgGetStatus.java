@@ -20,6 +20,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -140,55 +141,47 @@ public class SvnNgGetStatus extends SvnNgOperationRunner<SvnStatus, SvnGetStatus
         }
         
         if (depth.isRecursive() && getOperation().isReportExternals()) {
-            SVNExternalsStore externalsStore = new SVNExternalsStore();
-            context.getDb().gatherExternalDefinitions(getFirstTarget(), externalsStore);
-            
-            doExternalStatus(externalsStore.getNewExternals());
+            Map<File, File> externals = context.getDb().getExternalsDefinedBelow(getFirstTarget());
+            doExternalStatus(externals);
         }
         
         return getOperation().first();
     }
-    
-    private void doExternalStatus(Map<File, String> externalsNew) throws SVNException {
-        for (Iterator<File> paths = externalsNew.keySet().iterator(); paths.hasNext();) {
-            File path = paths.next();
-            String propVal = externalsNew.get(path);
-            SVNExternal[] externals = SVNExternal.parseExternals(path, propVal);
-            
-            for (int i = 0; i < externals.length; i++) {
-                SVNExternal external = externals[i];
-                File fullPath = new File(path, external.getPath());
 
-                Structure<StructureFields.ExternalNodeInfo> externalInfo = SvnWcDbExternals.readExternal(getWcContext(), fullPath, path, StructureFields.ExternalNodeInfo.kind);
-                ISVNWCDb.SVNWCDbKind externalKind = externalInfo.get(StructureFields.ExternalNodeInfo.kind);
+    private void doExternalStatus(Map<File, File> externalsNew) throws SVNException {
+        for (Iterator<File> paths = externalsNew.keySet().iterator(); paths.hasNext(); ) {
+            File fullPath = paths.next();
+            File wcRootAbsPath = externalsNew.get(fullPath);
 
-                if (externalKind != ISVNWCDb.SVNWCDbKind.Dir) {
-                    continue;
+            Structure<StructureFields.ExternalNodeInfo> externalInfo = SvnWcDbExternals.readExternal(getWcContext(), fullPath, wcRootAbsPath, StructureFields.ExternalNodeInfo.kind);
+            ISVNWCDb.SVNWCDbKind externalKind = externalInfo.get(StructureFields.ExternalNodeInfo.kind);
+
+            if (externalKind != ISVNWCDb.SVNWCDbKind.Dir) {
+                continue;
+            }
+
+            if (SVNFileType.getType(fullPath) != SVNFileType.DIRECTORY) {
+                continue;
+            }
+            handleEvent(SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.STATUS_EXTERNAL, null, null, null), ISVNEventHandler.UNKNOWN);
+            try {
+
+                SvnGetStatus getStatus = getOperation().getOperationFactory().createGetStatus();
+                getStatus.setSingleTarget(SvnTarget.fromFile(fullPath));
+                getStatus.setRevision(SVNRevision.HEAD);
+                getStatus.setDepth(getOperation().getDepth());
+                getStatus.setRemote(getOperation().isRemote());
+                getStatus.setReportAll(getOperation().isReportAll());
+                getStatus.setReportIgnored(getOperation().isReportIgnored());
+                getStatus.setReportExternals(getOperation().isReportExternals());
+                getStatus.setReceiver(getOperation().getReceiver());
+                getStatus.setFileListHook(getOperation().getFileListHook());
+
+                getStatus.run();
+            } catch (SVNException e) {
+                if (e instanceof SVNCancelException) {
+                    throw e;
                 }
-
-                if (SVNFileType.getType(fullPath) != SVNFileType.DIRECTORY) {
-                    continue;
-                }
-                handleEvent(SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.STATUS_EXTERNAL, null, null, null), ISVNEventHandler.UNKNOWN);
-                try {
-                    
-                    SvnGetStatus getStatus = getOperation().getOperationFactory().createGetStatus();
-                    getStatus.setSingleTarget(SvnTarget.fromFile(fullPath));
-                    getStatus.setRevision(SVNRevision.HEAD);
-                    getStatus.setDepth(getOperation().getDepth());
-                    getStatus.setRemote(getOperation().isRemote());
-                    getStatus.setReportAll(getOperation().isReportAll());
-                    getStatus.setReportIgnored(getOperation().isReportIgnored());
-                    getStatus.setReportExternals(getOperation().isReportExternals());
-                    getStatus.setReceiver(getOperation().getReceiver());
-                    getStatus.setFileListHook(getOperation().getFileListHook());
-                    
-                    getStatus.run();
-                } catch (SVNException e) {
-                    if (e instanceof SVNCancelException) {
-                        throw e;
-                    }
-                } 
             }
         }
     }

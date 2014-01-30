@@ -273,6 +273,61 @@ public class ExternalsTest {
         }
     }
 
+    @Test
+    public void testExternalIsReportedIfPropertyIsRemoved() throws Exception {
+        //SVNKIT-460
+        final TestOptions options = TestOptions.getInstance();
+
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testExternalIsReportedIfPropertyIsRemoved", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final SVNExternal external = new SVNExternal("external", url.appendPath("directory", false).toString(), SVNRevision.HEAD, SVNRevision.HEAD, false, false, true);
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("directory/file");
+            commitBuilder.setDirectoryProperty("", SVNProperty.EXTERNALS, SVNPropertyValue.create(external.toString()));
+            commitBuilder.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.setIgnoreExternals(false);
+            checkout.run();
+
+            final SvnSetProperty setProperty = svnOperationFactory.createSetProperty();
+            setProperty.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            setProperty.setPropertyName(SVNProperty.EXTERNALS);
+            setProperty.setPropertyValue(null);
+            setProperty.run();
+
+            final List<SvnStatus> statuses = new ArrayList<SvnStatus>();
+
+            final SvnGetStatus getStatus = svnOperationFactory.createGetStatus();
+            getStatus.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            getStatus.setReportAll(true);
+            getStatus.setReceiver(new ISvnObjectReceiver<SvnStatus>() {
+                public void receive(SvnTarget target, SvnStatus status) throws SVNException {
+                    statuses.add(status);
+                }
+            });
+            getStatus.run();
+
+            Assert.assertEquals(6, statuses.size());
+            Assert.assertEquals(new File(workingCopyDirectory, "external"), statuses.get(4).getPath());
+            Assert.assertEquals(new File(workingCopyDirectory, "external/file"), statuses.get(5).getPath());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertTableIsEmpty(WorkingCopy workingCopy, String tableName) throws SqlJetException {
         Assert.assertEquals(0, TestUtil.getTableSize(workingCopy, tableName));
     }
