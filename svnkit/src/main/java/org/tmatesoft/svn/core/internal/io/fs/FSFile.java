@@ -127,7 +127,8 @@ public class FSFile {
     }
 
     public String readLine(int limit) throws SVNException {
-        allocateReadBuffer(limit);
+        long currentLimit = limit < 0 ? 1024 : limit; //if limit < 0, read line buffer should have infinite size
+        allocateReadBuffer((int) currentLimit);
         try {
             while(myReadLineBuffer.hasRemaining()) {
                 int b = read();
@@ -138,6 +139,15 @@ public class FSFile {
                     break;
                 }
                 myReadLineBuffer.put((byte) (b & 0XFF));
+                if (limit < 0 && !myReadLineBuffer.hasRemaining()) {
+                    //make myReadLineBuffer twice as larger
+                    byte[] oldArray = myReadLineBuffer.array();
+                    int oldLimit = (int) currentLimit;
+
+                    currentLimit = currentLimit * 2;
+                    allocateReadBuffer((int) currentLimit);
+                    myReadLineBuffer.put(oldArray, 0, oldLimit);
+                }
             }
             myReadLineBuffer.flip();
             return myDecoder.decode(myReadLineBuffer).toString();
@@ -277,7 +287,7 @@ public class FSFile {
         Map map = new SVNHashMap();
         String line;
         while(true) {
-            line = readLine(1024);
+            line = readLine(-1);
             if ("".equals(line)) {
                 break;
             }
