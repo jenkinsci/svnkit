@@ -159,7 +159,7 @@ public class SvnNgGetStatus extends SvnNgOperationRunner<SvnStatus, SvnGetStatus
                 SVNExternal external = externals[i];
                 File fullPath = new File(path, external.getPath());
 
-                Structure<StructureFields.ExternalNodeInfo> externalInfo = SvnWcDbExternals.readExternal(getWcContext(), fullPath, fullPath, StructureFields.ExternalNodeInfo.kind);
+                Structure<StructureFields.ExternalNodeInfo> externalInfo = SvnWcDbExternals.readExternal(getWcContext(), fullPath, path, StructureFields.ExternalNodeInfo.kind);
                 ISVNWCDb.SVNWCDbKind externalKind = externalInfo.get(StructureFields.ExternalNodeInfo.kind);
 
                 if (externalKind != ISVNWCDb.SVNWCDbKind.Dir) {
