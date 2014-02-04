@@ -212,7 +212,6 @@ public class DeleteTest {
 
             final SvnScheduleForAddition scheduleForAddition = svnOperationFactory.createScheduleForAddition();
             scheduleForAddition.setSingleTarget(SvnTarget.fromFile(directory));
-            scheduleForAddition.setDepth(SVNDepth.INFINITY);
             scheduleForAddition.run();
 
             final boolean[] eventWasFired = {false};
