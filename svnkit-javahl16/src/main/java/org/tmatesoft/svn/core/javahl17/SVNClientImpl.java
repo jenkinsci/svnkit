@@ -619,7 +619,14 @@ public class SVNClientImpl implements ISVNClient {
             boolean moveAsChild, boolean makeParents,
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
+        move(srcPaths, destPath, force, moveAsChild, makeParents, false, true, revpropTable, handler, callback);
+    }
 
+    public void move(Set<String> srcPaths, String destPath, boolean force,
+                     boolean moveAsChild, boolean makeParents,
+                     boolean metadataOnly, boolean allowMixRev,
+                     Map<String, String> revpropTable, CommitMessageCallback handler,
+                     CommitCallback callback) throws ClientException {
         beforeOperation();
 
         try {
@@ -628,7 +635,7 @@ public class SVNClientImpl implements ISVNClient {
             if (SVNPathUtil.isURL(destPath)) {
                 moveRemote(srcPaths, destPath, moveAsChild, makeParents, revpropTable, handler, callback);
             } else {
-                moveLocal(srcPaths, destPath, force, moveAsChild, makeParents);
+                moveLocal(srcPaths, destPath, force, moveAsChild, makeParents, metadataOnly, allowMixRev);
             }
         } finally {
             afterOperation();
@@ -2083,7 +2090,8 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     private void moveLocal(Set<String> srcPaths, String destPath, boolean force,
-                           boolean moveAsChild, boolean makeParents) throws ClientException {
+                           boolean moveAsChild, boolean makeParents,
+                           boolean metadataOnly, boolean allowMixRev) throws ClientException {
         if (srcPaths == null || srcPaths.size() == 0) {
             return;
         }
@@ -2092,6 +2100,8 @@ public class SVNClientImpl implements ISVNClient {
         copy.setMakeParents(makeParents);
         copy.setFailWhenDstExists(!moveAsChild);
         copy.setMove(true);
+        copy.setMetadataOnly(metadataOnly);
+        copy.setAllowMixedRevisions(allowMixRev);
 
         for (String localPath : srcPaths) {
             copy.addCopySource(SvnCopySource.create(getTarget(localPath), SVNRevision.UNDEFINED));
@@ -2869,10 +2879,6 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     public void add(String path, Depth depth, boolean force, boolean noIgnores, boolean noAutoProps, boolean addParents) throws ClientException {
-    }
-
-    public void move(Set<String> srcPaths, String destPath, boolean force, boolean moveAsChild, boolean makeParents, boolean metadataOnly, boolean allowMixRev, Map<String, String> revpropTable, CommitMessageCallback handler,
-            CommitCallback callback) throws ClientException {
     }
 
     public void doImport(String path, String url, Depth depth, boolean noIgnore, boolean noAutoProps, boolean ignoreUnknownNodeTypes, Map<String, String> revpropTable, ImportFilterCallback importFilterCallback,
