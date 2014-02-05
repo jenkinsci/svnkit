@@ -512,7 +512,11 @@ public class SVNClientImpl implements ISVNClient {
 
     public void add(String path, Depth depth, boolean force, boolean noIgnores,
             boolean addParents) throws ClientException {
+        add(path, depth, force, noIgnores, false, addParents);
+    }
 
+    public void add(String path, Depth depth, boolean force, boolean noIgnores,
+                    boolean noAutoProps, boolean addParents) throws ClientException {
         beforeOperation();
 
         try {
@@ -523,6 +527,7 @@ public class SVNClientImpl implements ISVNClient {
             add.setForce(force);
             add.setIncludeIgnored(noIgnores);
             add.setAddParents(addParents);
+            add.setApplyAutoProperties(!noAutoProps);
 
             add.addTarget(getTarget(path));
 
@@ -2876,9 +2881,6 @@ public class SVNClientImpl implements ISVNClient {
 
     public VersionExtended getVersionExtended(boolean verbose) {
         return null;
-    }
-
-    public void add(String path, Depth depth, boolean force, boolean noIgnores, boolean noAutoProps, boolean addParents) throws ClientException {
     }
 
     public void doImport(String path, String url, Depth depth, boolean noIgnore, boolean noAutoProps, boolean ignoreUnknownNodeTypes, Map<String, String> revpropTable, ImportFilterCallback importFilterCallback,
