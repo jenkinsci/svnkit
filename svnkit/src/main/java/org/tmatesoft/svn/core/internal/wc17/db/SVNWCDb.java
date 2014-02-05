@@ -7377,7 +7377,9 @@ public class SVNWCDb implements ISVNWCDb {
                     SVNSkel conflicts = SVNSkel.parse(conflictData);
 
                     List<File> markers = SvnWcDbConflicts.readConflictMarkers(wcRoot.getDb(), wcRoot.getAbsPath(), conflicts);
-                    markerFiles.addAll(markers);
+                    if (markers != null) {
+                        markerFiles.addAll(markers);
+                    }
                 }
             } finally {
                 stmt.reset();

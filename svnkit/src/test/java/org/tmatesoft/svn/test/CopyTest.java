@@ -525,6 +525,65 @@ public class CopyTest {
         }
     }
 
+    @Test
+    public void testCopyTreeConflict() throws Exception {
+        //SVNKIT-461
+        final TestOptions options = TestOptions.getInstance();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCopyTreeConflict", options);
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        try {
+            // Create directory to obtain TC
+            final SVNURL url = sandbox.createSvnRepository();
+            CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addDirectory("tcDir");
+            commitBuilder.commit();
+
+            // Working copy inside which the tree-conflict is generated
+            WorkingCopy wc1 = sandbox.checkoutNewWorkingCopy(url);
+            File tcDir = wc1.getFile("tcDir");
+            // Set a property, to have local modifications
+            wc1.setProperty(tcDir, "pName", SVNPropertyValue.create("pValue"));
+            // Must create an UNVERSIONED file, else test is not reproducible
+            Assert.assertTrue(new File(tcDir, "newFile.txt").createNewFile());
+
+            // Delete directory from another working copy
+            WorkingCopy wc2 = sandbox.checkoutNewWorkingCopy(url);
+            File file2 = wc2.getFile("tcDir");
+            wc2.delete(file2);
+            wc2.commit("test");
+
+            // Update first working copy, to obtain the TC
+            try {
+                wc1.updateToRevision(-1);
+            } catch (Throwable t) {
+                // Throws a runtime exception, didn't study it, but the tree-conflict is generated
+            }
+
+            SVNClientManager scm = SVNClientManager.newInstance();
+            SVNStatus status = scm.getStatusClient().doStatus(tcDir, false);
+            // Make sure there is a tree-conflict
+            Assert.assertNotNull(status.getTreeConflict());
+
+            // Copy as sibling
+            final File dst = new File(tcDir.getParentFile(), "tcDir - Copy");
+            scm.getCopyClient().doCopy(
+                    new SVNCopySource[] { new SVNCopySource(SVNRevision.WORKING, SVNRevision.WORKING, tcDir) },
+                    dst,
+                    false,
+                    false,
+                    true);
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, wc1.getWorkingCopyDirectory());
+            Assert.assertEquals(SVNStatusType.STATUS_ADDED, statuses.get(dst).getNodeStatus());
+            Assert.assertTrue(statuses.get(dst).isCopied());
+            Assert.assertFalse(statuses.get(dst).isConflicted());
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertNoRepositoryPathStartsWithSlash(SvnOperationFactory svnOperationFactory, File workingCopyDirectory) throws SVNException {
         final SVNWCContext context = new SVNWCContext(ISVNWCDb.SVNWCDbOpenMode.ReadOnly, svnOperationFactory.getOptions(), false, false, svnOperationFactory.getEventHandler());
         try {
