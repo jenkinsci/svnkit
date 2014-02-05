@@ -372,7 +372,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                 for (SvnCopyPair copyPair : copyPairs) {
                     checkCancelled();
                     File dstPath = SVNFileUtil.createFilePath(copyPair.dstParent, copyPair.baseName);
-                    sleepForTimeStamp = sleepForTimeStamp || copy(context, copyPair.source, dstPath, getOperation().isVirtual());
+                    sleepForTimeStamp = sleepForTimeStamp || copy(context, copyPair.source, dstPath, getOperation().isMetadataOnly() || getOperation().isVirtual());
                 }
             } finally {
                 context.releaseWriteLock(dstAncestor);
@@ -403,7 +403,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                     lockedPaths.add(getWcContext().acquireWriteLock(file, false, true));
                 }
                 
-                move(getWcContext(), copyPair.source, SVNFileUtil.createFilePath(copyPair.dstParent, copyPair.baseName), getOperation().isVirtual());
+                move(getWcContext(), copyPair.source, SVNFileUtil.createFilePath(copyPair.dstParent, copyPair.baseName), getOperation().isMetadataOnly() || getOperation().isVirtual());
             } finally {
                 for (File file : lockedPaths) {
                     getWcContext().releaseWriteLock(file);

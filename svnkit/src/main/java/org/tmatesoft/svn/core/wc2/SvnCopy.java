@@ -161,6 +161,7 @@ public class SvnCopy extends SvnOperation<Void> {
     private boolean virtual;
     private boolean disjoint;
     private boolean allowMixedRevisions;
+    private boolean metadataOnly;
 
     protected SvnCopy(SvnOperationFactory factory) {
         super(factory);
@@ -322,5 +323,13 @@ public class SvnCopy extends SvnOperation<Void> {
      */
     public void setAllowMixedRevisions(boolean allowMixedRevisions) {
         this.allowMixedRevisions = allowMixedRevisions;
+    }
+
+    public boolean isMetadataOnly() {
+        return metadataOnly;
+    }
+
+    public void setMetadataOnly(boolean metadataOnly) {
+        this.metadataOnly = metadataOnly;
     }
 }

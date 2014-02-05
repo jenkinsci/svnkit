@@ -314,6 +314,42 @@ public class MoveTest {
         }
     }
 
+    @Test
+    public void testMoveMetadataOnly() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testMoveMetadataOnly", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("sourceFile");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File sourceFile = workingCopy.getFile("sourceFile");
+            final File targetFile = workingCopy.getFile("targetFile");
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(sourceFile), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(targetFile));
+            copy.setMove(true);
+            copy.setMetadataOnly(true);
+            copy.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(sourceFile).getNodeStatus());
+            Assert.assertEquals(targetFile, statuses.get(sourceFile).getMovedToPath());
+            Assert.assertEquals(SVNStatusType.STATUS_MISSING, statuses.get(targetFile).getNodeStatus());
+            Assert.assertNull(statuses.get(targetFile).getMovedToPath());
+        }
+        finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private String getTestName() {
         return "MoveTest";
     }
