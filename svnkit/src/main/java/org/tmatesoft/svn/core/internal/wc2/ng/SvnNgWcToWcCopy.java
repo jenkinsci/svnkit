@@ -621,11 +621,13 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             File dstDir = SVNFileUtil.getParentFile(nodeAbsPath);
 
             List<File> markers = SvnWcDbConflicts.readConflictMarkers((SVNWCDb) db, srcAbsPath, conflict);
-            for (File marker : markers) {
-                File childRelPath = SVNFileUtil.skipAncestor(srcDir, marker);
-                if (childRelPath != null) {
-                    File childAbsPath = SVNFileUtil.createFilePath(dstDir, childRelPath);
-                    SVNFileUtil.deleteFile(childAbsPath);
+            if (markers != null) {
+                for (File marker : markers) {
+                    File childRelPath = SVNFileUtil.skipAncestor(srcDir, marker);
+                    if (childRelPath != null) {
+                        File childAbsPath = SVNFileUtil.createFilePath(dstDir, childRelPath);
+                        SVNFileUtil.deleteFile(childAbsPath);
+                    }
                 }
             }
         }

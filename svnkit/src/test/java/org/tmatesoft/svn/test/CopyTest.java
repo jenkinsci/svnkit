@@ -584,6 +584,70 @@ public class CopyTest {
         }
     }
 
+    @Test
+    public void testCopyTreeConflict2() throws Exception {
+        //SVNKIT-461
+        final TestOptions options = TestOptions.getInstance();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCopyTreeConflict2", options);
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        try {
+            SVNURL url = sandbox.createSvnRepository();
+
+            // Create base for the tested situation
+            CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addDirectory("parent");
+            commitBuilder.addDirectory("parent/tcDir");
+            commitBuilder.commit();
+
+            // Working copy inside which the tree-conflict is generated
+            WorkingCopy wc1 = sandbox.checkoutNewWorkingCopy(url);
+            // The directory to be copied
+            File parent1 = wc1.getFile("parent");
+            // The tree-conflict directory
+            File tcDir1 = wc1.getFile("parent/tcDir");
+
+            // Modify directory from another working copy
+            WorkingCopy wc2 = sandbox.checkoutNewWorkingCopy(url);
+            File tcDir2 = wc2.getFile("parent/tcDir");
+            wc2.setProperty(tcDir2, "pName", SVNPropertyValue.create("pValue"));
+            wc2.commit("test");
+
+            // Delete directory from another working copy, but using "--keep-local"
+            wc1.delete(tcDir1);
+            // Simulate "--keep-local" by creating directory back
+            SVNFileUtil.ensureDirectoryExists(tcDir1);
+
+            // Generate TC
+            try {
+                wc1.updateToRevision(-1);
+            } catch (Throwable t) {
+                // Throws a runtime exception, didn't study it, but the conflict is generated
+            }
+
+            SVNClientManager scm = SVNClientManager.newInstance();
+            SVNStatus status = scm.getStatusClient().doStatus(tcDir1, false);
+            Assert.assertNotNull(status.getTreeConflict());
+
+            // Duplicate parent
+            scm.getCopyClient().doCopy(
+                    new SVNCopySource[] { new SVNCopySource(SVNRevision.WORKING, SVNRevision.WORKING, parent1) },
+                    new File(parent1.getParentFile(), "parent - Copy"),
+                    false,
+                    false,
+                    true);
+
+            File dst = wc1.getFile("parent - Copy");
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, wc1.getWorkingCopyDirectory());
+            Assert.assertEquals(SVNStatusType.STATUS_ADDED, statuses.get(dst).getNodeStatus());
+            Assert.assertTrue(statuses.get(dst).isCopied());
+            Assert.assertFalse(statuses.get(dst).isConflicted());
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertNoRepositoryPathStartsWithSlash(SvnOperationFactory svnOperationFactory, File workingCopyDirectory) throws SVNException {
         final SVNWCContext context = new SVNWCContext(ISVNWCDb.SVNWCDbOpenMode.ReadOnly, svnOperationFactory.getOptions(), false, false, svnOperationFactory.getEventHandler());
         try {
