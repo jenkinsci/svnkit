@@ -1,5 +1,7 @@
 package org.tmatesoft.svn.test;
 
+import java.io.File;
+
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Ignore;
@@ -9,18 +11,25 @@ import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc2.*;
-
-import java.io.File;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnRemoteDelete;
+import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
+import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.SvnUpdate;
 
 public class DeleteTest {
 
@@ -217,12 +226,9 @@ public class DeleteTest {
             final boolean[] eventWasFired = {false};
 
             svnOperationFactory.setEventHandler(new ISVNEventHandler() {
-                @Override
                 public void handleEvent(SVNEvent event, double progress) throws SVNException {
                     eventWasFired[0] = true;
                 }
-
-                @Override
                 public void checkCancelled() throws SVNCancelException {
                 }
             });
