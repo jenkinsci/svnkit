@@ -1,3 +1,15 @@
+== version 1.8.3-1 ==
+
++ Pre 1.8.4 version.
+
+== version 1.8.3 ==
+
++ JNA dependency is optional again.
++ Users may replace JNA version 3.5.2 with version 4.0.0 
+  (unless JDK 1.5 compatibility is needed).
++ SqlJet 1.1.10 is used now for better performance on checking out large projects.
++ Stability improvements.
+
 == version 1.8.2 ==
 
 + Optional readonly support of 1.7 working copy format
