@@ -47,6 +47,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     private boolean fallbackToAbsolutePath;
     private ISVNOptions options;
     private boolean propertiesOnly;
+    private boolean ignoreProperties;
 
     private String getDisplayPath(SvnTarget target) {
         String relativePath;
@@ -198,6 +199,14 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         this.propertiesOnly = propertiesOnly;
     }
 
+    public boolean isIgnoreProperties() {
+        return ignoreProperties;
+    }
+
+    public void setIgnoreProperties(boolean ignoreProperties) {
+        this.ignoreProperties = ignoreProperties;
+    }
+
     public void displayDeletedDirectory(SvnTarget target, String revision1, String revision2, OutputStream outputStream) throws SVNException {
     }
 
@@ -205,6 +214,9 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     }
 
     public void displayPropsChanged(SvnTarget target, String revision1, String revision2, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, OutputStream outputStream) throws SVNException {
+        if (isIgnoreProperties()) {
+            return;
+        }
         ensureEncodingAndEOLSet();
         String displayPath = getDisplayPath(target);
 

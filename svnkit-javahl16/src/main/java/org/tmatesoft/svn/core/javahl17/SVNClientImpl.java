@@ -935,6 +935,66 @@ public class SVNClientImpl implements ISVNClient {
             boolean ignoreAncestry, boolean noDiffDeleted, boolean force,
             boolean copiesAsAdds) throws ClientException {
 
+        diff(target1, revision1, target2, revision2, relativeToDir, outFileName, depth, changelists, ignoreAncestry, noDiffDeleted, force, copiesAsAdds, false, false, null);
+    }
+
+    public void diff(String target, Revision pegRevision,
+            Revision startRevision, Revision endRevision, String relativeToDir,
+            String outFileName, Depth depth, Collection<String> changelists,
+            boolean ignoreAncestry, boolean noDiffDeleted, boolean force,
+            boolean copiesAsAdds) throws ClientException {
+        diff(target, pegRevision, startRevision, endRevision, relativeToDir, outFileName, depth, changelists, ignoreAncestry, noDiffDeleted, force, copiesAsAdds, false, false, null);
+    }
+
+    public void diff(String target1, Revision revision1, String target2, Revision revision2,
+                     String relativeToDir, OutputStream outStream, Depth depth, Collection<String> changelists,
+                     boolean ignoreAncestry, boolean noDiffDeleted,
+                     boolean force, boolean copiesAsAdds,
+                     boolean ignoreProps, boolean propsOnly, DiffOptions options) throws ClientException {
+        beforeOperation();
+
+        try {
+            getEventHandler().setPathPrefix(getPathPrefix(relativeToDir));//TODO: review
+
+            SvnDiffGenerator diffGenerator = new SvnDiffGenerator();
+            diffGenerator.setBasePath(new File("").getAbsoluteFile());
+            diffGenerator.setIgnoreProperties(ignoreProps);
+            diffGenerator.setPropertiesOnly(propsOnly);
+            diffGenerator.setDiffOptions(getDiffOptions(options));
+            if (options != null) {
+                diffGenerator.setUseGitFormat(options.getGitFormat());
+            }
+
+            SvnDiff diff = svnOperationFactory.createDiff();
+            diff.setSources(getTarget(target1, revision1), getTarget(target2, revision2));
+            diff.setRelativeToDirectory(getFile(relativeToDir));
+            diff.setOutput(outStream);
+            diff.setDepth(getSVNDepth(depth));
+            diff.setApplicalbeChangelists(changelists);
+            diff.setIgnoreAncestry(ignoreAncestry);
+            diff.setNoDiffDeleted(noDiffDeleted);
+            diff.setIgnoreContentType(force);
+            diff.setShowCopiesAsAdds(copiesAsAdds);
+            diff.setDiffGenerator(diffGenerator);
+            diff.setDiffOptions(getDiffOptions(options));
+            if (options != null) {
+                diff.setUseGitDiffFormat(options.getGitFormat());
+            }
+
+            diff.run();
+        } catch (SVNException e) {
+            throw getClientException(e);
+        } finally {
+            afterOperation();
+        }
+    }
+
+    public void diff(String target1, Revision revision1, String target2, Revision revision2,
+                     String relativeToDir, String outFileName, Depth depth, Collection<String> changelists,
+                     boolean ignoreAncestry, boolean noDiffDeleted,
+                     boolean force, boolean copiesAsAdds,
+                     boolean ignoreProps, boolean propsOnly, DiffOptions options) throws ClientException {
+
         beforeOperation();
 
         FileOutputStream fileOutputStream = null;
@@ -947,6 +1007,12 @@ public class SVNClientImpl implements ISVNClient {
 
             SvnDiffGenerator diffGenerator = new SvnDiffGenerator();
             diffGenerator.setBasePath(new File("").getAbsoluteFile());
+            diffGenerator.setIgnoreProperties(ignoreProps);
+            diffGenerator.setPropertiesOnly(propsOnly);
+            diffGenerator.setDiffOptions(getDiffOptions(options));
+            if (options != null) {
+                diffGenerator.setUseGitFormat(options.getGitFormat());
+            }
 
             SvnDiff diff = svnOperationFactory.createDiff();
             diff.setSources(getTarget(target1, revision1), getTarget(target2, revision2));
@@ -959,6 +1025,11 @@ public class SVNClientImpl implements ISVNClient {
             diff.setIgnoreContentType(force);
             diff.setShowCopiesAsAdds(copiesAsAdds);
             diff.setDiffGenerator(diffGenerator);
+            diff.setDiffOptions(getDiffOptions(options));
+            if (options != null) {
+                diff.setUseGitDiffFormat(options.getGitFormat());
+            }
+
             diff.run();
         } catch (FileNotFoundException e) {
             throw SVNClientImpl.getClientException(e);
@@ -971,11 +1042,54 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
-    public void diff(String target, Revision pegRevision,
-            Revision startRevision, Revision endRevision, String relativeToDir,
-            String outFileName, Depth depth, Collection<String> changelists,
-            boolean ignoreAncestry, boolean noDiffDeleted, boolean force,
-            boolean copiesAsAdds) throws ClientException {
+    public void diff(String target1, Revision revision1, String target2, Revision revision2, String relativeToDir, OutputStream outStream, Depth depth, Collection<String> changelists, boolean ignoreAncestry, boolean noDiffDeleted,
+                     boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly) throws ClientException {
+        diff(target1, revision1, target2, revision2, relativeToDir, outStream, depth, changelists, ignoreAncestry, noDiffDeleted, force, copiesAsAdds, ignoreProps, propsOnly, null);
+    }
+
+    public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String relativeToDir, OutputStream outStream, Depth depth, Collection<String> changelists, boolean ignoreAncestry,
+                     boolean noDiffDeleted, boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly, DiffOptions options) throws ClientException {
+
+        beforeOperation();
+
+        try {
+            getEventHandler().setPathPrefix(getPathPrefix(relativeToDir));
+
+            SvnDiffGenerator diffGenerator = new SvnDiffGenerator();
+            diffGenerator.setBasePath(new File("").getAbsoluteFile());
+            diffGenerator.setIgnoreProperties(ignoreProps);
+            diffGenerator.setPropertiesOnly(propsOnly);
+            diffGenerator.setDiffOptions(getDiffOptions(options));
+            if (options != null) {
+                diffGenerator.setUseGitFormat(options.getGitFormat());
+            }
+
+
+            SvnDiff diff = svnOperationFactory.createDiff();
+            diff.setSource(getTarget(target, pegRevision), getSVNRevision(startRevision), getSVNRevision(endRevision));
+            diff.setRelativeToDirectory(getFile(relativeToDir));
+            diff.setOutput(outStream);
+            diff.setDepth(getSVNDepth(depth));
+            diff.setApplicalbeChangelists(changelists);
+            diff.setIgnoreAncestry(ignoreAncestry);
+            diff.setNoDiffDeleted(noDiffDeleted);
+            diff.setIgnoreContentType(force);
+            diff.setShowCopiesAsAdds(copiesAsAdds);
+            diff.setDiffGenerator(diffGenerator);
+            diff.setDiffOptions(getDiffOptions(options));
+            if (options != null) {
+                diff.setUseGitDiffFormat(options.getGitFormat());
+            }
+            diff.run();
+        } catch (SVNException e) {
+            throw getClientException(e);
+        } finally {
+            afterOperation();
+        }
+    }
+
+    public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String relativeToDir, String outFileName, Depth depth, Collection<String> changelists, boolean ignoreAncestry, boolean noDiffDeleted,
+                     boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly, DiffOptions options) throws ClientException {
 
         beforeOperation();
 
@@ -989,6 +1103,12 @@ public class SVNClientImpl implements ISVNClient {
 
             SvnDiffGenerator diffGenerator = new SvnDiffGenerator();
             diffGenerator.setBasePath(new File("").getAbsoluteFile());
+            diffGenerator.setIgnoreProperties(ignoreProps);
+            diffGenerator.setPropertiesOnly(propsOnly);
+            diffGenerator.setDiffOptions(getDiffOptions(options));
+            if (options != null) {
+                diffGenerator.setUseGitFormat(options.getGitFormat());
+            }
 
             SvnDiff diff = svnOperationFactory.createDiff();
             diff.setSource(getTarget(target, pegRevision), getSVNRevision(startRevision), getSVNRevision(endRevision));
@@ -1001,6 +1121,10 @@ public class SVNClientImpl implements ISVNClient {
             diff.setIgnoreContentType(force);
             diff.setShowCopiesAsAdds(copiesAsAdds);
             diff.setDiffGenerator(diffGenerator);
+            diff.setDiffOptions(getDiffOptions(options));
+            if (options != null) {
+                diff.setUseGitDiffFormat(options.getGitFormat());
+            }
             diff.run();
         } catch (FileNotFoundException e) {
             throw SVNClientImpl.getClientException(e);
@@ -1011,6 +1135,13 @@ public class SVNClientImpl implements ISVNClient {
             SVNFileUtil.closeFile(bufferedOutputStream);
             afterOperation();
         }
+    }
+
+    public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision,
+                     String relativeToDir, OutputStream outStream, Depth depth, Collection<String> changelists,
+                     boolean ignoreAncestry, boolean noDiffDeleted, boolean force, boolean copiesAsAdds,
+                     boolean ignoreProps, boolean propsOnly) throws ClientException {
+        diff(target, pegRevision, startRevision, endRevision, relativeToDir, outStream, depth, changelists, ignoreAncestry, noDiffDeleted, force, copiesAsAdds, ignoreProps, propsOnly, null);
     }
 
     public void diffSummarize(String target1, Revision revision1,
@@ -2751,6 +2882,18 @@ public class SVNClientImpl implements ISVNClient {
         };
     }
 
+    private SVNDiffOptions getDiffOptions(DiffOptions diffOptions) {
+        if (diffOptions == null) {
+            return null;
+        }
+        final SVNDiffOptions svnDiffOptions = new SVNDiffOptions();
+        svnDiffOptions.setIgnoreAllWhitespace(diffOptions.getIgnoreSpaceChange());
+        svnDiffOptions.setIgnoreAmountOfWhitespace(diffOptions.getIgnoreWhitespace());
+        svnDiffOptions.setIgnoreEOLStyle(diffOptions.getIgnoreEOLStyle());
+        svnDiffOptions.setIsShowCFunction(diffOptions.getShowFunction());
+        return svnDiffOptions;
+    }
+
     private String getPathPrefix(String pathOrUrl) {
         if (pathOrUrl == null) {
             return null;
@@ -2882,30 +3025,6 @@ public class SVNClientImpl implements ISVNClient {
 
     public VersionExtended getVersionExtended(boolean verbose) {
         return null;
-    }
-
-    public void diff(String target1, Revision revision1, String target2, Revision revision2, String relativeToDir, OutputStream outStream, Depth depth, Collection<String> changelists, boolean ignoreAncestry, boolean noDiffDeleted,
-            boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly, DiffOptions options) throws ClientException {
-    }
-
-    public void diff(String target1, Revision revision1, String target2, Revision revision2, String relativeToDir, String outFileName, Depth depth, Collection<String> changelists, boolean ignoreAncestry, boolean noDiffDeleted,
-            boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly, DiffOptions options) throws ClientException {
-    }
-
-    public void diff(String target1, Revision revision1, String target2, Revision revision2, String relativeToDir, OutputStream outStream, Depth depth, Collection<String> changelists, boolean ignoreAncestry, boolean noDiffDeleted,
-            boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly) throws ClientException {
-    }
-
-    public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String relativeToDir, OutputStream outStream, Depth depth, Collection<String> changelists, boolean ignoreAncestry,
-            boolean noDiffDeleted, boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly, DiffOptions options) throws ClientException {
-    }
-
-    public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String relativeToDir, String outFileName, Depth depth, Collection<String> changelists, boolean ignoreAncestry, boolean noDiffDeleted,
-            boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly, DiffOptions options) throws ClientException {
-    }
-
-    public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String relativeToDir, OutputStream outStream, Depth depth, Collection<String> changelists, boolean ignoreAncestry,
-            boolean noDiffDeleted, boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly) throws ClientException {
     }
 
     public void properties(String path, Revision revision, Revision pegRevision, Depth depth, Collection<String> changelists, InheritedProplistCallback callback) throws ClientException {
