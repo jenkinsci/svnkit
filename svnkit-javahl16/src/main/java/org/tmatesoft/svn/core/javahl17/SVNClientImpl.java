@@ -2744,7 +2744,6 @@ public class SVNClientImpl implements ISVNClient {
             return null;
         }
         return new ISVNFileFilter() {
-            @Override
             public boolean accept(File file) throws SVNException {
                 final SVNFileType fileType = SVNFileType.getType(file);
                 return filterCallback.filter(SVNFileUtil.getFilePath(file), getNodeKind(SVNFileType.getNodeKind(fileType)), fileType == SVNFileType.SYMLINK);
