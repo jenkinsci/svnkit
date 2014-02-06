@@ -693,6 +693,8 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      *            whether to ignore files of unknown node types or not
      * @param depth
      *            tree depth to process
+     * @param applyAutoProperties
+     *            disable or not auto-properties application
      * @return information about the new committed revision
      * @throws SVNException
      *             in the following cases:
@@ -709,6 +711,92 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * @since SVN 1.8
      */
     public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, SVNProperties revisionProperties, boolean useGlobalIgnores, boolean ignoreUnknownNodeTypes, SVNDepth depth, boolean applyAutoProperties)
+            throws SVNException {
+        return doImport(path, dstURL, commitMessage, revisionProperties, useGlobalIgnores, ignoreUnknownNodeTypes, depth, applyAutoProperties, null);
+    }
+
+    /**
+     * Imports file or directory <code>path</code> into repository directory
+     * <code>dstURL</code> at HEAD revision. If some components of
+     * <code>dstURL</code> do not exist, then creates parent directories as
+     * necessary.
+     * <p/>
+     * If <code>path</code> is a directory, the contents of that directory are
+     * imported directly into the directory identified by <code>dstURL</code>.
+     * Note that the directory <code>path</code> itself is not imported -- that
+     * is, the base name of <code>path<code> is not part of the import.
+     * <p/>
+     * If <code>path</code> is a file, then the parent of <code>dstURL</code> is
+     * the directory receiving the import. The base name of <code>dstURL</code>
+     * is the filename in the repository. In this case if <code>dstURL</code>
+     * already exists, throws {@link SVNException}.
+     * <p/>
+     * If the caller's {@link ISVNEventHandler event handler} is not <span
+     * class="javakeyword">null</span> it will be called as the import
+     * progresses with {@link SVNEventAction#COMMIT_ADDED} action. If the commit
+     * succeeds, the handler will be called with
+     * {@link SVNEventAction#COMMIT_COMPLETED} event action.
+     * <p/>
+     * If non-<span class="javakeyword">null</span>,
+     * <code>revisionProperties</code> holds additional, custom revision
+     * properties (<code>String</code> names mapped to {@link SVNPropertyValue}
+     * values) to be set on the new revision. This table cannot contain any
+     * standard Subversion properties.
+     * <p/>
+     * {@link #getCommitHandler() Commit handler} will be asked for a commit log
+     * message.
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#EMPTY}, imports just
+     * <code>path</code> and nothing below it. If {@link SVNDepth#FILES},
+     * imports <code>path</code> and any file children of <code>path</code>. If
+     * {@link SVNDepth#IMMEDIATES}, imports <code>path</code>, any file
+     * children, and any immediate subdirectories (but nothing underneath those
+     * subdirectories). If {@link SVNDepth#INFINITY}, imports <code>path</code>
+     * and everything under it fully recursively.
+     * <p/>
+     * If <code>useGlobalIgnores</code> is <span
+     * class="javakeyword">false</span>, doesn't add files or directories that
+     * match ignore patterns.
+     * <p/>
+     * If <code>ignoreUnknownNodeTypes</code> is <span
+     * class="javakeyword">false</span>, ignores files of which the node type is
+     * unknown, such as device files and pipes.
+     *
+     * @param path
+     *            path to import
+     * @param dstURL
+     *            import destination url
+     * @param commitMessage
+     *            commit log message
+     * @param revisionProperties
+     *            custom revision properties
+     * @param useGlobalIgnores
+     *            whether matching against global ignore patterns should take
+     *            place
+     * @param ignoreUnknownNodeTypes
+     *            whether to ignore files of unknown node types or not
+     * @param depth
+     *            tree depth to process
+     * @param applyAutoProperties
+     *            disable or not auto-properties application
+     * @param fileFilter
+     *            filter to exclude or include certain files for the operation
+     * @return information about the new committed revision
+     * @throws SVNException
+     *             in the following cases:
+     *             <ul>
+     *             <li/>exception with {@link SVNErrorCode#ENTRY_NOT_FOUND}
+     *             error code - if <code>path</code> does not exist <li/>
+     *             exception with {@link SVNErrorCode#ENTRY_EXISTS} error code -
+     *             if <code>dstURL</code> already exists and <code>path</code>
+     *             is a file <li/>exception with
+     *             {@link SVNErrorCode#CL_ADM_DIR_RESERVED} error code - if
+     *             trying to import an item with a reserved SVN name (like
+     *             <code>'.svn'</code> or <code>'_svn'</code>)
+     *             </ul>
+     * @since SVN 1.8
+     */
+    public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, SVNProperties revisionProperties, boolean useGlobalIgnores, boolean ignoreUnknownNodeTypes, SVNDepth depth, boolean applyAutoProperties, ISVNFileFilter fileFilter)
             throws SVNException {
         SVNRepository repos = null;
         SVNFileType srcKind = SVNFileType.getType(path);
@@ -778,7 +866,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
             changed = newPaths.size() > 0;
             SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
             if (srcKind == SVNFileType.DIRECTORY) {
-                changed |= importDir(deltaGenerator, path, newDirPath, useGlobalIgnores, ignoreUnknownNodeTypes, depth, versionedAutoProperties, commitEditor);
+                changed |= importDir(deltaGenerator, path, newDirPath, useGlobalIgnores, ignoreUnknownNodeTypes, depth, versionedAutoProperties, fileFilter, commitEditor);
             } else if (srcKind == SVNFileType.FILE || srcKind == SVNFileType.SYMLINK) {
                 if (!useGlobalIgnores || !SVNStatusEditor.isIgnored(ignores, path, "/" + path.getName())) {
                     changed |= importFile(deltaGenerator, path, srcKind, filePath, versionedAutoProperties, commitEditor);
@@ -1580,12 +1668,12 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
         targets.add(url);
     }
 
-    private boolean importDir(SVNDeltaGenerator deltaGenerator, File dir, String importPath, boolean useGlobalIgnores, boolean ignoreUnknownNodeTypes, SVNDepth depth, Map<String, Map<String, String>> versionedAutoProperties, ISVNEditor editor)
+    private boolean importDir(SVNDeltaGenerator deltaGenerator, File dir, String importPath, boolean useGlobalIgnores, boolean ignoreUnknownNodeTypes, SVNDepth depth, Map<String, Map<String, String>> versionedAutoProperties, ISVNFileFilter fileFilter, ISVNEditor editor)
             throws SVNException {
         checkCancelled();
         File[] children = SVNFileListUtil.listFiles(dir);
         boolean changed = false;
-        ISVNFileFilter filter = getCommitHandler() instanceof ISVNFileFilter ? (ISVNFileFilter) getCommitHandler() : null;
+        ISVNFileFilter commitHandlerFilter = getCommitHandler() instanceof ISVNFileFilter ? (ISVNFileFilter) getCommitHandler() : null;
         Collection ignores = useGlobalIgnores ? SVNStatusEditor.getGlobalIgnores(getOptions()) : null;
         for (int i = 0; children != null && i < children.length; i++) {
             File file = children[i];
@@ -1594,7 +1682,10 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
                 handleEvent(skippedEvent, ISVNEventHandler.UNKNOWN);
                 continue;
             }
-            if (filter != null && !filter.accept(file)) {
+            if (commitHandlerFilter != null && !commitHandlerFilter.accept(file)) {
+                continue;
+            }
+            if (fileFilter != null && !fileFilter.accept(file)) {
                 continue;
             }
             String path = importPath == null ? file.getName() : SVNPathUtil.append(importPath, file.getName());
@@ -1611,7 +1702,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
                 if (depth == SVNDepth.IMMEDIATES) {
                     depthBelowHere = SVNDepth.EMPTY;
                 }
-                importDir(deltaGenerator, file, path, useGlobalIgnores, ignoreUnknownNodeTypes, depthBelowHere, versionedAutoProperties, editor);
+                importDir(deltaGenerator, file, path, useGlobalIgnores, ignoreUnknownNodeTypes, depthBelowHere, versionedAutoProperties, fileFilter, editor);
                 editor.closeDir();
             } else if ((fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) && depth.compareTo(SVNDepth.FILES) >= 0) {
                 changed |= importFile(deltaGenerator, file, fileType, path, versionedAutoProperties, editor);

@@ -85,31 +85,12 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNSSHConnector;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
-import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorage;
-import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchHunkInfo;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnDiffGenerator;
 import org.tmatesoft.svn.core.javahl.JavaHLCompositeLog;
 import org.tmatesoft.svn.core.javahl.JavaHLDebugLog;
-import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
-import org.tmatesoft.svn.core.wc.SVNConflictAction;
-import org.tmatesoft.svn.core.wc.SVNConflictChoice;
-import org.tmatesoft.svn.core.wc.SVNConflictDescription;
-import org.tmatesoft.svn.core.wc.SVNConflictReason;
-import org.tmatesoft.svn.core.wc.SVNConflictResult;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNOperation;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnAnnotate;
 import org.tmatesoft.svn.core.wc2.SvnAnnotateItem;
@@ -767,7 +748,13 @@ public class SVNClientImpl implements ISVNClient {
             boolean noIgnore, boolean ignoreUnknownNodeTypes,
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
+        doImport(path, url, depth, noIgnore, false, ignoreUnknownNodeTypes, revpropTable, null, handler, callback);
+    }
 
+    public void doImport(String path, String url, Depth depth,
+                         boolean noIgnore, boolean noAutoProps, boolean ignoreUnknownNodeTypes,
+                         Map<String, String> revpropTable, ImportFilterCallback importFilterCallback,
+                         CommitMessageCallback handler, CommitCallback callback) throws ClientException {
         beforeOperation();
 
         try{
@@ -780,6 +767,8 @@ public class SVNClientImpl implements ISVNClient {
             svnImport.setRevisionProperties(getSVNProperties(revpropTable));
             svnImport.setCommitHandler(getCommitHandler(handler));
             svnImport.setReceiver(getCommitInfoReceiver(callback));
+            svnImport.setApplyAutoProperties(!noAutoProps);
+            svnImport.setFileFilter(getFileFilter(importFilterCallback));
 
             svnImport.setSource(new File(path));
             svnImport.addTarget(getTarget(url));
@@ -2750,6 +2739,19 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
+    private ISVNFileFilter getFileFilter(final ImportFilterCallback filterCallback) {
+        if (filterCallback == null) {
+            return null;
+        }
+        return new ISVNFileFilter() {
+            @Override
+            public boolean accept(File file) throws SVNException {
+                final SVNFileType fileType = SVNFileType.getType(file);
+                return filterCallback.filter(SVNFileUtil.getFilePath(file), getNodeKind(SVNFileType.getNodeKind(fileType)), fileType == SVNFileType.SYMLINK);
+            }
+        };
+    }
+
     private String getPathPrefix(String pathOrUrl) {
         if (pathOrUrl == null) {
             return null;
@@ -2881,10 +2883,6 @@ public class SVNClientImpl implements ISVNClient {
 
     public VersionExtended getVersionExtended(boolean verbose) {
         return null;
-    }
-
-    public void doImport(String path, String url, Depth depth, boolean noIgnore, boolean noAutoProps, boolean ignoreUnknownNodeTypes, Map<String, String> revpropTable, ImportFilterCallback importFilterCallback,
-            CommitMessageCallback messageHandler, CommitCallback commitCallback) throws ClientException {
     }
 
     public void diff(String target1, Revision revision1, String target2, Revision revision2, String relativeToDir, OutputStream outStream, Depth depth, Collection<String> changelists, boolean ignoreAncestry, boolean noDiffDeleted,
