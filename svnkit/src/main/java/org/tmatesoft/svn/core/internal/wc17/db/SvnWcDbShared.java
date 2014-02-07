@@ -18,6 +18,7 @@ import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.parse
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.reset;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +34,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -53,8 +53,6 @@ import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.MovedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.RepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbCollectTargets;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbCreateSchema;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbInsertTarget;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.LOCK__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
@@ -115,33 +113,39 @@ public class SvnWcDbShared {
         SVNErrorManager.error(err, SVNLogType.WC);
     }
     
-    protected static void collectTargets(SVNWCDbRoot root, File relpath, SVNDepth depth, Collection<String> changelists) throws SVNException {
-        SVNSqlJetDb tmpDb = root.getSDb().getTemporaryDb();
+    protected static class Target {
+    	public Target(long wcId, String relpath) {
+    		this.relPath = relpath;
+    		this.wcId = wcId;
+    	}
+    	
+    	public String relPath;
+    	public long wcId;
+    }
+    
+    protected static Collection<Target> collectTargets(SVNWCDbRoot root, File relpath, SVNDepth depth, Collection<String> changelists) throws SVNException {
         SVNSqlJetStatement stmt = null;
+        final Collection<Target> targets = new ArrayList<Target>();
         try {
-            stmt = new SVNWCDbCreateSchema(tmpDb, SVNWCDbCreateSchema.TARGETS_LIST, -1);
-            try {
-                stmt.done();
-            } finally {
-                stmt.reset();
-            }
-            stmt = new SVNWCDbInsertTarget(tmpDb, new SVNWCDbCollectTargets(root.getSDb(), root.getWcId(), relpath, depth, changelists));
-            try {
-                stmt.done();
-            } finally {
-                stmt.reset();
-            }
+        	stmt = new SVNWCDbCollectTargets(root.getSDb(), root.getWcId(), relpath, depth, changelists);
+        	while(stmt.next()) {
+        		final long wcId = getColumnInt64(stmt, NODES__Fields.wc_id);
+        		final String path = getColumnText(stmt, NODES__Fields.local_relpath);
+        		targets.add(new Target(wcId, path));
+        	}
             if (depth == SVNDepth.FILES || depth == SVNDepth.IMMEDIATES) {
-                stmt  = new SVNWCDbInsertTarget(tmpDb, new SVNWCDbCollectTargets(root.getSDb(), root.getWcId(), relpath, SVNDepth.EMPTY, changelists));
-                try {
-                    stmt.done();
-                } finally {
-                    stmt.reset();
-                }
+            	reset(stmt);
+                stmt  = new SVNWCDbCollectTargets(root.getSDb(), root.getWcId(), relpath, SVNDepth.EMPTY, changelists);
+            	while(stmt.next()) {
+            		final long wcId = getColumnInt64(stmt, NODES__Fields.wc_id);
+            		final String path = getColumnText(stmt, NODES__Fields.local_relpath);
+            		targets.add(new Target(wcId, path));
+            	}
             }
         } finally {
-            reset(stmt);
+        	reset(stmt);
         }
+        return targets;
     }
 
     public static Structure<AdditionInfo> scanAddition(SVNWCDb db, File localAbsPath) throws SVNException {
