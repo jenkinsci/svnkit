@@ -91,56 +91,7 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnDiffGenerator;
 import org.tmatesoft.svn.core.javahl.JavaHLCompositeLog;
 import org.tmatesoft.svn.core.javahl.JavaHLDebugLog;
 import org.tmatesoft.svn.core.wc.*;
-import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
-import org.tmatesoft.svn.core.wc2.SvnAnnotate;
-import org.tmatesoft.svn.core.wc2.SvnAnnotateItem;
-import org.tmatesoft.svn.core.wc2.SvnCat;
-import org.tmatesoft.svn.core.wc2.SvnCheckout;
-import org.tmatesoft.svn.core.wc2.SvnChecksum;
-import org.tmatesoft.svn.core.wc2.SvnCleanup;
-import org.tmatesoft.svn.core.wc2.SvnCommit;
-import org.tmatesoft.svn.core.wc2.SvnCommitItem;
-import org.tmatesoft.svn.core.wc2.SvnCopy;
-import org.tmatesoft.svn.core.wc2.SvnCopySource;
-import org.tmatesoft.svn.core.wc2.SvnDiff;
-import org.tmatesoft.svn.core.wc2.SvnDiffStatus;
-import org.tmatesoft.svn.core.wc2.SvnDiffSummarize;
-import org.tmatesoft.svn.core.wc2.SvnExport;
-import org.tmatesoft.svn.core.wc2.SvnGetInfo;
-import org.tmatesoft.svn.core.wc2.SvnGetMergeInfo;
-import org.tmatesoft.svn.core.wc2.SvnGetProperties;
-import org.tmatesoft.svn.core.wc2.SvnGetStatus;
-import org.tmatesoft.svn.core.wc2.SvnGetStatusSummary;
-import org.tmatesoft.svn.core.wc2.SvnImport;
-import org.tmatesoft.svn.core.wc2.SvnInfo;
-import org.tmatesoft.svn.core.wc2.SvnList;
-import org.tmatesoft.svn.core.wc2.SvnLog;
-import org.tmatesoft.svn.core.wc2.SvnLogMergeInfo;
-import org.tmatesoft.svn.core.wc2.SvnMerge;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnRelocate;
-import org.tmatesoft.svn.core.wc2.SvnRemoteCopy;
-import org.tmatesoft.svn.core.wc2.SvnRemoteDelete;
-import org.tmatesoft.svn.core.wc2.SvnRemoteMkDir;
-import org.tmatesoft.svn.core.wc2.SvnRemoteSetProperty;
-import org.tmatesoft.svn.core.wc2.SvnResolve;
-import org.tmatesoft.svn.core.wc2.SvnRevert;
-import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
-import org.tmatesoft.svn.core.wc2.SvnSchedule;
-import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
-import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
-import org.tmatesoft.svn.core.wc2.SvnSetChangelist;
-import org.tmatesoft.svn.core.wc2.SvnSetLock;
-import org.tmatesoft.svn.core.wc2.SvnSetProperty;
-import org.tmatesoft.svn.core.wc2.SvnStatus;
-import org.tmatesoft.svn.core.wc2.SvnStatusSummary;
-import org.tmatesoft.svn.core.wc2.SvnSuggestMergeSources;
-import org.tmatesoft.svn.core.wc2.SvnSwitch;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
-import org.tmatesoft.svn.core.wc2.SvnUnlock;
-import org.tmatesoft.svn.core.wc2.SvnUpdate;
-import org.tmatesoft.svn.core.wc2.SvnUpgrade;
-import org.tmatesoft.svn.core.wc2.SvnWorkingCopyInfo;
+import org.tmatesoft.svn.core.wc2.*;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -1219,6 +1170,37 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
+    public void properties(String path, Revision revision,
+                           Revision pegRevision, Depth depth, Collection<String> changelists,
+                           InheritedProplistCallback callback) throws ClientException {
+        beforeOperation();
+
+        try {
+            getEventHandler().setPathPrefix(getPathPrefix(path));
+
+            PropertiesReceiverProvider propertiesReceiverProvider = new PropertiesReceiverProvider(callback);
+
+            SvnGetProperties getProperties = svnOperationFactory.createGetProperties();
+            getProperties.setRevision(getSVNRevision(revision));
+            getProperties.setDepth(getSVNDepth(depth));
+            getProperties.setApplicalbeChangelists(changelists);
+            getProperties.setReceiver(propertiesReceiverProvider.getPropertiesReceiver());
+            getProperties.setTargetInheritedPropertiesReceiver(propertiesReceiverProvider.getInheritedPropertiesReceiver());
+
+            getProperties.addTarget(getTarget(path, pegRevision));
+
+            try {
+                getProperties.run();
+            } finally {
+                propertiesReceiverProvider.flush();
+            }
+        } catch (SVNException e) {
+            throw getClientException(e);
+        } finally {
+            afterOperation();
+        }
+    }
+
     public void propertySetLocal(Set<String> paths, String name, byte[] value,
             Depth depth, Collection<String> changelists, boolean force)
             throws ClientException {
@@ -1843,10 +1825,10 @@ public class SVNClientImpl implements ISVNClient {
         if (commitable == null) {
             return null;
         }
-        return JavaHLObjectFactory.createCommitItem(getFilePath(commitable.getPath()), 
-                getNodeKind(commitable.getKind()), 
+        return JavaHLObjectFactory.createCommitItem(getFilePath(commitable.getPath()),
+                getNodeKind(commitable.getKind()),
                 commitable.getFlags(),
-                getUrlString(commitable.getUrl()), 
+                getUrlString(commitable.getUrl()),
                 getUrlString(commitable.getCopyFromUrl()),
                 commitable.getCopyFromRevision(),
                 getFilePath(commitable.getMovedFromAbsPath()));
@@ -1966,7 +1948,7 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
-    private Map<String, byte[]> getProperties(SVNProperties svnProperties) {
+    private static Map<String, byte[]> getProperties(SVNProperties svnProperties) {
         if (svnProperties == null) {
             return new HashMap<String, byte[]>();
         }
@@ -2001,6 +1983,60 @@ public class SVNClientImpl implements ISVNClient {
                 callback.singlePath(target == null ? null : target.getPathOrUrlString(), getProperties(svnProperties));
             }
         };
+    }
+
+    private static Collection<InheritedProplistCallback.InheritedItem> getInheritedProperties(List<SvnInheritedProperties> inheritedProperties) {
+        if (inheritedProperties == null) {
+            return null;
+        }
+        final List<InheritedProplistCallback.InheritedItem> inheritedItems = new ArrayList<InheritedProplistCallback.InheritedItem>();
+        for (SvnInheritedProperties inheritedPropertiesItem : inheritedProperties) {
+            SvnTarget target = inheritedPropertiesItem.getTarget();
+            inheritedItems.add(new InheritedProplistCallback.InheritedItem(target == null ? null : target.getPathOrUrlString(), getProperties(inheritedPropertiesItem.getProperties())));
+        }
+        return inheritedItems;
+    }
+
+    private static class PropertiesReceiverProvider {
+
+        private final InheritedProplistCallback callback;
+
+        private SvnTarget lastTarget;
+        private List<SvnInheritedProperties> lastInheritedProperties;
+
+        private PropertiesReceiverProvider(InheritedProplistCallback callback) {
+            this.callback = callback;
+        }
+
+        private ISvnObjectReceiver<List<SvnInheritedProperties>> getInheritedPropertiesReceiver() {
+            return new ISvnObjectReceiver<List<SvnInheritedProperties>>() {
+                public void receive(SvnTarget target, List<SvnInheritedProperties> inheritedProperties) throws SVNException {
+                    if (lastTarget != null && !lastTarget.equals(target)) {
+                        callback.singlePath(lastTarget == null ? null : lastTarget.getPathOrUrlString(), null, getInheritedProperties(lastInheritedProperties));
+                    }
+                    lastTarget = target;
+                    lastInheritedProperties = inheritedProperties;
+                }
+            };
+        }
+
+        private ISvnObjectReceiver<SVNProperties> getPropertiesReceiver() {
+            return new ISvnObjectReceiver<SVNProperties>() {
+                public void receive(SvnTarget target, SVNProperties properties) throws SVNException {
+                    if (lastTarget != null) {
+                        callback.singlePath(lastTarget == null ? null : lastTarget.getPathOrUrlString(), getProperties(properties), getInheritedProperties(lastInheritedProperties));
+                    }
+                    lastTarget = null;
+                }
+            };
+        }
+
+        public void flush() {
+            if (lastTarget != null) {
+                callback.singlePath(lastTarget == null ? null : lastTarget.getPathOrUrlString(), null, getInheritedProperties(lastInheritedProperties));
+                lastTarget = null;
+            }
+        }
     }
 
     private SVNConflictChoice getSVNConflictChoice(Choice choice) {
@@ -3025,9 +3061,6 @@ public class SVNClientImpl implements ISVNClient {
 
     public VersionExtended getVersionExtended(boolean verbose) {
         return null;
-    }
-
-    public void properties(String path, Revision revision, Revision pegRevision, Depth depth, Collection<String> changelists, InheritedProplistCallback callback) throws ClientException {
     }
 
     public byte[] propertyGet(String path, String name, Revision revision, Revision pegRevision, Collection<String> changelists) throws ClientException {
