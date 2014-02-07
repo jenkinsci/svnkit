@@ -2890,7 +2890,7 @@ public class SVNClientImpl implements ISVNClient {
         svnDiffOptions.setIgnoreAllWhitespace(diffOptions.getIgnoreSpaceChange());
         svnDiffOptions.setIgnoreAmountOfWhitespace(diffOptions.getIgnoreWhitespace());
         svnDiffOptions.setIgnoreEOLStyle(diffOptions.getIgnoreEOLStyle());
-        svnDiffOptions.setIsShowCFunction(diffOptions.getShowFunction());
+        svnDiffOptions.setShowCFunction(diffOptions.getShowFunction());
         return svnDiffOptions;
     }
 
