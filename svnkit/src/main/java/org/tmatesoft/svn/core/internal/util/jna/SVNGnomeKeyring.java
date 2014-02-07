@@ -33,6 +33,8 @@ import com.sun.jna.ptr.PointerByReference;
  * @version 1.3
  */
 public class SVNGnomeKeyring {
+	
+	private static final Object keyringAccessMonitor = new Object();
 
     private static final ISVNGnomeKeyringLibrary.GnomeKeyringOperationDoneCallback DONE_CALLBACK = new ISVNGnomeKeyringLibrary.GnomeKeyringOperationDoneCallback() {
 
@@ -40,11 +42,12 @@ public class SVNGnomeKeyring {
             if (data == null) {
                 return;
             }
-            ISVNGLibrary gLibrary = JNALibraryLoader.getGLibrary();
-            
-            GnomeKeyringContext context = new GnomeKeyringContext(data);
-            context.read();
-            gLibrary.g_main_loop_quit(context.loop);
+            final ISVNGLibrary gLibrary = JNALibraryLoader.getGLibrary();
+            synchronized (keyringAccessMonitor) {
+                GnomeKeyringContext context = new GnomeKeyringContext(data);
+                context.read();
+                gLibrary.g_main_loop_quit(context.loop);
+			}
         }
     };
 
@@ -54,22 +57,23 @@ public class SVNGnomeKeyring {
             if (data == null) {
                 return;
             }
-            ISVNGnomeKeyringLibrary gnomeKeyringLibrary = JNALibraryLoader.getGnomeKeyringLibrary();
-            ISVNGLibrary gLibrary = JNALibraryLoader.getGLibrary();
-            
-            GnomeKeyringContext context = new GnomeKeyringContext(data);
-            context.read();
-            if (result == ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_OK && info != null) {
-                context.keyringInfo = gnomeKeyringLibrary.gnome_keyring_info_copy(info);
-                context.write();
-            } else {
-                if (context.keyringInfo != null) {
-                    gnomeKeyringLibrary.gnome_keyring_info_free(context.keyringInfo);
-                }
-                context.keyringInfo = null;
-                context.write();
+            final ISVNGnomeKeyringLibrary gnomeKeyringLibrary = JNALibraryLoader.getGnomeKeyringLibrary();
+            final ISVNGLibrary gLibrary = JNALibraryLoader.getGLibrary();
+            synchronized (keyringAccessMonitor) {
+	            GnomeKeyringContext context = new GnomeKeyringContext(data);
+	            context.read();
+	            if (result == ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_OK && info != null) {
+	                context.keyringInfo = gnomeKeyringLibrary.gnome_keyring_info_copy(info);
+	                context.write();
+	            } else {
+	                if (context.keyringInfo != null) {
+	                    gnomeKeyringLibrary.gnome_keyring_info_free(context.keyringInfo);
+	                }
+	                context.keyringInfo = null;
+	                context.write();
+	            }
+	            gLibrary.g_main_loop_quit(context.loop);
             }
-            gLibrary.g_main_loop_quit(context.loop);
         }
     };
 
@@ -79,22 +83,23 @@ public class SVNGnomeKeyring {
             if (data == null) {
                 return;
             }
-            ISVNGLibrary gLibrary = JNALibraryLoader.getGLibrary();
-
-            GnomeKeyringContext context = new GnomeKeyringContext(data);
-            context.read();
-            if (result == ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_OK && value != null) {
-                String stringValue = value.getString(0);
-                context.keyringName = stringValue;
-                context.write();
-            } else {
-//              if (key_info - > keyring_name != NULL)
-//                  free((void*)key_info - > keyring_name);
-//              Does JNA free native memory referenced by keyringName or not?
-                context.keyringName = null;
-                context.write();
+            final ISVNGLibrary gLibrary = JNALibraryLoader.getGLibrary();
+            synchronized (keyringAccessMonitor) {
+	            GnomeKeyringContext context = new GnomeKeyringContext(data);
+	            context.read();
+	            if (result == ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_OK && value != null) {
+	                String stringValue = value.getString(0);
+	                context.keyringName = stringValue;
+	                context.write();
+	            } else {
+	//              if (key_info - > keyring_name != NULL)
+	//                  free((void*)key_info - > keyring_name);
+	//              Does JNA free native memory referenced by keyringName or not?
+	                context.keyringName = null;
+	                context.write();
+	            }
+	            gLibrary.g_main_loop_quit(context.loop);
             }
-            gLibrary.g_main_loop_quit(context.loop);
         }
     };
 
@@ -112,38 +117,42 @@ public class SVNGnomeKeyring {
     }
 
     public static void initialize() {
-        ISVNGLibrary gLibrary = JNALibraryLoader.getGLibrary();
+        final ISVNGLibrary gLibrary = JNALibraryLoader.getGLibrary();
         if (gLibrary == null) {
             return;
         }
-        String applicationName = gLibrary.g_get_application_name();
-        if (applicationName == null) {
-            gLibrary.g_set_application_name("Subversion");
-        }
+        synchronized (keyringAccessMonitor) {
+            String applicationName = gLibrary.g_get_application_name();
+            if (applicationName == null) {
+                gLibrary.g_set_application_name("Subversion");
+            }
+		}
     }
 
     private static String getDefaultKeyringName() {
-        ISVNGnomeKeyringLibrary gnomeKeyringLibrary = JNALibraryLoader.getGnomeKeyringLibrary();
-        ISVNGLibrary gLibrary = JNALibraryLoader.getGLibrary();
-
-        GnomeKeyringContext context = new GnomeKeyringContext();
-        context.keyringInfo = null;
-        context.keyringName = null;
-        context.loop = gLibrary.g_main_loop_new(null, false);
-        context.write();
-
-        gnomeKeyringLibrary.gnome_keyring_get_default_keyring(DEFAULT_KEYRING_CALLBACK, context.getPointer(), null);
-        gLibrary.g_main_loop_run(context.loop);
-        context.read();
-
-        if (context.keyringName == null) {
-            destroyKeyringContext(context);
-            return null;
+        final ISVNGnomeKeyringLibrary gnomeKeyringLibrary = JNALibraryLoader.getGnomeKeyringLibrary();
+        final ISVNGLibrary gLibrary = JNALibraryLoader.getGLibrary();
+        synchronized (keyringAccessMonitor) {
+	
+	        GnomeKeyringContext context = new GnomeKeyringContext();
+	        context.keyringInfo = null;
+	        context.keyringName = null;
+	        context.loop = gLibrary.g_main_loop_new(null, false);
+	        context.write();
+	
+	        gnomeKeyringLibrary.gnome_keyring_get_default_keyring(DEFAULT_KEYRING_CALLBACK, context.getPointer(), null);
+	        gLibrary.g_main_loop_run(context.loop);
+	        context.read();
+	
+	        if (context.keyringName == null) {
+	            destroyKeyringContext(context);
+	            return null;
+	        }
+	
+	        String defaultKeyringName = context.keyringName;
+	        destroyKeyringContext(context);
+	        return defaultKeyringName;
         }
-
-        String defaultKeyringName = context.keyringName;
-        destroyKeyringContext(context);
-        return defaultKeyringName;
     }
 
     private static boolean checkKeyringIsLocked(String keyringName) {
@@ -156,16 +165,18 @@ public class SVNGnomeKeyring {
         context.loop = gLibrary.g_main_loop_new(null, false);
         context.write();
 
-        gnomeKeyringLibrary.gnome_keyring_get_info(keyringName, GET_KEYRING_INFO_CALLBACK, context.getPointer(), null);
-        gLibrary.g_main_loop_run(context.loop);
-        context.read();
+        synchronized (keyringAccessMonitor) {
+            gnomeKeyringLibrary.gnome_keyring_get_info(keyringName, GET_KEYRING_INFO_CALLBACK, context.getPointer(), null);
+            gLibrary.g_main_loop_run(context.loop);
+            context.read();
 
-        if (context.keyringInfo == null) {
-            destroyKeyringContext(context);
-            return false;
-        }
+            if (context.keyringInfo == null) {
+                destroyKeyringContext(context);
+                return false;
+            }
 
-        return gnomeKeyringLibrary.gnome_keyring_info_get_is_locked(context.keyringInfo);
+            return gnomeKeyringLibrary.gnome_keyring_info_get_is_locked(context.keyringInfo);
+		}
     }
 
     private static void unlockKeyring(String keyringName, String keyringPassword) {
@@ -178,22 +189,24 @@ public class SVNGnomeKeyring {
         context.loop = gLibrary.g_main_loop_new(null, false);
         context.write();
 
-        gnomeKeyringLibrary.gnome_keyring_get_info(keyringName, GET_KEYRING_INFO_CALLBACK, context.getPointer(), null);
-        gLibrary.g_main_loop_run(context.loop);
-        context.read();
-
-        if (context.keyringInfo == null) {
-            destroyKeyringContext(context);
-            return;
-        } else {
-            context.loop = gLibrary.g_main_loop_new(null, false);
-            context.write();
-
-            gnomeKeyringLibrary.gnome_keyring_unlock(keyringName, keyringPassword, DONE_CALLBACK, context.getPointer(), null);
-            gLibrary.g_main_loop_run(context.loop);
-            context.read();
+        synchronized (keyringAccessMonitor) {
+	        gnomeKeyringLibrary.gnome_keyring_get_info(keyringName, GET_KEYRING_INFO_CALLBACK, context.getPointer(), null);
+	        gLibrary.g_main_loop_run(context.loop);
+	        context.read();
+	
+	        if (context.keyringInfo == null) {
+	            destroyKeyringContext(context);
+	            return;
+	        } else {
+	            context.loop = gLibrary.g_main_loop_new(null, false);
+	            context.write();
+	
+	            gnomeKeyringLibrary.gnome_keyring_unlock(keyringName, keyringPassword, DONE_CALLBACK, context.getPointer(), null);
+	            gLibrary.g_main_loop_run(context.loop);
+	            context.read();
+	        }
+	        destroyKeyringContext(context);
         }
-        destroyKeyringContext(context);
     }
 
     public static String getPassword(String realm, String userName, boolean nonInteractive, ISVNGnomeKeyringPasswordProvider keyringPasswordProvider) throws SVNException {
@@ -218,40 +231,41 @@ public class SVNGnomeKeyring {
 
     private static String getPassword(String realm, String userName) {
         ISVNGnomeKeyringLibrary gnomeKeyringLibrary = JNALibraryLoader.getGnomeKeyringLibrary();
-
 //      Ensure Gnome Keyring access is initialized via dbus.
 //      if (!dbus_bus_get(DBUS_BUS_SESSION, NULL)) {
 //          return FALSE;
 //      }
 
-        if (!gnomeKeyringLibrary.gnome_keyring_is_available()) {
-            return null;
-        }
-        
-        getDefaultKeyringName();
-        PointerByReference itemsReference = new PointerByReference();
-        int result = gnomeKeyringLibrary.gnome_keyring_find_network_password_sync(userName, realm, null, null, null, null, 0, itemsReference);
-
-        String password = null;
-        if (result == ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_OK) {
-            ISVNGLibrary.GList items = new ISVNGLibrary.GList(itemsReference.getValue());
-            items.read();
-            if (items.data != null) {
-                ISVNGnomeKeyringLibrary.GnomeKeyringNetworkPasswordData item = new ISVNGnomeKeyringLibrary.GnomeKeyringNetworkPasswordData(items.data);
-                item.read();
-                if (item.password != null) {
-                    password = item.password.getString(0);
-                }
-                gnomeKeyringLibrary.gnome_keyring_network_password_list_free(items);
+        synchronized (keyringAccessMonitor) {
+            if (!gnomeKeyringLibrary.gnome_keyring_is_available()) {
+                return null;
             }
-        }
+            
+            getDefaultKeyringName();
+            PointerByReference itemsReference = new PointerByReference();
+            int result = gnomeKeyringLibrary.gnome_keyring_find_network_password_sync(userName, realm, null, null, null, null, 0, itemsReference);
 
-//      Subversion frees memory allocated for temporary defaultKeyring value.
-//      Ensure we freed native memory from which we obtained corresponding String Object keyringName.
-//      if (default_keyring)
-//          free(default_keyring);
-        
-        return password;
+            String password = null;
+            if (result == ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_OK) {
+                ISVNGLibrary.GList items = new ISVNGLibrary.GList(itemsReference.getValue());
+                items.read();
+                if (items.data != null) {
+                    ISVNGnomeKeyringLibrary.GnomeKeyringNetworkPasswordData item = new ISVNGnomeKeyringLibrary.GnomeKeyringNetworkPasswordData(items.data);
+                    item.read();
+                    if (item.password != null) {
+                        password = item.password.getString(0);
+                    }
+                    gnomeKeyringLibrary.gnome_keyring_network_password_list_free(items);
+                }
+            }
+
+//          Subversion frees memory allocated for temporary defaultKeyring value.
+//          Ensure we freed native memory from which we obtained corresponding String Object keyringName.
+//          if (default_keyring)
+//              free(default_keyring);
+            
+            return password;
+		}
     }
 
     public static boolean setPassword(String realm, String userName, String password, boolean nonInteractive, ISVNGnomeKeyringPasswordProvider keyringPasswordProvider) throws SVNException {
@@ -275,27 +289,28 @@ public class SVNGnomeKeyring {
     }
 
     private static boolean setPassword(String realm, String userName, String password) {
-        ISVNGnomeKeyringLibrary gnomeKeyringLibrary = JNALibraryLoader.getGnomeKeyringLibrary();
-
+        final ISVNGnomeKeyringLibrary gnomeKeyringLibrary = JNALibraryLoader.getGnomeKeyringLibrary();
 //      Ensure Gnome Keyring access is initialized via dbus.
 //      if (!dbus_bus_get(DBUS_BUS_SESSION, NULL)) {
 //          return FALSE;
 //      }
 
-        if (!gnomeKeyringLibrary.gnome_keyring_is_available()) {
-            return false;
+        synchronized (keyringAccessMonitor) {
+	        if (!gnomeKeyringLibrary.gnome_keyring_is_available()) {
+	            return false;
+	        }
+	        
+	        getDefaultKeyringName();
+	        IntByReference itemId = new IntByReference();
+	        int result = gnomeKeyringLibrary.gnome_keyring_set_network_password_sync(null, userName, realm, null, null, null, null, 0, password, itemId);
+	
+	//      Subversion frees memory allocated for temporary defaultKeyring value.
+	//      Ensure we freed native memory from which we obtained corresponding String Object keyringName.
+	//      if (default_keyring)
+	//          free(default_keyring);
+	
+	        return result == ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_OK;
         }
-        
-        getDefaultKeyringName();
-        IntByReference itemId = new IntByReference();
-        int result = gnomeKeyringLibrary.gnome_keyring_set_network_password_sync(null, userName, realm, null, null, null, null, 0, password, itemId);
-
-//      Subversion frees memory allocated for temporary defaultKeyring value.
-//      Ensure we freed native memory from which we obtained corresponding String Object keyringName.
-//      if (default_keyring)
-//          free(default_keyring);
-
-        return result == ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_OK;
     }
 
     private static void destroyKeyringContext(GnomeKeyringContext context) {
@@ -307,13 +322,15 @@ public class SVNGnomeKeyring {
 //          free((void*)key_info - > keyring_name);
 //      Does JNA free native memory referenced by keyringName or not?
 
-        context.keyringName = null;
-        context.write();
 
-        if (context.keyringInfo != null) {
-            gnomeKeyringLibrary.gnome_keyring_info_free(context.keyringInfo);
-            context.keyringInfo = null;
-        }
+        synchronized (keyringAccessMonitor) {
+            context.keyringName = null;
+            context.write();
+            if (context.keyringInfo != null) {
+                gnomeKeyringLibrary.gnome_keyring_info_free(context.keyringInfo);
+                context.keyringInfo = null;
+            }
+		}
     }
 
 //  struct gnome_keyring_baton
