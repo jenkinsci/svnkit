@@ -129,7 +129,8 @@ public class StructureFields {
         newActualProperties,
         keepRecordedInfo,
         workItems, 
-        iprops;
+        iprops,
+        definingAbsPath;
     }
     
     public enum DeletionInfo {

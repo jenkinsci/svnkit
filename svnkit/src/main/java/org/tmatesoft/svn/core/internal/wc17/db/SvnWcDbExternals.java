@@ -234,6 +234,9 @@ public class SvnWcDbExternals extends SvnWcDbShared {
                 if (info.hasField(ExternalNodeInfo.kind)) {
                     info.set(ExternalNodeInfo.kind, getColumnKind(selectExternalInfo, EXTERNALS__Fields.kind));
                 }
+                if (info.hasField(ExternalNodeInfo.definingAbsPath)) {
+                    info.set(ExternalNodeInfo.definingAbsPath, SVNFileUtil.createFilePath(root.getAbsPath(), selectExternalInfo.getColumnString(EXTERNALS__Fields.def_local_relpath)));
+                }
                 // TODO read more                
                 return info;
             } else {
