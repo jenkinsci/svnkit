@@ -4,9 +4,7 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
@@ -343,6 +341,56 @@ public class MoveTest {
             Assert.assertEquals(targetFile, statuses.get(sourceFile).getMovedToPath());
             Assert.assertEquals(SVNStatusType.STATUS_MISSING, statuses.get(targetFile).getNodeStatus());
             Assert.assertNull(statuses.get(targetFile).getMovedToPath());
+        }
+        finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testMixedRevisionMoveForbidden() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testMixedRevisionMoveForbidden", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("directory/file1");
+            commitBuilder1.addFile("directory/file2");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.changeFile("directory/file1", "changed".getBytes());
+            commitBuilder2.changeFile("directory/file2", "changed".getBytes());
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File directory = workingCopy.getFile("directory");
+            final File movedDirectory = workingCopy.getFile("movedDirectory");
+
+            final File file1 = workingCopy.getFile("directory/file1");
+            final File file2 = workingCopy.getFile("directory/file2");
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(file2));
+            update.setRevision(SVNRevision.create(1));
+            update.run();
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(directory), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(movedDirectory));
+            copy.setMove(true);
+            copy.setAllowMixedRevisions(false);
+            try {
+                copy.run();
+                Assert.fail("An exception should be thrown");
+            } catch (SVNException e) {
+                //expected
+                Assert.assertEquals(SVNErrorCode.WC_MIXED_REVISIONS, e.getErrorMessage().getErrorCode());
+            }
         }
         finally {
             svnOperationFactory.dispose();
