@@ -328,6 +328,52 @@ public class ExternalsTest {
         }
     }
 
+    @Test
+    public void testFileExternalsNotMarkedAsDeletedOnMoving() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testFileExternalsNotMarkedAsDeletedOnMoving", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final SVNExternal external = new SVNExternal("directory/external", url.appendPath("directory/file", false).toString(), SVNRevision.HEAD, SVNRevision.HEAD, false, false, true);
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("directory/file");
+            commitBuilder.setDirectoryProperty("", SVNProperty.EXTERNALS, SVNPropertyValue.create(external.toString()));
+            commitBuilder.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.setIgnoreExternals(false);
+            checkout.run();
+
+            final File externalDirectory = new File(workingCopyDirectory, "directory");
+            final File renamedDirectory = new File(workingCopyDirectory, "renamed");
+
+            final File externalFile = new File(externalDirectory, "external");
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(externalDirectory), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(renamedDirectory));
+            copy.setMove(true);
+            copy.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertFalse(statuses.containsKey(externalFile));
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertTableIsEmpty(WorkingCopy workingCopy, String tableName) throws SqlJetException {
         Assert.assertEquals(0, TestUtil.getTableSize(workingCopy, tableName));
     }

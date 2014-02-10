@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
  *      OR (local_relpath > ?2 || '/' AND local_relpath < ?2 || '0'))
  * AND op_depth = ?3
  * AND presence NOT IN ('base-deleted', 'not-present', 'excluded', 'absent')
+ * AND file_external IS NULL
  */
 public class SVNWCDbInsertDeleteFromNodeRecursive extends SVNSqlJetInsertStatement {
 
@@ -47,6 +48,9 @@ public class SVNWCDbInsertDeleteFromNodeRecursive extends SVNSqlJetInsertStateme
                 final long selectDepth = (Long) SVNWCDbInsertDeleteFromNodeRecursive.this.getBind(3);
                 final long rowDepth = getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth);
                 if (rowDepth != selectDepth) {
+                    return false;
+                }
+                if (!isColumnNull(SVNWCDbSchema.NODES__Fields.file_external)) {
                     return false;
                 }
                 final String rowPresence = getColumnString(SVNWCDbSchema.NODES__Fields.presence);
