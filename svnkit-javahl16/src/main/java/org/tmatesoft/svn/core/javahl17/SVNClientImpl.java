@@ -926,6 +926,36 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
+
+    public void getMergeinfoLog(LogKind kind, String pathOrUrl,
+                                Revision pegRevision, String mergeSourceUrl,
+                                Revision srcPegRevision,
+                                Revision srcStartRevision, Revision srcEndRevision,
+                                boolean discoverChangedPaths, Depth depth,
+                                Set<String> revProps, LogMessageCallback callback) throws ClientException {
+        beforeOperation();
+
+        try {
+            getEventHandler().setPathPrefix(getPathPrefix(pathOrUrl, mergeSourceUrl));
+
+            SvnLogMergeInfo logMergeInfo = svnOperationFactory.createLogMergeInfo();
+            logMergeInfo.addRevisionRange(SvnRevisionRange.create(getSVNRevision(srcStartRevision), getSVNRevision(srcEndRevision)));
+            logMergeInfo.setFindMerged(kind == LogKind.merged);
+            logMergeInfo.setSingleTarget(getTarget(pathOrUrl, pegRevision));
+            logMergeInfo.setSource(getTarget(mergeSourceUrl, srcPegRevision));
+            logMergeInfo.setDiscoverChangedPaths(discoverChangedPaths);
+            logMergeInfo.setDepth(getSVNDepth(depth));
+            logMergeInfo.setRevisionProperties(getRevisionPropertiesNames(revProps));
+            logMergeInfo.setReceiver(getLogEntryReceiver(callback));
+
+            logMergeInfo.run();
+        } catch (SVNException e) {
+            throw getClientException(e);
+        } finally {
+            afterOperation();
+        }
+    }
+
     public void diff(String target1, Revision revision1, String target2,
             Revision revision2, String relativeToDir, String outFileName,
             Depth depth, Collection<String> changelists,
@@ -3113,11 +3143,5 @@ public class SVNClientImpl implements ISVNClient {
 
     public VersionExtended getVersionExtended(boolean verbose) {
         return null;
-    }
-
-    public void getMergeinfoLog(LogKind kind, String pathOrUrl, Revision pegRevision, String mergeSourceUrl, Revision srcPegRevision, Revision srcStartRevision, Revision srcEndRevision, boolean discoverChangedPaths, Depth depth,
-            Set<String> revProps, LogMessageCallback callback) throws ClientException {
-        // TODO Auto-generated method stub
-        
     }
 }
