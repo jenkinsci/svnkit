@@ -1305,7 +1305,7 @@ public class SVNClientImpl implements ISVNClient {
 
     public byte[] revProperty(String path, String name, Revision rev)
             throws ClientException {
-        return getProperty(path, name, rev, null, true);
+        return getProperty(path, name, rev, null, true, null);
     }
 
     public Map<String, byte[]> revProperties(String path, Revision rev) throws ClientException {
@@ -1365,7 +1365,12 @@ public class SVNClientImpl implements ISVNClient {
 
     public byte[] propertyGet(String path, String name, Revision revision,
             Revision pegRevision) throws ClientException {
-        return getProperty(path, name, revision, pegRevision, false);
+        return propertyGet(path, name, revision, pegRevision, null);
+    }
+
+    public byte[] propertyGet(String path, String name, Revision revision,
+            Revision pegRevision, Collection<String> changelists) throws ClientException {
+        return getProperty(path, name, revision, pegRevision, false, changelists);
     }
 
     public byte[] fileContent(String path, Revision revision,
@@ -2106,7 +2111,7 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
-    private byte[] getProperty(String path, final String name, Revision rev, Revision pegRevision, boolean revisionProperties) throws ClientException {
+    private byte[] getProperty(String path, final String name, Revision rev, Revision pegRevision, boolean revisionProperties, Collection<String> changelists) throws ClientException {
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -2123,6 +2128,7 @@ public class SVNClientImpl implements ISVNClient {
                 }
             });
 
+            getProperties.setApplicalbeChangelists(changelists);
             getProperties.run();
 
             return SVNPropertyValue.getPropertyAsBytes(propertyValue[0]);
@@ -3106,10 +3112,6 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     public VersionExtended getVersionExtended(boolean verbose) {
-        return null;
-    }
-
-    public byte[] propertyGet(String path, String name, Revision revision, Revision pegRevision, Collection<String> changelists) throws ClientException {
         return null;
     }
 
