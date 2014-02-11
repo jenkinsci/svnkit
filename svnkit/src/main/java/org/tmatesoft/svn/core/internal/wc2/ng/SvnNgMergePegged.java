@@ -105,7 +105,7 @@ public class SvnNgMergePegged extends SvnNgOperationRunner<Void, SvnMerge> {
             }
             return mergeDriver.doMerge(null, sources, target,
                     repos,
-                    true, sameRepos, getOperation().isIgnoreAncestry(), getOperation().isForce(),
+                    true, sameRepos, getOperation().isIgnoreMergeInfo(), getOperation().isIgnoreAncestry(), getOperation().isForce(),
                     getOperation().isDryRun(),
                     getOperation().isRecordOnly(),
                     null, false, false, getOperation().getDepth(), getOperation().getMergeOptions());

@@ -249,7 +249,7 @@ public class SvnNgMergeDriver {
     public MergeData mergeCousinsAndSupplementMergeInfo(File targetWCPath,
             SVNRepository repository1, SVNRepository repository2, 
             SVNURL url1, long rev1, SVNURL url2, long rev2, long youngestCommonRev,
-            SVNURL sourceReposRoot, SVNURL wcReposRoot, SVNDepth depth,
+            SVNURL sourceReposRoot, SVNURL wcReposRoot, SVNDepth depth, boolean ignoreMergeInfo,
             boolean ignoreAncestry, boolean forceDelete, boolean recordOnly, boolean dryRun) throws SVNException {
 
         assert repository1.getLocation().equals(url1);
@@ -287,7 +287,7 @@ public class SvnNgMergeDriver {
             List<MergeSource> fauxSources = new LinkedList<MergeSource>();
             fauxSources.add(fauxSource);
 
-            mergeData = doMerge(null, fauxSources, targetWCPath, repository1, true, sameRepos,
+            mergeData = doMerge(null, fauxSources, targetWCPath, repository1, true, sameRepos, ignoreMergeInfo,
                     ignoreAncestry, forceDelete, dryRun, false, null, true, false, depth, diffOptions);
             modifiedSubtrees = mergeData.modifiedSubtrees;
             conflictReport = mergeData.conflictReport;
@@ -313,13 +313,13 @@ public class SvnNgMergeDriver {
                 context.getEventHandler().handleEvent(mergeStartedEvent, ISVNEventHandler.UNKNOWN);
             }
 
-            mergeData = doMerge(addResultsCatalog, addSources, targetWCPath, repository1, true, sameRepos,
+            mergeData = doMerge(addResultsCatalog, addSources, targetWCPath, repository1, true, sameRepos, ignoreMergeInfo,
                     ignoreAncestry, forceDelete, dryRun, true, modifiedSubtrees, true, true, depth, diffOptions);
             if (mergeData.conflictReport != null && mergeData.conflictReport.wasLastRange()) {
                 return mergeData;
             }
 
-            mergeData = doMerge(removeResultsCatalog, removeSources, targetWCPath, repository1, true, sameRepos,
+            mergeData = doMerge(removeResultsCatalog, removeSources, targetWCPath, repository1, true, sameRepos, ignoreMergeInfo,
                     ignoreAncestry, forceDelete, dryRun, true, modifiedSubtrees, true, true, depth, diffOptions);
             if (mergeData.conflictReport != null && mergeData.conflictReport.wasLastRange()) {
                 return mergeData;
@@ -511,7 +511,8 @@ public class SvnNgMergeDriver {
             File targetAbsPath,
             SVNRepository sourceRepository,
             boolean sourcesRelated,
-            boolean sameRepository, 
+            boolean sameRepository,
+            boolean ignoreMergeInfo,
             boolean diffIgnoreAncestry,
             boolean forceDelete,
             boolean dryRun, 
@@ -1200,7 +1201,7 @@ public class SvnNgMergeDriver {
     }
 
     protected boolean isHonorMergeInfo() {
-        return mergeSource.ancestral && sameRepos && !diffIgnoreAncestry && mergeinfoCapable;
+        return mergeSource.ancestral && sameRepos && !diffIgnoreAncestry && mergeinfoCapable && !ignoreMergeInfo;
     }
 
     public boolean isRecordMergeInfo() {

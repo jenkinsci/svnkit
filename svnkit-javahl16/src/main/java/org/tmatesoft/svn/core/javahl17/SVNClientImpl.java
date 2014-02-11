@@ -815,6 +815,52 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
+    public void merge(String path1, Revision revision1,
+                      String path2, Revision revision2,
+                      String localPath, boolean force, Depth depth,
+                      boolean ignoreMergeinfo, boolean diffIgnoreAncestry,
+                      boolean dryRun, boolean recordOnly)
+            throws ClientException {
+        try {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Automatic merge is not supported yet");
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
+        } catch (SVNException e) {
+            throw getClientException(e);
+        }
+    }
+
+    public void merge(String path, Revision pegRevision,
+                      List<RevisionRange> revisions, String localPath,
+                      boolean force, Depth depth, boolean ignoreMergeinfo,
+                      boolean ignoreAncestry, boolean dryRun, boolean recordOnly)
+            throws ClientException {
+
+        beforeOperation();
+
+        try {
+            getEventHandler().setPathPrefix(getPathPrefix(path, localPath));
+
+            SvnMerge merge = svnOperationFactory.createMerge();
+            merge.setSource(getTarget(path, pegRevision), false/*reintegrate=false*/);
+            for (RevisionRange revisionRange : revisions) {
+                merge.addRevisionRange(getSvnRevisionRange(revisionRange));
+            }
+            merge.addTarget(getTarget(localPath));
+            merge.setForce(force);
+            merge.setDepth(getSVNDepth(depth));
+            merge.setIgnoreAncestry(ignoreAncestry);
+            merge.setDryRun(dryRun);
+            merge.setRecordOnly(recordOnly);
+            merge.setIgnoreMergeInfo(ignoreMergeinfo);
+
+            merge.run();
+        } catch (SVNException e) {
+            throw getClientException(e);
+        } finally {
+            afterOperation();
+        }
+    }
+
     public void mergeReintegrate(String path, Revision pegRevision,
             String localPath, boolean dryRun) throws ClientException {
 
@@ -3065,18 +3111,6 @@ public class SVNClientImpl implements ISVNClient {
 
     public byte[] propertyGet(String path, String name, Revision revision, Revision pegRevision, Collection<String> changelists) throws ClientException {
         return null;
-    }
-
-    public void merge(String path1, Revision revision1, String path2, Revision revision2, String localPath, boolean force, Depth depth, boolean ignoreMergeinfo, boolean diffIgnoreAncestry, boolean dryRun, boolean recordOnly)
-            throws ClientException {
-        // TODO Auto-generated method stub
-        
-    }
-
-    public void merge(String path, Revision pegRevision, List<RevisionRange> revisions, String localPath, boolean force, Depth depth, boolean ignoreMergeinfo, boolean diffIgnoreAncestry, boolean dryRun, boolean recordOnly)
-            throws ClientException {
-        // TODO Auto-generated method stub
-        
     }
 
     public void getMergeinfoLog(LogKind kind, String pathOrUrl, Revision pegRevision, String mergeSourceUrl, Revision srcPegRevision, Revision srcStartRevision, Revision srcEndRevision, boolean discoverChangedPaths, Depth depth,
