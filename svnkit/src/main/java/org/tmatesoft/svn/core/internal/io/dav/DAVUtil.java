@@ -333,6 +333,8 @@ public class DAVUtil {
             propName = SVNProperty.UUID;
         } else if (property == DAVElement.MD5_CHECKSUM) {
             propName = SVNProperty.CHECKSUM;
+        } else if (property == DAVElement.SHA1_CHECKSUM) {
+            propName = SVNProperty.SVNKIT_SHA1_CHECKSUM;
         }
         return propName;
     }

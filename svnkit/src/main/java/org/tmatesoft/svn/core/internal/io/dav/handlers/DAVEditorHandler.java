@@ -191,6 +191,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
     protected static final String BC_URL_ATTR = "bc-url";
     protected static final String BASE_CHECKSUM_ATTR = "base-checksum";
     protected static final String PATH_ATTR = "path";
+    protected static final String SHA1_CHECKSUM_ATTR = "sha1-checksum";
 
     protected ISVNEditor myEditor;
     protected String myPath;
@@ -394,7 +395,11 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
                 }
             }
+            String sha1Checksum = attrs.getValue(SHA1_CHECKSUM_ATTR);
             myEditor.addFile(myPath, copyFromPath, copyFromRev);
+            if (sha1Checksum != null) {
+                myEditor.changeFileProperty(myPath, SVNProperty.SVNKIT_SHA1_CHECKSUM, SVNPropertyValue.create(sha1Checksum));
+            }
             myIsFetchProps = true;
         } else if (element == DELETE_ENTRY) {
             String name = attrs.getValue(NAME_ATTR);
@@ -427,6 +432,10 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             }
         } else if (element == FETCH_FILE) {
             String baseChecksum = attrs.getValue(BASE_CHECKSUM_ATTR);
+            String sha1Checksum = attrs.getValue(SHA1_CHECKSUM_ATTR);
+            if (sha1Checksum != null) {
+                myEditor.changeFileProperty(myPath, SVNProperty.SVNKIT_SHA1_CHECKSUM, SVNPropertyValue.create(sha1Checksum));
+            }
             myChecksum = null;
             if (!myIsReceiveAll) {
                 fetchFile(baseChecksum);

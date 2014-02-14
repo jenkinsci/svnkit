@@ -127,6 +127,7 @@ public class DAVElement {
     public static final DAVElement BASELINE_RELATIVE_PATH = getElement(SVN_DAV_PROPERTY_NAMESPACE, "baseline-relative-path");
     public static final DAVElement REPOSITORY_UUID = getElement(SVN_DAV_PROPERTY_NAMESPACE, "repository-uuid");
     public static final DAVElement MD5_CHECKSUM = getElement(SVN_DAV_PROPERTY_NAMESPACE, "md5-checksum");
+    public static final DAVElement SHA1_CHECKSUM = getElement(SVN_DAV_PROPERTY_NAMESPACE, "sha1-checksum");
     public static final DAVElement DEADPROP_COUNT = getElement(SVN_DAV_PROPERTY_NAMESPACE, "deadprop-count");
 
     public static final DAVElement AUTO_VERSION = getElement(DAV_NAMESPACE, "auto-version");
