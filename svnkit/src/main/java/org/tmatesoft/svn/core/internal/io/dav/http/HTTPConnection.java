@@ -488,8 +488,12 @@ public class HTTPConnection implements IHTTPConnection {
 		            SVNErrorManager.cancel(ssl.getCause().getMessage(), SVNLogType.NETWORK);
 	            }
                 SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", new Object[] { ssl.getMessage() }, SVNErrorMessage.TYPE_ERROR, ssl);
-	            if (keyManager != null) {
-		            keyManager.acknowledgeAndClearAuthentication(sslErr);
+	            if (keyManager != null && keyManager.isInitialized()) {
+            		keyManager.acknowledgeAndClearAuthentication(sslErr);
+	            } else {
+            		sslErr = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "SSL handshake failed: ''{0}''", new Object[] { ssl.getMessage() }, SVNErrorMessage.TYPE_ERROR, ssl);
+		            SVNErrorManager.error(sslErr, SVNLogType.NETWORK);
+	            	
 	            }
                 err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, ssl);
 	            continue;

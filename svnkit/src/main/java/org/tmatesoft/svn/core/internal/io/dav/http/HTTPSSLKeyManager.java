@@ -393,6 +393,10 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
             throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE, exception);
         }
     }
+    
+    public boolean isInitialized() {
+    	return myKeyManagers != null;
+    }
 
     private boolean initializeNoException() {
         try {
