@@ -433,13 +433,17 @@ public class SvnNgRemoteDiffEditor2 implements ISVNEditor {
             File tmpDir = new File(System.getProperty("java.io.tmpdir"));
             fb.pathStartRevision = SVNFileUtil.createUniqueFile(tmpDir, "svn", "tmp", false);
             tempFiles.add(fb.pathStartRevision);
-            OutputStream outputStream = SVNFileUtil.openFileForWriting(fb.pathStartRevision);
-            SVNChecksumOutputStream checksumOutputStream = new SVNChecksumOutputStream(outputStream, SVNChecksumOutputStream.MD5_ALGORITHM, true);
+            OutputStream outputStream = null;
+            SVNChecksumOutputStream checksumOutputStream = null;
             try {
+                outputStream = SVNFileUtil.openFileForWriting(fb.pathStartRevision);
+                checksumOutputStream = new SVNChecksumOutputStream(outputStream, SVNChecksumOutputStream.MD5_ALGORITHM, false);
+
                 repository.getFile(fb.path, fb.baseRevision, fb.pristineProps, checksumOutputStream);
                 fb.startMd5Checksum = checksumOutputStream.getDigest();
             } finally {
                 SVNFileUtil.closeFile(checksumOutputStream);
+                SVNFileUtil.closeFile(outputStream);//close original output stream because checksumOutputStream won't close it
             }
         } else {
             repository.getFile(fb.path, fb.baseRevision, fb.pristineProps, null);
