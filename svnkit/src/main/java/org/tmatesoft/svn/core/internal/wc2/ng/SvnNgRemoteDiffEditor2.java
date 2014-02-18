@@ -338,9 +338,13 @@ public class SvnNgRemoteDiffEditor2 implements ISVNEditor {
         fb.resultMd5Checksum = deltaProcessor.textDeltaEnd();
     }
 
-    public void cleanup() throws SVNException {
+    public void cleanup() {
         for (File tempFile : tempFiles) {
-            SVNFileUtil.deleteFile(tempFile);
+            try {
+                SVNFileUtil.deleteFile(tempFile);
+            } catch (SVNException e) {
+                //ignore
+            }
         }
     }
 
