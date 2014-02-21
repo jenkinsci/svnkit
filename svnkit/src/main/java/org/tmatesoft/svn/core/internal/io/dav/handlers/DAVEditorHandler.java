@@ -28,23 +28,24 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVProperties;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepository;
 import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
 import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
-import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.ISVNReporter;
-import org.tmatesoft.svn.core.io.ISVNReporterBaton;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.io.*;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.Map;
@@ -215,14 +216,18 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
     private boolean myHasTarget;
     private Map myVersionURLs;
 
+    private String mySha1Checksum;
+    private ISVNWorkingCopyContentMediator myWorkingCopyContentMediator;
+
     public DAVEditorHandler(IHTTPConnectionFactory connectionFactory, DAVRepository owner, ISVNEditor editor, 
-            Map lockTokens, boolean fetchContent, boolean hasTarget) {
+            Map lockTokens, boolean fetchContent, boolean hasTarget, ISVNWorkingCopyContentMediator workingCopyContentMediator) {
         myConnectionFactory = connectionFactory;
         myOwner = owner;
         myEditor = editor;
         myIsFetchContent = fetchContent;
         myHasTarget = hasTarget;
         myLockTokens = lockTokens;
+        myWorkingCopyContentMediator = workingCopyContentMediator;
         
         myDeltaConsumer = fetchContent ? (ISVNDeltaConsumer) editor : new ISVNDeltaConsumer() {
             public void applyTextDelta(String path, String baseChecksum) throws SVNException {
@@ -401,6 +406,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 myEditor.changeFileProperty(myPath, SVNProperty.SVNKIT_SHA1_CHECKSUM, SVNPropertyValue.create(sha1Checksum));
             }
             myIsFetchProps = true;
+            mySha1Checksum = sha1Checksum;
         } else if (element == DELETE_ENTRY) {
             String name = attrs.getValue(NAME_ATTR);
             if (name == null) {
@@ -437,6 +443,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 myEditor.changeFileProperty(myPath, SVNProperty.SVNKIT_SHA1_CHECKSUM, SVNPropertyValue.create(sha1Checksum));
             }
             myChecksum = null;
+            mySha1Checksum = sha1Checksum;
             if (!myIsReceiveAll) {
                 fetchFile(baseChecksum);
             }
@@ -492,12 +499,14 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             }
             myEditor.closeFile(myPath, myChecksum);
             myChecksum = null;
+            mySha1Checksum = null;
             myPath = SVNPathUtil.removeTail(myPath);
             myIsDirectory = true;
         } else if (element == OPEN_FILE) {
             addNodeProperties(myPath, false);
             myEditor.closeFile(myPath, myChecksum);
             myChecksum = null;
+            mySha1Checksum = null;
             myPath = SVNPathUtil.removeTail(myPath);
             myIsDirectory = true;
         } else if (element == DAVElement.MD5_CHECKSUM) {
@@ -577,11 +586,27 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         }
         
         if (myIsFetchContent) {
-            SVNErrorManager.assertionFailure(myHref != null, "myHref is null", SVNLogType.NETWORK);
-            String deltaBaseVersionURL = myPath != null ? (String) myVersionURLs.get(myPath) : null;
-            DeltaOutputStreamWrapper osWrapper = new DeltaOutputStreamWrapper(deltaBaseVersionURL != null, myPath);
-            DAVConnection connection = getConnection();
-            connection.doGet(myHref, deltaBaseVersionURL, osWrapper);
+            InputStream inputStream = null;
+            try {
+                SVNErrorManager.assertionFailure(myHref != null, "myHref is null", SVNLogType.NETWORK);
+                String deltaBaseVersionURL = myPath != null ? (String) myVersionURLs.get(myPath) : null;
+                DeltaOutputStreamWrapper osWrapper = new DeltaOutputStreamWrapper(deltaBaseVersionURL != null, myPath);
+                if (myWorkingCopyContentMediator != null) {
+                    inputStream = myWorkingCopyContentMediator.getContentAsStream(new SvnChecksum(SvnChecksum.Kind.sha1, this.mySha1Checksum));
+                }
+                if (inputStream != null) {
+                    try {
+                        FSRepositoryUtil.copy(inputStream, osWrapper, null);
+                    } finally {
+                        SVNFileUtil.closeFile(osWrapper);
+                    }
+                } else {
+                    DAVConnection connection = getConnection();
+                    connection.doGet(myHref, deltaBaseVersionURL, osWrapper);//this will close osWrapper
+                }
+            } finally {
+                SVNFileUtil.closeFile(inputStream);
+            }
         }
         setDeltaProcessing(false);
     }
