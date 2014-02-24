@@ -797,8 +797,10 @@ public class SVNClientImpl implements ISVNClient {
 
             SvnMerge merge = svnOperationFactory.createMerge();
             merge.setSource(getTarget(path, pegRevision), false/*reintegrate=false*/);
-            for (RevisionRange revisionRange : revisions) {
-                merge.addRevisionRange(getSvnRevisionRange(revisionRange));
+            if (revisions != null) {
+                for (RevisionRange revisionRange : revisions) {
+                    merge.addRevisionRange(getSvnRevisionRange(revisionRange));
+                }
             }
             merge.addTarget(getTarget(localPath));
             merge.setForce(force);
@@ -842,8 +844,10 @@ public class SVNClientImpl implements ISVNClient {
 
             SvnMerge merge = svnOperationFactory.createMerge();
             merge.setSource(getTarget(path, pegRevision), false/*reintegrate=false*/);
-            for (RevisionRange revisionRange : revisions) {
-                merge.addRevisionRange(getSvnRevisionRange(revisionRange));
+            if (revisions != null) {
+                for (RevisionRange revisionRange : revisions) {
+                    merge.addRevisionRange(getSvnRevisionRange(revisionRange));
+                }
             }
             merge.addTarget(getTarget(localPath));
             merge.setForce(force);
