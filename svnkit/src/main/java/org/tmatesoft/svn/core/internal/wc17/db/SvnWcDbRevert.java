@@ -250,7 +250,7 @@ public class SvnWcDbRevert extends SvnWcDbShared {
         }
 
         if (opDepth > 0 && opDepth != SVNWCUtils.relpathDepth(localRelPath)) {
-            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OPERATION_DEPTH, "Can't revert '%s' without" + " reverting parent", SVNFileUtil.createFilePath(root.getAbsPath(), localRelPath));
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OPERATION_DEPTH, "Can't revert ''{0}'' without" + " reverting parent", SVNFileUtil.createFilePath(root.getAbsPath(), localRelPath));
             SVNErrorManager.error(errorMessage, SVNLogType.WC);
         }
 
