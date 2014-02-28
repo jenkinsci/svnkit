@@ -38,6 +38,11 @@ public class SVNWCDbClearMovedToDescendants extends SVNSqlJetUpdateStatement {
     }
 
     @Override
+    protected String getRowPath() throws SVNException {
+        return getColumnString(SVNWCDbSchema.NODES__Fields.moved_to);
+    }
+
+    @Override
     protected Object[] getWhere() throws SVNException {
         return new Object[]{getBind(1)};
     }
