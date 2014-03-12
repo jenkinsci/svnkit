@@ -1,3 +1,12 @@
+This is the Jenkins patches to SVNKit.
+
+We maintain all our changes in the 'master' branch. The upstream repository is in
+http://svn.svnkit.com/git/svnkit, and we'll occasionally merge upstream release tag
+into our main line.
+
+
+====================
+
 This is a README.txt file for SVNKit - pure Java Subversion client library.
 
 1. DESCRIPTION
