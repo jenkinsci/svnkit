@@ -394,13 +394,6 @@ public class SVNErrorMessage extends Exception implements Serializable {
             }
     }
 
-    @Override
-    public SVNErrorMessage initCause(Throwable cause) {
-        super.initCause(cause);
-        myThrowable = cause;
-        return this;
-    }
-
     /**
      * Wraps this error message into a new one that is returned as
      * a parent error message. A parent message is set the error code
@@ -524,5 +517,16 @@ public class SVNErrorMessage extends Exception implements Serializable {
 
     public boolean hasChildWithErrorCode(SVNErrorCode errorCode) {
         return findChildWithErrorCode(errorCode) != null;
+    }
+
+    @Override
+    public SVNErrorMessage initCause(Throwable cause) {
+        try {
+            super.initCause(cause);
+        } catch (IllegalStateException e) {
+            // failed to set the cause. that's OK.
+        }
+        myThrowable = cause;
+        return this;
     }
 }
