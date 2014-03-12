@@ -2,7 +2,7 @@ group = 'org.tmatesoft.svnkit'
 version = '1.8.4-jenkins-1'
 
 project.ext {
-   release = false
+   release = true
 target = '1.5'
    compatibleSvnVersion = '1.8.1'
 }
