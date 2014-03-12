@@ -99,7 +99,7 @@ public class SvnOldCopy extends SvnOldRunner<Void, SvnCopy> {
 
     private void throwCannotPerformOnUrl(SvnTarget target, String kind, String operation) throws SVNException {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
-                "Cannot perform '{0}' {1}: ''{2}'' is URL", new Object[] {
+                "Cannot perform ''{0}'' {1}: ''{2}'' is URL", new Object[] {
                 kind, operation, target
         });
         SVNErrorManager.error(err, SVNLogType.WC);

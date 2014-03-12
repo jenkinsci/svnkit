@@ -76,7 +76,11 @@ public class SVNConnection {
             myIsCredentialsReceived = false;
             myConnector.open(repository);
             myRepository = repository;
-            handshake(repository);
+            try {
+                handshake(repository);
+            } catch (SVNException th) {
+                myConnector.handleExceptionOnOpen(repository, th);
+            }
         } finally {
             myIsReopening = false;
         }
@@ -176,7 +180,7 @@ public class SVNConnection {
         List mechs = SVNReader.getList(items, 0);
         if (mechs == null || mechs.size() == 0) {
             if (authManager instanceof ISVNAuthenticationManagerExt) {
-                ((ISVNAuthenticationManagerExt)authManager).acknowledgeConnectionSuccessful(myRepository.getLocation());
+                ((ISVNAuthenticationManagerExt)authManager).acknowledgeConnectionSuccessful(myRepository.getLocation(), "");
             }
             return;
         }
@@ -190,7 +194,7 @@ public class SVNConnection {
         myAuthentication = authenticator.authenticate(mechs, myRealm, repository);
         receiveRepositoryCredentials(repository);
         if (authManager instanceof ISVNAuthenticationManagerExt) {
-            ((ISVNAuthenticationManagerExt)authManager).acknowledgeConnectionSuccessful(myRepository.getLocation());
+            ((ISVNAuthenticationManagerExt)authManager).acknowledgeConnectionSuccessful(myRepository.getLocation(), "");
         }
     }
     

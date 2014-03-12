@@ -11,6 +11,9 @@
  */
 package org.tmatesoft.svn.core.internal.util.jna;
 
+import java.util.Arrays;
+import java.util.List;
+
 import com.sun.jna.Memory;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
@@ -29,7 +32,8 @@ interface ISVNWinCryptLibrary extends StdCallLibrary {
         
         public DATA_BLOB(byte[] bytes) {
             if (bytes != null) {
-                cbData = new Memory(bytes.length);
+                int allocationSize = Math.max(1, bytes.length);
+                cbData = new Memory(allocationSize);
                 cbData.write(0, bytes, 0, bytes.length);
                 cbSize = new NativeLong(bytes.length);
             } else {
@@ -40,6 +44,10 @@ interface ISVNWinCryptLibrary extends StdCallLibrary {
         
         public NativeLong cbSize;
         public Pointer cbData;
+        
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("cbSize", "cbData");
+        }
     }
     
     public boolean CryptProtectData(Pointer dataIn, 

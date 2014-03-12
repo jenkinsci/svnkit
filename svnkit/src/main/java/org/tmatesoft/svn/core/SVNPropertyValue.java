@@ -277,4 +277,16 @@ public class SVNPropertyValue implements Serializable {
         myValue = propertyValue;
     }
 
+    public static boolean areEqual(SVNPropertyValue propertyValue1, SVNPropertyValue propertyValue2) {
+        if (propertyValue1 == null) {
+            return propertyValue2 == null;
+        }
+        if (propertyValue2 == null) {
+            return false;
+        }
+        byte[] propertyValueBytes1 = SVNPropertyValue.getPropertyAsBytes(propertyValue1);
+        byte[] propertyValueBytes2 = SVNPropertyValue.getPropertyAsBytes(propertyValue2);
+
+        return Arrays.equals(propertyValueBytes1, propertyValueBytes2);
+    }
 }

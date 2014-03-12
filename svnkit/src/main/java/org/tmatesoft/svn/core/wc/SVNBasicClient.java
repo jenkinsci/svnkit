@@ -70,6 +70,7 @@ public class SVNBasicClient {
         setOptions(options);
         this.operationFactory.setAuthenticationManager(authManager);
         this.operationFactory.setRepositoryPool(new DefaultSVNRepositoryPool(authManager, options));
+        this.operationFactory.setAutoDisposeRepositoryPool(true);
         
         setPathListHandler(null);
         setDebugLog(null);
@@ -78,8 +79,10 @@ public class SVNBasicClient {
     }
 
     protected SVNBasicClient(ISVNRepositoryPool pool, ISVNOptions options) {
+        boolean autoDisposeRepositoryPool = false;
         if (pool == null) {
             pool = new DefaultSVNRepositoryPool(SVNWCUtil.createDefaultAuthenticationManager(), options);
+            autoDisposeRepositoryPool = true;
         }
         if (options == null) {
             options = SVNWCUtil.createDefaultOptions(true);
@@ -87,6 +90,7 @@ public class SVNBasicClient {
         this.operationFactory = new SvnOperationFactory();
         setOptions(options);
         this.operationFactory.setRepositoryPool(pool);
+        this.operationFactory.setAutoDisposeRepositoryPool(autoDisposeRepositoryPool);
         
         setPathListHandler(null);
         setDebugLog(null);

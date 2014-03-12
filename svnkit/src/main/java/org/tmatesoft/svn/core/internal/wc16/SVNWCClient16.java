@@ -446,7 +446,7 @@ public class SVNWCClient16 extends SVNBasicDelegate {
             repos.getFile("", revNumber, properties, null);
             checkCancelled();
             String mimeType = properties.getStringValue(SVNProperty.MIME_TYPE);
-            String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), mimeType, repos.getLocation().toDecodedString(), getOptions());
+            String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), mimeType, repos.getLocation().toString(), getOptions());
             String keywords = properties.getStringValue(SVNProperty.KEYWORDS);
             String eol = properties.getStringValue(SVNProperty.EOL_STYLE);
             if (charset != null || keywords != null || eol != null) {
@@ -3977,7 +3977,7 @@ public class SVNWCClient16 extends SVNBasicDelegate {
             String charset = SVNTranslator.getCharset(charsetProp, mimeType, path.getPath(), getOptions());
             eols = SVNTranslator.getEOL(eolStyle, getOptions());
             if (hasMods && !special) {
-                time = SVNDate.formatDate(new Date(path.lastModified()));
+                time = SVNDate.formatDate(new Date(SVNFileUtil.getFileLastModified(path)));
             } else {
                 time = entry.getCommittedDate();
             }

@@ -178,7 +178,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     /**
      * Constructs an annotation generator object.
      * 
-     * @param path                    a file path (relative to a repository location)
+     * @param path                    a file path (relative to a repository location) or URL-encoded URL
      * @param tmpDirectory            a revision to stop at
      * @param startRevision           a start revision to begin annotation with
      * @param force                   forces binary files processing  
@@ -229,14 +229,18 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_BINARY_FILE, "Cannot calculate blame information for binary file ''{0}''", myPath);
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
-        myCurrentRevision = fileRevision.getRevision();
+        if (fileRevision.getRevision() < myStartRevision) {
+            myCurrentRevision = SVNRepository.INVALID_REVISION;
+        } else {
+            myCurrentRevision = fileRevision.getRevision();
+        }
         boolean known = fileRevision.getRevision() >= myStartRevision;
         SVNProperties props = fileRevision.getRevisionProperties();
         if (myCancelBaton != null) {
             File file = SVNPathUtil.isURL(myPath) ? null : new File(myPath);
             SVNEvent event = SVNEventFactory.createSVNEvent(file, SVNNodeKind.NONE, null, myCurrentRevision, SVNEventAction.ANNOTATE, null, null, null, props, null);
             if (file == null) {
-                event.setURL(SVNURL.parseURIDecoded(myPath));
+                event.setURL(SVNURL.parseURIEncoded(myPath));
             }
             myCancelBaton.handleEvent(event, ISVNEventHandler.UNKNOWN);
             myCancelBaton.checkCancelled();

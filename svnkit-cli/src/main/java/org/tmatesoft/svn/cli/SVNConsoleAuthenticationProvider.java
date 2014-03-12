@@ -32,11 +32,14 @@ import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
+import org.tmatesoft.svn.core.internal.io.svn.SVNSSHPrivateKeyUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 import org.tmatesoft.svn.core.internal.wc.ISVNAuthStoreHandler;
 import org.tmatesoft.svn.core.internal.wc.ISVNGnomeKeyringPasswordProvider;
 import org.tmatesoft.svn.core.internal.wc.ISVNSSLPasspharsePromptSupport;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+
+import com.trilead.ssh2.auth.AgentProxy;
 
 
 /**
@@ -77,7 +80,7 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
     private static final String OUR_PASSWORD_PROMPT_STRING = "Store password unencrypted (yes/no)? ";
     private static final String OUR_PASSPHRASE_PROMPT_STRING = "Store passphrase unencrypted (yes/no)? ";
     private static final int MAX_PROMPT_COUNT = 3;
-    private Map myRequestsCount = new HashMap();
+    private Map<String,Integer> myRequestsCount = new HashMap<String,Integer>();
     private boolean myIsTrustServerCertificate;
     
     public SVNConsoleAuthenticationProvider(boolean trustServerCertificate) {
@@ -258,7 +261,7 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                     if (defaultPrivateKeyFile != null) {
                         privateKeyFilePrompt = "Private key for '" + url.getHost() + "' (OpenSSH format) [" + defaultPrivateKeyFile.getAbsolutePath() + "]";
                     } else {
-                        privateKeyFilePrompt = "Private key for '" + url.getHost() + "' (OpenSSH format)"; 
+                        privateKeyFilePrompt = "Private key for '" + url.getHost() + "' (OpenSSH format) (leave blank to use a SSH agent)";
                     }
 
                     keyFilePath = prompt(privateKeyFilePrompt);
@@ -287,27 +290,29 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                         continue;
                     }
                 }
-                
-                String passphrasePrompt = null;
-                if (defaultPassphrase != null) {
-                    passphrasePrompt = "Private key passphrase [";
-                    for (int i = 0; i < defaultPassphrase.length(); i++) {
-                        passphrasePrompt += "*";
-                    }
-                    passphrasePrompt += "]";
-                } else {
-                    passphrasePrompt = "Private key passphrase [none]";
-                }
-                
-                passphrase = promptPassword(passphrasePrompt);
-                if ("".equals(passphrase)) {
+
+                if(keyFile != null) {
+                    String passphrasePrompt = null;
                     if (defaultPassphrase != null) {
-                        passphrase = defaultPassphrase;
+                        passphrasePrompt = "Private key passphrase [";
+                        for (int i = 0; i < defaultPassphrase.length(); i++) {
+                            passphrasePrompt += "*";
+                        }
+                        passphrasePrompt += "]";
                     } else {
-                        passphrase = null;
+                        passphrasePrompt = "Private key passphrase [none]";
                     }
-                } else if (passphrase == null) {
-                    return null;
+
+                    passphrase = promptPassword(passphrasePrompt);
+                    if ("".equals(passphrase)) {
+                        if (defaultPassphrase != null) {
+                            passphrase = defaultPassphrase;
+                        } else {
+                            passphrase = null;
+                        }
+                    } else if (passphrase == null) {
+                        return null;
+                    }
                 }
             }
 
@@ -325,6 +330,12 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                 return new SVNSSHAuthentication(name, password, port, authMayBeStored, url, false);
             } else if (keyFile != null) {
                 return new SVNSSHAuthentication(name, keyFile, passphrase, port, authMayBeStored, url, false);
+            } else {
+                final AgentProxy agentProxy = SVNSSHPrivateKeyUtil.createOptionalSSHAgentProxy();
+                if (agentProxy != null) {
+                    return new SVNSSHAuthentication(name, agentProxy, port, url, false);
+                }
+                return null;
             }
         } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
             String name = System.getProperty("user.name");
@@ -433,14 +444,14 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
     private static String promptPassword(String label) {
         System.err.print(label + ": ");
         System.err.flush();
-        Class systemClass = System.class;
+        Class<?> systemClass = System.class;
         try {
             // try to use System.console().readPassword - since JDK 1.6
             Method consoleMethod = systemClass.getMethod("console", new Class[0]);
             if (consoleMethod != null) {
                 Object consoleObject = consoleMethod.invoke(null, new Object[0]);
                 if (consoleObject != null) {
-                    Class consoleClass = consoleObject.getClass();
+                    Class<?> consoleClass = consoleObject.getClass();
                     Method readPasswordMethod = consoleClass.getMethod("readPassword", new Class[0]);
                     if (readPasswordMethod != null) {
                         Object password = readPasswordMethod.invoke(consoleObject, new Object[0]);

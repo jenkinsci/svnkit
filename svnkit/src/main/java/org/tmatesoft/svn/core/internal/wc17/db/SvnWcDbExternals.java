@@ -1,22 +1,8 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getKindText;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getPresenceText;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.reset;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDeleteStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
@@ -39,6 +25,12 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.EXTERNALS__Fields;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.*;
 
 public class SvnWcDbExternals extends SvnWcDbShared {
     
@@ -135,7 +127,9 @@ public class SvnWcDbExternals extends SvnWcDbShared {
             insertBase.workItems = info.<SVNSkel>get(ExternalNodeInfo.workItems);
             
             insertBase.fileExternal = true;
+            insertBase.iprops = info.<Map<String, SVNProperties>>get(ExternalNodeInfo.iprops);
             insertBase.wcId = root.getWcId();
+            insertBase.wcRoot = root;
             
             try {
                 insertBase.transaction(root.getSDb());
@@ -147,18 +141,22 @@ public class SvnWcDbExternals extends SvnWcDbShared {
         }
         //
         SVNSqlJetInsertStatement stmt = new InsertExternalStatement(root.getSDb());
-        stmt.bindf("issttsisii", 
-                root.getWcId(),
-                localRelpath,
-                SVNFileUtil.getFileDir(localRelpath),
-                getPresenceText(info.<SVNWCDbStatus>get(ExternalNodeInfo.presence)),
-                getKindText(info.<SVNWCDbKind>get(ExternalNodeInfo.kind)),
-                info.get(ExternalNodeInfo.recordAncestorRelPath),
-                reposId,
-                info.get(ExternalNodeInfo.recordedReposRelPath),
-                info.lng(ExternalNodeInfo.recordedPegRevision),
-                info.lng(ExternalNodeInfo.recordedRevision));
-        stmt.done();
+        try {
+            stmt.bindf("issttsisii",
+                    root.getWcId(),
+                    localRelpath,
+                    SVNFileUtil.getFileDir(localRelpath),
+                    getPresenceText(info.<SVNWCDbStatus>get(ExternalNodeInfo.presence)),
+                    getKindText(info.<SVNWCDbKind>get(ExternalNodeInfo.kind)),
+                    info.get(ExternalNodeInfo.recordAncestorRelPath),
+                    reposId,
+                    info.get(ExternalNodeInfo.recordedReposRelPath),
+                    info.lng(ExternalNodeInfo.recordedPegRevision),
+                    info.lng(ExternalNodeInfo.recordedRevision));
+            stmt.done();
+        } finally {
+            stmt.reset();
+        }
     }
 
     public static void removeExternal(SVNWCContext context, File wriAbsPath, File localAbsPath) throws SVNException {
@@ -199,8 +197,12 @@ public class SvnWcDbExternals extends SvnWcDbShared {
         SVNSqlJetDeleteStatement deleteExternal = null;
         try {
             deleteExternal = new SVNSqlJetDeleteStatement(root.getSDb(), SVNWCDbSchema.EXTERNALS);
-            deleteExternal.bindf("is", root.getWcId(), localRelpath);
-            deleteExternal.done();
+            try {
+                deleteExternal.bindf("is", root.getWcId(), localRelpath);
+                deleteExternal.done();
+            } finally {
+                deleteExternal.reset();
+            }
 
             if (workItems != null) {
                 root.getDb().addWorkQueue(root.getAbsPath(), workItems);
@@ -231,6 +233,9 @@ public class SvnWcDbExternals extends SvnWcDbShared {
                 }
                 if (info.hasField(ExternalNodeInfo.kind)) {
                     info.set(ExternalNodeInfo.kind, getColumnKind(selectExternalInfo, EXTERNALS__Fields.kind));
+                }
+                if (info.hasField(ExternalNodeInfo.definingAbsPath)) {
+                    info.set(ExternalNodeInfo.definingAbsPath, SVNFileUtil.createFilePath(root.getAbsPath(), selectExternalInfo.getColumnString(EXTERNALS__Fields.def_local_relpath)));
                 }
                 // TODO read more                
                 return info;
@@ -284,11 +289,11 @@ public class SvnWcDbExternals extends SvnWcDbShared {
 
     public static void addExternalFile(SVNWCContext context, File localAbsPath, File wriAbsPath, File reposRelPath, 
             SVNURL reposRootUrl, String reposUuid, 
-            long targetRevision, SVNProperties newPristineProperties, long changedRev,
+            long targetRevision, SVNProperties newPristineProperties, Map<String, SVNProperties> iprops, long changedRev,
             SVNDate changedDate, String changedAuthor, SvnChecksum newChecksum, SVNProperties davCache, 
             File recordAncestorAbspath, File recordedReposRelPath, long recordedPegRevision, long recordedRevision, 
             boolean updateActualProperties, SVNProperties newActualProperties, boolean keepRecordedInfo, 
-            SVNSkel allWorkItems) throws SVNException {
+            SVNSkel conflictSkel, SVNSkel allWorkItems) throws SVNException {
         SVNWCDb db = (SVNWCDb) context.getDb();
         if (wriAbsPath == null) {
             wriAbsPath = SVNFileUtil.getParentFile(localAbsPath);
@@ -309,6 +314,7 @@ public class SvnWcDbExternals extends SvnWcDbShared {
         externalInfo.set(ExternalNodeInfo.reposRelPath, reposRelPath);
         externalInfo.set(ExternalNodeInfo.revision, targetRevision);
         externalInfo.set(ExternalNodeInfo.properties, newPristineProperties);
+        externalInfo.set(ExternalNodeInfo.iprops, iprops); 
 
         externalInfo.set(ExternalNodeInfo.changedRevision, changedRev);
         externalInfo.set(ExternalNodeInfo.changedDate, changedDate);
@@ -325,6 +331,7 @@ public class SvnWcDbExternals extends SvnWcDbShared {
         externalInfo.set(ExternalNodeInfo.newActualProperties, newActualProperties);
         externalInfo.set(ExternalNodeInfo.keepRecordedInfo, keepRecordedInfo);
 
+        externalInfo.set(ExternalNodeInfo.conflict, conflictSkel);
         externalInfo.set(ExternalNodeInfo.workItems, allWorkItems);
         
         begingWriteTransaction(root);

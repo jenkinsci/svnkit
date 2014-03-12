@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.server.dav;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -234,7 +235,8 @@ public class DAVResourceURI {
             setPath("/");
         } else {
             setActivityID(DAVPathUtil.head(parameter));
-            setPath(DAVPathUtil.removeHead(parameter, false));
+            final String path = DAVPathUtil.removeHead(parameter, false);
+            setPath(SVNEncodingUtil.uriDecode(path));
         }
     }
 

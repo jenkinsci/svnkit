@@ -1,9 +1,12 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnChecksum;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnDate;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnProperties;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnText;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.reset;
 
@@ -46,7 +49,14 @@ public class SvnWcDbReader extends SvnWcDbShared {
         baseReplace,
         replaceRoot
     }
-    
+
+    public enum InstallInfo {
+        wcRootAbsPath,
+        sha1Checksum,
+        pristineProps,
+        changedDate,
+    }
+
     public static Collection<File> getServerExcludedNodes(SVNWCDb db, File path) throws SVNException {
         DirParsedInfo dirInfo = db.obtainWcRoot(path);
         SVNSqlJetDb sdb = dirInfo.wcDbDir.getWCRoot().getSDb();
@@ -171,6 +181,45 @@ public class SvnWcDbReader extends SvnWcDbShared {
             reset(stmt);
             commitTransaction(dirInfo.wcDbDir.getWCRoot());
         }
+        return result;
+    }
+
+    public static Structure<InstallInfo> readNodeInstallInfo(SVNWCDb db, File localAbspath, InstallInfo... fields) throws SVNException {
+        final Structure<InstallInfo> result = Structure.obtain(InstallInfo.class, fields);
+        
+        final DirParsedInfo dirInfo = db.obtainWcRoot(localAbspath);
+        final SVNSqlJetDb sdb = dirInfo.wcDbDir.getWCRoot().getSDb();
+        final long wcId = dirInfo.wcDbDir.getWCRoot().getWcId();
+        final File localRelPath = dirInfo.localRelPath;
+        
+        if (result.hasField(InstallInfo.wcRootAbsPath)) {
+            result.set(InstallInfo.wcRootAbsPath, dirInfo.wcDbDir.getWCRoot().getAbsPath());
+        }
+        
+        begingReadTransaction(dirInfo.wcDbDir.getWCRoot());
+        SVNSqlJetStatement stmt = null;
+        try {
+            stmt = sdb.getStatement(SVNWCDbStatements.SELECT_NODE_INFO);
+            stmt.bindf("is", wcId, localRelPath);
+            if (!stmt.next()) {
+                nodeIsNotInstallable(localAbspath);
+            } else {
+                if (result.hasField(InstallInfo.changedDate)) {
+                    result.set(InstallInfo.changedDate, getColumnDate(stmt, NODES__Fields.changed_date));
+                }
+                if (result.hasField(InstallInfo.sha1Checksum)) {
+                    result.set(InstallInfo.sha1Checksum, getColumnChecksum(stmt, NODES__Fields.checksum));
+                }
+                if (result.hasField(InstallInfo.pristineProps)) {
+                    result.set(InstallInfo.pristineProps, getColumnProperties(stmt, NODES__Fields.properties));
+                }
+            }
+            reset(stmt);
+        } finally {
+            reset(stmt);
+            commitTransaction(dirInfo.wcDbDir.getWCRoot());
+        }
+        
         return result;
     }
     
@@ -415,10 +464,10 @@ public class SvnWcDbReader extends SvnWcDbShared {
                             long size = cursor.getInteger(SVNWCDbSchema.NODES__Fields.translated_size.toString());
                             long date = cursor.getInteger(SVNWCDbSchema.NODES__Fields.last_mod_time.toString());
                             if (size != -1 && date != 0) {
-                                if (size != localFile.length()) {
+                                if (size != SVNFileUtil.getFileLength(localFile)) {
                                     return true;
                                 }
-                                if (date/1000 == localFile.lastModified()) {
+                                if (date/1000 == SVNFileUtil.getFileLastModified(localFile)) {
                                     cursor.next();
                                     continue;
                                 }

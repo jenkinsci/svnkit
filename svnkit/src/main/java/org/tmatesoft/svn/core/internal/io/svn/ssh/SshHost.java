@@ -1,13 +1,14 @@
 package org.tmatesoft.svn.core.internal.io.svn.ssh;
 
+import com.trilead.ssh2.Connection;
+import com.trilead.ssh2.InteractiveCallback;
+import com.trilead.ssh2.ServerHostKeyVerifier;
+import com.trilead.ssh2.auth.AgentProxy;
+
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-
-import com.trilead.ssh2.Connection;
-import com.trilead.ssh2.InteractiveCallback;
-import com.trilead.ssh2.ServerHostKeyVerifier;
 
 public class SshHost {
     
@@ -23,6 +24,7 @@ public class SshHost {
     private char[] myPassphrase;
     private char[] myPassword;
     private String myUserName;
+    private AgentProxy myAgentProxy;
     
     private int myConnectTimeout;
     private boolean myIsLocked;
@@ -31,6 +33,7 @@ public class SshHost {
     private List<SshConnection> myConnections;
     private Object myOpenerLock = new Object();
     private int myOpenersCount;
+    private int myReadTimeout;
     
     public SshHost(String host, int port) {
         myConnections = new LinkedList<SshConnection>();
@@ -45,12 +48,17 @@ public class SshHost {
     public void setConnectionTimeout(int timeout) {
         myConnectTimeout = timeout;
     }
-    
-    public void setCredentials(String userName, char[] key, char[] passphrase, char[] password) {
+
+    public void setReadTimeout(int readTimeout) {
+        myReadTimeout = readTimeout;
+    }
+
+    public void setCredentials(String userName, char[] key, char[] passphrase, char[] password, AgentProxy agentProxy) {
         myUserName = userName;
         myPrivateKey = key;
         myPassphrase = passphrase;
         myPassword = password;
+        myAgentProxy = agentProxy;
     }
     
     public boolean purge() {
@@ -169,9 +177,21 @@ public class SshHost {
             if (isDisposed()) {
                 throw new SshHostDisposedException();
             }
-            for (SshConnection connection : myConnections) {
+            for (Iterator<SshConnection> connections = myConnections.iterator(); connections.hasNext();) {
+                final SshConnection connection = connections.next();
+
                 if (connection.getSessionsCount() < MAX_SESSIONS_PER_CONNECTION) {
-                    return connection.openSession();
+                    try {
+                        return connection.openSession();
+                    } catch (IOException e) {
+                        // this connection has been closed by server.
+                        if (e.getMessage() != null && e.getMessage().contains("connection is closed")) {
+                            connection.close();
+                            connections.remove();
+                        } else {
+                            throw e;
+                        }
+                    }
                 }
             }
         } finally {
@@ -209,19 +229,22 @@ public class SshHost {
                 }                    
                 return true;
             }
-        }, myConnectTimeout, myConnectTimeout);
+        }, myConnectTimeout, myReadTimeout, myConnectTimeout);
         
         boolean authenticated = false;        
         
         final String password = myPassword != null ? new String(myPassword) : null;
         final String passphrase = myPassphrase != null ? new String(myPassphrase) : null;
-        
-        if (myPrivateKey != null) {
+
+        if(myAgentProxy != null) {
+            authenticated = connection.authenticateWithAgent(myUserName, myAgentProxy);
+        }
+        if (!authenticated && myPrivateKey != null) {
             authenticated = connection.authenticateWithPublicKey(myUserName, myPrivateKey, passphrase);
-        } else if (myPassword != null) {
+        }
+        if (!authenticated && myPassword != null) {
             String[] methods = connection.getRemainingAuthMethods(myUserName);
-            authenticated = false;
-            for (int i = 0; i < methods.length; i++) {
+            for (int i = 0; !authenticated && i < methods.length; i++) {
                 if ("password".equals(methods[i])) {
                     authenticated = connection.authenticateWithPassword(myUserName, password);                    
                 } else if ("keyboard-interactive".equals(methods[i])) {
@@ -235,13 +258,7 @@ public class SshHost {
                         }
                     });
                 }
-                if (authenticated) {
-                    break;
-                }
             }
-        } else {
-            connection.close();
-            throw new SshAuthenticationException("No supported authentication methods left.");
         }
         if (!authenticated) {
             connection.close();

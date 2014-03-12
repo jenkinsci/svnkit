@@ -1,22 +1,9 @@
 package org.tmatesoft.svn.core.internal.wc2.old;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
+import org.tmatesoft.svn.core.internal.util.*;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
@@ -27,14 +14,22 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbUpgradeData;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbConflicts;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade.TextBaseInfo;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.core.wc2.SvnChecksum.Kind;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public class SvnOldUpgradeEntries {
 	
@@ -45,7 +40,7 @@ public class SvnOldUpgradeEntries {
 		SVNEntry thisDir = entries.get("");
 		/* If there is no "this dir" entry, something is wrong. */
 		if (thisDir == null) {
-			SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "No default entry in directory '{0}'", dirAbsPath);
+			SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "No default entry in directory ''{0}''", dirAbsPath);
             SVNErrorManager.error(err, SVNLogType.WC);
 		}  
 		File oldRootAbsPath = SVNFileUtil.createFilePath(SVNPathUtil.getCommonPathAncestor(
@@ -74,7 +69,7 @@ public class SvnOldUpgradeEntries {
 		}
 		
 		if (dirNode.treeConflicts != null) {
-			writeActualOnlyEntries(dirNode.treeConflicts, upgradeData.root.getSDb(), upgradeData.workingCopyId, SVNFileUtil.getFilePath(dirRelPath));
+			writeActualOnlyEntries(dirNode.treeConflicts, upgradeData.root.getSDb(), upgradeData.root.getDb(), upgradeData.rootAbsPath, upgradeData.workingCopyId, SVNFileUtil.getFilePath(dirRelPath));
 		}
 	
 		return dirNode;
@@ -99,6 +94,7 @@ public class SvnOldUpgradeEntries {
 		SVNDate lastModTime;
 		SVNProperties properties;
 		boolean isFileExternal;
+        SVNProperties inheritedProperties;
 	};
 	
 	private static class DbActualNode {
@@ -208,7 +204,23 @@ public class SvnOldUpgradeEntries {
 	     delete+copied    delete+copied      [base|work]+work  [base|work]+work
 	     replace+copied   replace+copied     [base|work]+work  [base|work]+work
 	  */
-		
+
+        if (parentNode == null && entry.getSchedule() != null) {
+            String scheduleOperation;
+            if (SVNProperty.SCHEDULE_ADD.equals(entry.getSchedule())) {
+                scheduleOperation = "addition";
+            } else if (SVNProperty.SCHEDULE_DELETE.equals(entry.getSchedule())) {
+                scheduleOperation = "deletion";
+            } else if (SVNProperty.SCHEDULE_REPLACE.equals(entry.getSchedule())) {
+                scheduleOperation = "replacement";
+            } else {
+                scheduleOperation = entry.getSchedule();
+            }
+
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SCHEDULE, "Working copy root directory is scheduled for {0}; revert it before upgrade.", scheduleOperation);
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
+        }
+
 		assert(parentNode != null || entry.getSchedule() == null);
 		assert(parentNode == null || parentNode.base != null || parentNode.belowWork != null || parentNode.work != null);
 		
@@ -273,8 +285,13 @@ public class SvnOldUpgradeEntries {
 				workingNode.reposRelPath = SVNPathUtil.append(parentNode.work.reposRelPath, SVNFileUtil.getFileName(localRelPath));
 				workingNode.revision = parentNode.work.revision;
 				workingNode.opDepth = parentNode.work.opDepth;
+			} else if (parentNode.belowWork != null && parentNode.belowWork.reposRelPath != null) {
+                workingNode.reposId = upgradeData.repositoryId;
+                workingNode.reposRelPath = SVNFileUtil.getFilePath(SVNFileUtil.createFilePath(parentNode.belowWork.reposRelPath, SVNFileUtil.getFileName(localRelPath)));
+                workingNode.revision = parentNode.belowWork.revision;
+                workingNode.opDepth = parentNode.belowWork.opDepth;
 			} else {
-				SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "No copyfrom URL for '{0}'", localRelPath);
+				SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "No copyfrom URL for ''{0}''", localRelPath);
 	            SVNErrorManager.error(err, SVNLogType.WC);
 			}
 		}
@@ -415,7 +432,7 @@ public class SvnOldUpgradeEntries {
 										
 					if (entryMd5Checksum.getDigest() != null && foundMd5Checksum != null && !entryMd5Checksum.equals(foundMd5Checksum)) {
 						SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, 
-							"Bad base MD5 checksum for '{0}'; expected: '{1}'; found '{2}';", 
+							"Bad base MD5 checksum for ''{0}''; expected: ''{1}''; found ''{2}'';",
 									SVNFileUtil.createFilePath(rootAbsPath, localRelPath), entryMd5Checksum, foundMd5Checksum);
 			           SVNErrorManager.error(err, SVNLogType.WC);
 					}  else {
@@ -453,6 +470,10 @@ public class SvnOldUpgradeEntries {
 			if (entry.getExternalFilePath() != null) {
 				baseNode.isFileExternal = true;
 			}
+
+            if (parentNode != null && isSwitched(parentNode.base, baseNode)) {
+                baseNode.inheritedProperties = new SVNProperties();
+            }
 			
 			insertNode(upgradeData.root.getSDb(), baseNode);
 			
@@ -506,6 +527,22 @@ public class SvnOldUpgradeEntries {
 			belowWorkingNode.depth = SVNDepth.INFINITY;
 			belowWorkingNode.lastModTime = null;
 			belowWorkingNode.properties = null;
+
+            if (workingNode != null
+                    && entry.isScheduledForDeletion()
+                    && workingNode.reposRelPath != null) {
+                belowWorkingNode.reposRelPath = workingNode.reposRelPath;
+                belowWorkingNode.reposId = workingNode.reposId;
+                belowWorkingNode.revision = workingNode.revision;
+
+                belowWorkingNode.changedRev = entry.getCommittedRevision();
+                belowWorkingNode.changedDate = SVNDate.parseDate(entry.getCommittedDate());
+                belowWorkingNode.changedAuthor = entry.getAuthor();
+
+                workingNode.reposRelPath = null;
+                workingNode.reposId = 0;
+                workingNode.revision = SVNRepository.INVALID_REVISION;
+            }
 			
 			insertNode(upgradeData.root.getSDb(), belowWorkingNode);
 		}
@@ -529,6 +566,7 @@ public class SvnOldUpgradeEntries {
 			if (entry.isDirectory()) {
 				workingNode.checksum = null;
 			} else {
+                workingNode.checksum = null;
 				/* text_base_info is NULL for files scheduled to be added. */
 				if (textBaseInfo != null) {
 					workingNode.checksum = textBaseInfo.normalBase.sha1Checksum;
@@ -591,7 +629,7 @@ public class SvnOldUpgradeEntries {
 			actualNode.wcId = upgradeData.workingCopyId;
 			actualNode.localRelPath = SVNFileUtil.getFilePath(localRelPath);
 			actualNode.parentRelPath = parentRelPath;
-			insertActualNode(upgradeData.root.getSDb(), actualNode);
+			insertActualNode(upgradeData.root.getSDb(), upgradeData.root.getDb(), upgradeData.rootAbsPath, actualNode);
 		}
 		
 		WriteBaton entryNode = null;
@@ -610,74 +648,118 @@ public class SvnOldUpgradeEntries {
 		}
 		return entryNode;
 	}
+
+    private static boolean isSwitched(DbNode parent, DbNode child) {
+        if (parent != null && child != null) {
+            if (parent.reposId != child.reposId) {
+                return true;
+            }
+
+            if (parent.reposRelPath != null && child.reposRelPath != null) {
+                File unswitched = SVNFileUtil.createFilePath(parent.reposRelPath, SVNPathUtil.tail(child.localRelPath));
+                if (!SVNFileUtil.getFilePath(unswitched).equals(child.reposRelPath)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 	
 	/* No transaction required: called from write_entry which is itself transaction-wrapped. */
 	private static void insertNode(SVNSqlJetDb sDb, DbNode node) throws SVNException {
 		assert(node.opDepth > 0 || node.reposRelPath != null);
 		SVNSqlJetStatement stmt = sDb.getStatement(SVNWCDbStatements.INSERT_NODE);
-		stmt.bindf("isisnnnnsnrisnnni",  
-				node.wcId,
-				node.localRelPath == null ? "" : node.localRelPath,
-				node.opDepth,
-				node.parentRelPath,
-				/* Setting depth for files? */
-				(node.kind == SVNNodeKind.DIR) ? SVNDepth.asString(node.depth) : null,
-				node.changedRev,
-				node.changedDate != null ? node.changedDate : null,
-				node.changedAuthor,
-				node.lastModTime
-				);
-		
-		if (node.reposRelPath != null) {
-			stmt.bindLong(5, node.reposId);
-			stmt.bindString(6, node.reposRelPath);
-			stmt.bindLong(7, node.revision);
-		}
-		
-		stmt.bindString(8, SvnWcDbStatementUtil.getPresenceText(node.presence));
-		
-		if (node.kind == SVNNodeKind.NONE) 
-			stmt.bindString(10, "unknown");
-		else
-			stmt.bindString(10, node.kind.toString());
-			
-		if (node.kind == SVNNodeKind.FILE) 
-			stmt.bindChecksum(14, node.checksum);
-		
-		if (node.properties != null)  /* ### Never set, props done later */
-			stmt.bindProperties(15, node.properties);
-		
-		if (node.translatedSize != ISVNWCDb.INVALID_FILESIZE) 
-			stmt.bindLong(16, node.translatedSize);
-		
-		if (node.isFileExternal)
-			stmt.bindLong(20, 1);
-		
-		stmt.done();
+        try {
+            stmt.bindf("isisnnnnsnrisnnni",
+                    node.wcId,
+                    node.localRelPath == null ? "" : node.localRelPath,
+                    node.opDepth,
+                    node.parentRelPath,
+                    /* Setting depth for files? */
+                    SVNDepth.asString(node.depth),
+                    node.changedRev,
+                    node.changedDate != null ? node.changedDate : null,
+                    node.changedAuthor,
+                    node.lastModTime
+                    );
+
+            if (node.reposRelPath != null) {
+                stmt.bindLong(5, node.reposId);
+                stmt.bindString(6, node.reposRelPath);
+                stmt.bindLong(7, node.revision);
+            }
+
+            stmt.bindString(8, SvnWcDbStatementUtil.getPresenceText(node.presence));
+
+            if (node.kind == SVNNodeKind.NONE)
+                stmt.bindString(10, "unknown");
+            else
+                stmt.bindString(10, node.kind.toString());
+
+            if (node.kind == SVNNodeKind.FILE)
+                stmt.bindChecksum(14, node.checksum);
+
+            if (node.properties != null)  /* ### Never set, props done later */
+                stmt.bindProperties(15, node.properties);
+
+            if (node.translatedSize != ISVNWCDb.INVALID_FILESIZE)
+                stmt.bindLong(16, node.translatedSize);
+
+            if (node.isFileExternal)
+                stmt.bindLong(20, 1);
+
+            if (node.inheritedProperties != null) {
+                stmt.bindProperties(23, node.inheritedProperties);
+            }
+
+            stmt.done();
+        } finally {
+            stmt.reset();
+        }
 	}
 	
-	private static void insertActualNode(SVNSqlJetDb sDb, DbActualNode actualNode) throws SVNException {
+	private static void insertActualNode(SVNSqlJetDb sDb, ISVNWCDb db, File wriAbsPath, DbActualNode actualNode) throws SVNException {
 		SVNSqlJetStatement stmt = sDb.getStatement(SVNWCDbStatements.INSERT_ACTUAL_NODE);
-		stmt.bindLong(1, actualNode.wcId);
-		stmt.bindString(2, actualNode.localRelPath);
-		stmt.bindString(3, actualNode.parentRelPath);
-		if (actualNode.properties != null)
-			stmt.bindProperties(4, actualNode.properties);
-		if (actualNode.conflictOld != null) {
-			stmt.bindString(5, actualNode.conflictOld);
-			stmt.bindString(6, actualNode.conflictNew);
-			stmt.bindString(7, actualNode.conflictWorking);
-		}
-		if (actualNode.propReject != null) 
-			stmt.bindString(8, actualNode.propReject);
-		if (actualNode.changelist != null) 
-			stmt.bindString(9, actualNode.changelist);
-		if (actualNode.treeConflictData != null) 
-			stmt.bindString(10, actualNode.treeConflictData);
-		stmt.done();
+        try {
+            stmt.bindLong(1, actualNode.wcId);
+            stmt.bindString(2, actualNode.localRelPath);
+            stmt.bindString(3, actualNode.parentRelPath);
+            if (actualNode.properties != null) {
+                stmt.bindProperties(4, actualNode.properties);
+            }
+            if (actualNode.changelist != null) {
+                stmt.bindString(5, actualNode.changelist);
+            }
+
+            byte[] treeConflictDataBytes = null;
+            if (actualNode.treeConflictData != null) {
+                try {
+                    treeConflictDataBytes = actualNode.treeConflictData.getBytes("UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    treeConflictDataBytes = actualNode.treeConflictData.getBytes();
+                }
+            }
+
+
+            SVNSkel conflictData = SvnWcDbConflicts.upgradeConflictSkelFromRaw(db, wriAbsPath,
+                    SVNFileUtil.createFilePath(actualNode.localRelPath),
+                    actualNode.conflictOld,
+                    actualNode.conflictWorking,
+                    actualNode.conflictNew,
+                    SVNFileUtil.createFilePath(actualNode.propReject),
+                    SVNSkel.parse(treeConflictDataBytes));
+
+            if (conflictData != null) {
+                byte[] conflictDataBytes = conflictData.unparse();
+                stmt.bindBlob(6, conflictDataBytes);
+            }
+            stmt.done();
+        } finally {
+            stmt.reset();
+        }
 	}
 	
-	private static void writeActualOnlyEntries(Map<String, String> treeConflicts, SVNSqlJetDb sDb, long wcId, String dirRelPath) throws SVNException {
+	private static void writeActualOnlyEntries(Map<String, String> treeConflicts, SVNSqlJetDb sDb, ISVNWCDb db, File wriAbsPath, long wcId, String dirRelPath) throws SVNException {
 		for (Iterator<String> items = treeConflicts.keySet().iterator(); items.hasNext();) {
 			String path = items.next();
 			DbActualNode actualNode = new DbActualNode();
@@ -685,7 +767,7 @@ public class SvnOldUpgradeEntries {
 			actualNode.localRelPath = path;
 			actualNode.parentRelPath = dirRelPath;
 			actualNode.treeConflictData = treeConflicts.get(path);
-			insertActualNode(sDb, actualNode);
+			insertActualNode(sDb, db, wriAbsPath, actualNode);
 		}
 	}
 	

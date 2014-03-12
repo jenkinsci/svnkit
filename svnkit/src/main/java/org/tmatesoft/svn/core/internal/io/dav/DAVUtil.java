@@ -61,7 +61,7 @@ public class DAVUtil {
             header.setHeaderValue(HTTPHeader.DEPTH_HEADER, "infinity");
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
-                    "Invalid PROPFIND depth value: '{0}'", new Integer(depth));
+                    "Invalid PROPFIND depth value: ''{0}''", new Integer(depth));
             SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         if (label != null) {
@@ -333,6 +333,8 @@ public class DAVUtil {
             propName = SVNProperty.UUID;
         } else if (property == DAVElement.MD5_CHECKSUM) {
             propName = SVNProperty.CHECKSUM;
+        } else if (property == DAVElement.SHA1_CHECKSUM) {
+            propName = SVNProperty.SVNKIT_SHA1_CHECKSUM;
         }
         return propName;
     }

@@ -79,7 +79,7 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
     private static final long NEGOTIATE_KEY_EXCHANGE = 0x40000000L;  
     private static final long NEGOTIATE_56 = 0x80000000L;  
     
-    private static Map ourFlags = new TreeMap();
+    private static Map<Long, String> ourFlags = new TreeMap<Long, String>();
     static {
         ourFlags.put(new Long(NEGOTIATE_UNICODE), "0x00000001 (Negotiate Unicode)");
         ourFlags.put(new Long(NEGOTIATE_OEM), "0x00000002 (Negotiate OEM)");
@@ -114,7 +114,8 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         ourFlags.put(new Long(NEGOTIATE_KEY_EXCHANGE), "0x40000000 (Negotiate Key Exchange)");
         ourFlags.put(new Long(NEGOTIATE_56), "0x80000000 (Negotiate 56)");
     }
-    private static Map ourTargetInfoTypes = new TreeMap();
+
+    private static Map<Integer, String> ourTargetInfoTypes = new TreeMap<Integer, String>();
     static {
         ourTargetInfoTypes.put(new Integer(1), "Server Name");
         ourTargetInfoTypes.put(new Integer(2), "Domain Name");
@@ -256,8 +257,8 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         log.append('\n');
         log.append("Flags: " + Long.toString(flags, 16));
         log.append('\n');
-        for (Iterator flagsIter = ourFlags.keySet().iterator(); flagsIter.hasNext();) {
-            Long curFlag = (Long)flagsIter.next();
+        for (Iterator<Long> flagsIter = ourFlags.keySet().iterator(); flagsIter.hasNext();) {
+            final Long curFlag = flagsIter.next();
             if ((flags & curFlag.longValue()) != 0) {
                 log.append(ourFlags.get(curFlag));
                 log.append('\n');
@@ -408,7 +409,7 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         
-        String username = getUserName();
+        final String username = getUserName();
         String domain = getDomain();
         if (domain == null) {
             domain = "";
@@ -466,8 +467,9 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             addByte((byte)((flags >> 24) & 0xff));
             sublog.append("Flags: " + Long.toString(flags, 16));
             sublog.append('\n');
-            for (Iterator flagsIter = ourFlags.keySet().iterator(); flagsIter.hasNext();) {
-                Long curFlag = (Long)flagsIter.next();
+            
+            for (Iterator<Long> flagsIter = ourFlags.keySet().iterator(); flagsIter.hasNext();) {
+                final Long curFlag = flagsIter.next();
                 if ((flags & curFlag.longValue()) != 0) {
                     sublog.append(ourFlags.get(curFlag));
                     sublog.append('\n');
@@ -515,8 +517,8 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             sublog.append('\n');
             sublog.append("Flags: " + Long.toString(flags, 16));
             sublog.append('\n');
-            for (Iterator flagsIter = ourFlags.keySet().iterator(); flagsIter.hasNext();) {
-                Long curFlag = (Long)flagsIter.next();
+            for (Iterator<Long> flagsIter = ourFlags.keySet().iterator(); flagsIter.hasNext();) {
+                final Long curFlag = flagsIter.next();
                 if ((flags & curFlag.longValue()) != 0) {
                     sublog.append(ourFlags.get(curFlag));
                     sublog.append('\n');
@@ -740,7 +742,7 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
     }
     
     public String getUserName() {
-        String login = super.getUserName();
+        String login = getRawUserName();
         String userName = null;
         int slashInd = login != null ? login.indexOf('\\') : -1; 
         if (slashInd != -1) {
@@ -750,13 +752,13 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             }
             userName = login.substring(lastInd);
         } else {
-            userName = login;
+            userName = login == null ? System.getProperty("user.name") : login;
         }
         return userName;
     }
 
     public String getDomain() {
-        String login = getUserName();
+        String login = getRawUserName();
         String domain = null;
         int slashInd = login != null ? login.indexOf('\\') : -1; 
         if (slashInd != -1) {
@@ -924,6 +926,10 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             key[i] = (byte) (key[i] << 1);
         }
         return key;
+    }
+
+    public boolean allowPropmtForCredentials() {
+        return true;
     }
 
 }

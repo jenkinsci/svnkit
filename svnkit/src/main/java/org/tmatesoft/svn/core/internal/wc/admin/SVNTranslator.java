@@ -56,6 +56,9 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SVNTranslator {
 
     private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
+    
+    private static CodingErrorAction onMalformedInputAction = CodingErrorAction.REPORT;
+    private static CodingErrorAction onUnmappableCharacterAction = CodingErrorAction.REPORT;
 
     public static String translateString(String str, byte[] eol, Map<String, byte[]> keywords, boolean repair, boolean expand) throws SVNException {
         ByteArrayOutputStream bufferOS = new ByteArrayOutputStream();
@@ -172,7 +175,7 @@ public class SVNTranslator {
         }
         if ((charset == null || SVNProperty.isUTF8(charset)) && eol == null && (keywords == null || keywords.isEmpty())) {
             // no expansion, fast copy.
-            SVNFileUtil.copyFile(src, dst, false);
+            SVNFileUtil.copyFile(src, dst, false, false);
             return;
         }
         OutputStream os = SVNFileUtil.openFileForWriting(dst);
@@ -385,7 +388,7 @@ public class SVNTranslator {
             return;
 
         }
-        if (charset == null && eol == null && (keywords == null || keywords.isEmpty())) {
+        if ((charset == null || SVNProperty.isUTF8(charset)) && eol == null && (keywords == null || keywords.isEmpty())) {
             // no expansion, fast copy.
             SVNFileUtil.copyFile(source, destination, false);
             return;
@@ -502,14 +505,14 @@ public class SVNTranslator {
                 byte[] convertedEOL = convertEOL(lf, UTF8_CHARSET, cs);
                 boolean encodingConvertsEOL = !Arrays.equals(lf, convertedEOL);
                 if (Arrays.equals(convertedEOL, eol) && encodingConvertsEOL) {
-                    out = new SVNCharsetOutputStream(out, UTF8_CHARSET, cs, CodingErrorAction.REPORT, CodingErrorAction.REPORT);
+                    out = new SVNCharsetOutputStream(out, UTF8_CHARSET, cs, getOnMalformedInputAction(), getOnUnmappableCharacterAction());
                     if (keywords != null) {
                         out = new SVNTranslatorOutputStream(out, null, false, keywords, expand);
                     }
                     return out;
                 }
             }
-            out = new SVNCharsetOutputStream(out, UTF8_CHARSET, cs, CodingErrorAction.REPORT, CodingErrorAction.REPORT);
+            out = new SVNCharsetOutputStream(out, UTF8_CHARSET, cs, getOnMalformedInputAction(), getOnUnmappableCharacterAction());
             return new SVNTranslatorOutputStream(out, eol, repair, keywords, expand);
         }
         if (eol != null) {
@@ -519,11 +522,11 @@ public class SVNTranslator {
                 if (keywords != null) {
                     out = new SVNTranslatorOutputStream(out, null, false, keywords, expand);
                 }
-                return new SVNCharsetOutputStream(out, cs, UTF8_CHARSET, CodingErrorAction.REPORT, CodingErrorAction.REPORT);
+                return new SVNCharsetOutputStream(out, cs, UTF8_CHARSET, getOnMalformedInputAction(), getOnUnmappableCharacterAction());
             }
         }
         out = new SVNTranslatorOutputStream(out, eol, repair, keywords, expand);
-        return new SVNCharsetOutputStream(out, cs, UTF8_CHARSET, CodingErrorAction.REPORT, CodingErrorAction.REPORT);
+        return new SVNCharsetOutputStream(out, cs, UTF8_CHARSET, getOnMalformedInputAction(), getOnUnmappableCharacterAction());
     }
 
     public static InputStream getTranslatingInputStream(InputStream in, String charset, byte[] eol, boolean repair, Map<String, byte[]> keywords, boolean expand) {
@@ -540,24 +543,24 @@ public class SVNTranslator {
                     if (keywords != null) {
                         in = new SVNTranslatorInputStream(in, null, false, keywords, expand);
                     }
-                    return new SVNCharsetInputStream(in, UTF8_CHARSET, cs);
+                    return new SVNCharsetInputStream(in, UTF8_CHARSET, cs, getOnMalformedInputAction(), getOnUnmappableCharacterAction());
                 }
             }
             in = new SVNTranslatorInputStream(in, eol, repair, keywords, expand);
-            return new SVNCharsetInputStream(in, UTF8_CHARSET, cs);
+            return new SVNCharsetInputStream(in, UTF8_CHARSET, cs, getOnMalformedInputAction(), getOnUnmappableCharacterAction());
         }
         if (eol != null) {
             byte[] convertedEOL = convertEOL(eol, cs, UTF8_CHARSET);
             boolean charsetConvertsEOL = !Arrays.equals(convertedEOL, eol);
             if (Arrays.equals(lf, convertedEOL) && charsetConvertsEOL) {
-                in = new SVNCharsetInputStream(in, cs, UTF8_CHARSET);
+                in = new SVNCharsetInputStream(in, cs, UTF8_CHARSET, getOnMalformedInputAction(), getOnUnmappableCharacterAction());
                 if (keywords != null) {
                     in = new SVNTranslatorInputStream(in, null, false, keywords, expand);
                 }
                 return in;
             }
         }
-        in = new SVNCharsetInputStream(in, cs, UTF8_CHARSET);
+        in = new SVNCharsetInputStream(in, cs, UTF8_CHARSET, getOnMalformedInputAction(), getOnUnmappableCharacterAction());
         return new SVNTranslatorInputStream(in, eol, repair, keywords, expand);
     }
 
@@ -605,7 +608,7 @@ public class SVNTranslator {
                     map.put("LastChangedBy", author);
                     map.put("Author", author);
                 } else if ("HeadURL".equals(token) || "URL".equalsIgnoreCase(token)) {
-                    url = expand && url == null ? SVNEncodingUtil.uriDecode(u).getBytes("UTF-8") : url;
+                    url = expand && url == null ? u.getBytes("UTF-8") : url;
                     map.put("HeadURL", url);
                     map.put("URL", url);
                 } else if ("Id".equalsIgnoreCase(token)) {
@@ -728,5 +731,18 @@ public class SVNTranslator {
             }
         }
         SVNErrorManager.error(error, cause, SVNLogType.DEFAULT);
+    }
+    
+    public static synchronized CodingErrorAction getOnMalformedInputAction() {
+        return onMalformedInputAction;
+    }
+
+    public static synchronized CodingErrorAction getOnUnmappableCharacterAction() {
+        return onUnmappableCharacterAction;
+    }
+
+    public static synchronized void setEncoderActions(CodingErrorAction onMalformedInput, CodingErrorAction onUnmappableCharacter) {
+        onMalformedInputAction = onMalformedInput;
+        onUnmappableCharacterAction = onUnmappableCharacter;
     }
 }

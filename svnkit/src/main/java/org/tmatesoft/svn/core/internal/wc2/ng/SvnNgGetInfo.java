@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.AdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.DeletionInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.MovedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared;
@@ -109,7 +110,7 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnInfo, SvnGetInfo> impl
     public void nodeFound(File localAbspath, SVNWCDbKind kind) throws SVNException {
         SvnInfo info = buildInfo(localAbspath, kind);
         if (info == null && isFirstInfo) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{1}'' was not found", localAbspath), 
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found", localAbspath), 
                     SVNLogType.WC);
         }
         isFirstInfo = false;
@@ -139,6 +140,7 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnInfo, SvnGetInfo> impl
         wcInfo.setDepth(SVNDepth.UNKNOWN);
         wcInfo.setRecordedSize(ISVNWCDb.INVALID_FILESIZE);
         wcInfo.setCopyFromRevision(SVNWCContext.INVALID_REVNUM);
+        wcInfo.setSchedule(SvnSchedule.NORMAL);
         
         return info;
     }
@@ -158,7 +160,7 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnInfo, SvnGetInfo> impl
                 InfoField.depth, InfoField.checksum,
                 InfoField.originalReposRelpath, InfoField.originalRootUrl, InfoField.originalUuid, InfoField.originalRevision,
                 InfoField.lock, InfoField.translatedSize, InfoField.lastModTime, InfoField.changelist,
-                InfoField.conflicted, InfoField.opRoot, InfoField.haveBase);
+                InfoField.conflicted, InfoField.opRoot, InfoField.haveBase, InfoField.movedHere, InfoField.movedTo);
         
         info.setRevision(readInfo.revision);
         info.setRepositoryRootURL(readInfo.reposRootUrl);
@@ -172,6 +174,11 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnInfo, SvnGetInfo> impl
         wcInfo.setRecordedSize(readInfo.translatedSize);
         wcInfo.setRecordedTime(readInfo.lastModTime);
         wcInfo.setChangelist(readInfo.changelist);
+        wcInfo.setMovedTo(readInfo.movedToAbsPath);
+        if (readInfo.opRoot && readInfo.movedHere) {
+            final Structure<MovedInfo> movedInfo = SvnWcDbShared.scanMoved((SVNWCDb) getWcContext().getDb(), localAbspath);
+            wcInfo.setMovedFrom(movedInfo.<File>get(MovedInfo.movedFromAbsPath));
+        }
         
         File reposRelPath = readInfo.reposRelPath;
         

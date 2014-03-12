@@ -1,41 +1,15 @@
 package org.tmatesoft.svn.core.internal.wc2.old;
 
-import java.io.File;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
-import org.tmatesoft.svn.core.internal.wc.SVNExternal;
-import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.*;
+import org.tmatesoft.svn.core.internal.wc.admin.*;
 import org.tmatesoft.svn.core.internal.wc16.SVNUpdateClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
@@ -54,13 +28,13 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
-import org.tmatesoft.svn.core.wc2.SvnChecksum;
+import org.tmatesoft.svn.core.wc2.*;
 import org.tmatesoft.svn.core.wc2.SvnChecksum.Kind;
-import org.tmatesoft.svn.core.wc2.SvnGetProperties;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
-import org.tmatesoft.svn.core.wc2.SvnUpgrade;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.File;
+import java.io.InputStream;
+import java.util.*;
 
 public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
@@ -191,7 +165,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			readEntries(wcAccess, localAbsPath);
 		} catch (SVNException e) {
 			SVNErrorMessage err = SVNErrorMessage.create(
-					SVNErrorCode.WC_INVALID_OP_ON_CWD, "Can''t upgrade ''{0}'' as it is not a pre-1.7 working copy directory", localAbsPath);
+					SVNErrorCode.WC_INVALID_OP_ON_CWD, "Can''t upgrade ''{0}'' as it is not a working copy directory", localAbsPath);
 			SVNErrorManager.error(err, SVNLogType.WC);
 		} 
 		
@@ -236,7 +210,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			}
 		}
 		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OP_ON_CWD,
-						"Can''t upgrade ''{0}'' as it is not a pre-1.7 working copy root, the root is ''{1}''", localAbsPath, parentAbsPath);
+						"Can''t upgrade ''{0}'' as it is not a working copy root, the root is ''{1}''", localAbsPath, parentAbsPath);
 		SVNErrorManager.error(err, SVNLogType.WC);
 	}
 
@@ -280,7 +254,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
 		if (getEntryURL(entry) == null) {
 			SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
-							"Working copy '{0}' can't be upgraded because it doesn't have a url", localAbsPath);
+							"Working copy ''{0}'' can't be upgraded because it doesn't have a url", localAbsPath);
 			SVNErrorManager.error(err, SVNLogType.WC);
 		}
 
@@ -323,7 +297,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		/* Create the new DB in the temporary root wc/.svn/tmp/wcng/.svn */
 
 		upgradeData.rootAbsPath = SVNFileUtil.createFilePath(SVNWCUtils.admChild(localAbsPath, "tmp"), "wcng");
-		File rootAdmAbsPath = SVNWCUtils.admChild(upgradeData.rootAbsPath, "tmp");
+		File rootAdmAbsPath = SVNWCUtils.admChild(upgradeData.rootAbsPath, "");
 
 		try {
 
@@ -385,7 +359,11 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			SVNFileUtil.deleteAll(upgradeData.rootAbsPath, true);
 		}
 
-	}
+        if (getOperation().getEventHandler() != null) {
+            SVNEvent event = SVNEventFactory.createSVNEvent(localAbsPath, SVNNodeKind.DIR, null, -1, SVNEventAction.UPGRADE, null, null, null);
+            getOperation().getEventHandler().handleEvent(event, -1);
+        }
+    }
 
 	private void upgradeWorkingCopy(WriteBaton parentDirBaton, SVNWCDb db, File dirAbsPath, SVNWCDbUpgradeData data, Map<SVNURL, String> reposCache, RepositoryInfo reposInfo) throws SVNException {
 
@@ -397,7 +375,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
 		if (oldFormat >= SVNWCContext.WC_NG_VERSION) {
 			if (getOperation().getEventHandler() != null) {
-				SVNEvent event = SVNEventFactory.createSVNEvent(dirAbsPath,SVNNodeKind.DIR, null, -1, SVNEventAction.SKIP, null, null, null);
+				SVNEvent event = SVNEventFactory.createSVNEvent(dirAbsPath,SVNNodeKind.DIR, null, -1, SVNEventAction.SKIP, SVNEventAction.UPGRADED_PATH, null, null);
 				getOperation().getEventHandler().handleEvent(event, -1);
 			}
 			return;
@@ -409,7 +387,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		} catch (SVNException ex) {
 			if (ex.isEnoent()) {
 				if (getOperation().getEventHandler() != null) {
-					SVNEvent event = SVNEventFactory.createSVNEvent(dirAbsPath, SVNNodeKind.DIR, null, -1, SVNEventAction.SKIP, null, null, null);
+					SVNEvent event = SVNEventFactory.createSVNEvent(dirAbsPath, SVNNodeKind.DIR, null, -1, SVNEventAction.SKIP, SVNEventAction.UPGRADED_PATH, null, null);
 					getOperation().getEventHandler().handleEvent(event, -1);
 				}
 			}
@@ -500,6 +478,9 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 					SVNErrorMessage err = ex.getErrorMessage().wrap("This working copy is corrupt and cannot be upgraded. Please check out a new working copy.");
 					SVNErrorManager.error(err, SVNLogType.WC);
 				}
+                if (ex.getErrorMessage().getErrorCode() == SVNErrorCode.WC_INVALID_SCHEDULE) {
+                    throw ex;
+                }
 			}
 
 			/***** WC PROPS *****/
@@ -601,10 +582,14 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
 				/* Insert a row into the pristine table. */
 				SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.INSERT_OR_IGNORE_PRISTINE);
-				stmt.bindChecksum(1, sha1Checksum);
-				stmt.bindChecksum(2, md5Checksum);
-				stmt.bindLong(3, textBasePath.length());
-				stmt.exec();
+                try {
+                    stmt.bindChecksum(1, sha1Checksum);
+                    stmt.bindChecksum(2, md5Checksum);
+                    stmt.bindLong(3, textBasePath.length());
+                    stmt.exec();
+                } finally {
+                    stmt.reset();
+                }
 
 				pristinePath = SvnWcDbPristines.getPristineFuturePath(root, sha1Checksum);
 

@@ -223,6 +223,9 @@ public class SVNCopyClient16 extends SVNCopyDriver {
      * @since 1.2
      */
     public ISVNExternalsHandler getExternalsHandler() {
+        if (myExternalsHandler == null) {
+            return ISVNExternalsHandler.DEFAULT;
+        }
         return this.myExternalsHandler;
     }
 

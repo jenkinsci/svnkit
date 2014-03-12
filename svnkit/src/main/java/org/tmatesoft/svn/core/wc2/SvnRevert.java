@@ -36,9 +36,11 @@ import org.tmatesoft.svn.core.SVNException;
 public class SvnRevert extends SvnOperation<Void> {
 
     private boolean revertMissingDirectories;
+    private boolean preserveModifiedCopies;
 
     protected SvnRevert(SvnOperationFactory factory) {
         super(factory);
+        preserveModifiedCopies = false; // default Subversion behaviour, see issue #3101 of SVN issue tracker
     }
 
     public boolean isRevertMissingDirectories() {
@@ -47,6 +49,14 @@ public class SvnRevert extends SvnOperation<Void> {
 
     public void setRevertMissingDirectories(boolean revertMissingDirectories) {
         this.revertMissingDirectories = revertMissingDirectories;
+    }
+
+    public boolean isPreserveModifiedCopies() {
+        return preserveModifiedCopies;
+    }
+
+    public void setPreserveModifiedCopies(boolean preserveModifiedCopies) {
+        this.preserveModifiedCopies = preserveModifiedCopies;
     }
 
     @Override

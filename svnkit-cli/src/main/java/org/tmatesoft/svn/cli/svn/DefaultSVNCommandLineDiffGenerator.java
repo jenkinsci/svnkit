@@ -11,13 +11,14 @@
  */
 package org.tmatesoft.svn.cli.svn;
 
+import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Date;
-
-import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 
 
 /**
@@ -35,8 +36,8 @@ public class DefaultSVNCommandLineDiffGenerator extends DefaultSVNDiffGenerator 
     }
     
     protected void displayHeaderFields(OutputStream os, String label1, String label2) throws IOException {
-        Date time1 = new Date(myFile1.lastModified());
-        Date time2 = new Date(myFile2.lastModified());
+        Date time1 = new Date(SVNFileUtil.getFileLastModified(myFile1));
+        Date time2 = new Date(SVNFileUtil.getFileLastModified(myFile2));
         String timestamp1 = SVNDate.formatConsoleDiffDate(time1);
         String timestamp2 = SVNDate.formatConsoleDiffDate(time2);
         String file1 = myFile1.getAbsolutePath();

@@ -356,7 +356,7 @@ public class SVNStatusClient16 extends SVNBasicDelegate {
 
             public void handleStatus(SVNStatus status) throws SVNException {
                 if (deletedInRepository[0] && status.getEntry() != null) {
-                    status.setRemoteStatus(SVNStatusType.STATUS_DELETED, null, null, null);
+                    status.setRemoteNodeStatus(SVNStatusType.STATUS_DELETED);
                 }
                 if (!SVNWCAccess.matchesChangeList(changeLists, status.getEntry())) {
                     return;

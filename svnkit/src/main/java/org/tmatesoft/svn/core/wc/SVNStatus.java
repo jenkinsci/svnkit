@@ -11,16 +11,17 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import java.io.File;
-import java.util.Date;
-import java.util.Map;
-
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+
+import java.io.File;
+import java.util.Date;
+import java.util.Map;
 
 /**
  * The <b>SVNStatus</b> class is used to provide detailed status information for
@@ -154,6 +155,9 @@ public class SVNStatus {
 
     private boolean myIsVersioned;
     private SVNDepth myDepth;
+    
+    private File myMovedToPath;
+    private File myMovedFromPath;
 
     /**
      * Constructs an <b>SVNStatus</b> object filling it with status information
@@ -275,6 +279,10 @@ public class SVNStatus {
      * have been moved in the repository, but {@link SVNStatus#getURL()
      * getURL()} returns the item's URL as it's defined in a URL entry property.
      * Applicable for a remote status invocation.
+     *
+     * Used by SVNKit internals and not intended for users (from an API point of view).
+     * Use {@link SVNStatus#getRepositoryRelativePath getRepositoryRelativePath} and
+     * {@link SVNStatus#getRepositoryRootURL()} instead.
      *
      * @return the item's URL as it's real repository location
      */
@@ -539,8 +547,8 @@ public class SVNStatus {
      * Gets the item's last committed repository revision. Relevant for a remote
      * status invocation.
      *
-     * @return the latest repository revision when the item was changed; <span
-     *         class="javakeyword">null</span> if there are no incoming changes
+     * @return the latest repository revision when the item was changed;
+     *         SVNRevision.UNDEFINED if there are no incoming changes
      *         for this file or directory.
      */
     public SVNRevision getRemoteRevision() {
@@ -586,7 +594,7 @@ public class SVNStatus {
     public Date getWorkingContentsDate() {
         if (myLocalContentsDate == null) {
             if (getFile() != null && getKind() == SVNNodeKind.FILE) {
-                myLocalContentsDate = new Date(getFile().lastModified());
+                myLocalContentsDate = new Date(SVNFileUtil.getFileLastModified(getFile()));
             } else {
                 myLocalContentsDate = new Date(0);
             }
@@ -609,7 +617,7 @@ public class SVNStatus {
                 propFile = new File(getFile().getAbsoluteFile().getParentFile(), SVNFileUtil.getAdminDirectoryName());
                 propFile = new File(propFile, "props/" + getFile().getName() + ".svn-work");
             }
-            myLocalPropertiesDate = propFile != null ? new Date(propFile.lastModified()) : new Date(0);
+            myLocalPropertiesDate = propFile != null ? new Date(SVNFileUtil.getFileLastModified(propFile)) : new Date(0);
         }
         return myLocalPropertiesDate;
     }
@@ -767,15 +775,21 @@ public class SVNStatus {
     }
     
     public SVNStatusType getCombinedNodeAndContentsStatus() {
-        if (getNodeStatus() == SVNStatusType.STATUS_CONFLICTED) {
-            if (!isVersioned() && isConflicted()) {
-                return SVNStatusType.STATUS_MISSING;
-            }
-            return getContentsStatus();
-        } else if (getNodeStatus() == SVNStatusType.STATUS_MODIFIED) {
-            return getContentsStatus();
-        }
-        return getNodeStatus();
+        int workingCopyFormat = getWorkingCopyFormat();
+        SVNStatusType nodeStatus = getNodeStatus();
+        SVNStatusType contentsStatus = getContentsStatus();
+        boolean versioned = isVersioned();
+        boolean conflicted = isConflicted();
+
+        return combineNodeAndContentsStatus(workingCopyFormat, nodeStatus, contentsStatus, versioned, conflicted);
+    }
+
+    public SVNStatusType getCombinedRemoteNodeAndContentsStatus() {
+        int workingCopyFormat = getWorkingCopyFormat();
+        SVNStatusType remoteNodeStatus = getRemoteNodeStatus();
+        SVNStatusType remoteContentsStatus = getRemoteContentsStatus();
+
+        return combineRemoteNodeAndContentsStatus(workingCopyFormat, remoteNodeStatus, remoteContentsStatus);
     }
 
     public SVNStatusType getNodeStatus() {
@@ -796,9 +810,17 @@ public class SVNStatus {
     public String getRepositoryRelativePath() {
         return myRepositoryRelativePath;
     }
-    
+
     public SVNDepth getDepth() {
         return myDepth;
+    }
+    
+    public File getMovedToPath() {
+        return myMovedToPath;
+    }
+
+    public File getMovedFromPath() {
+        return myMovedFromPath;
     }
 
     public void setRemoteNodeStatus(SVNStatusType remoteNodeStatus) {
@@ -956,7 +978,7 @@ public class SVNStatus {
     public void setIsConflicted(boolean isConflicted) {
         myIsConflicted = isConflicted;
     }
-    
+
     public void setIsVersioned(boolean isVersioned) {
         myIsVersioned = isVersioned;
     }
@@ -965,4 +987,38 @@ public class SVNStatus {
         myDepth = depth;
     }
     
+    public void setMovedFromPath(File path) {
+        myMovedFromPath = path;
+    }
+    
+    public void setMovedToPath(File path) {
+        myMovedToPath = path;
+    }
+
+    public static SVNStatusType combineNodeAndContentsStatus(int workingCopyFormat, SVNStatusType nodeStatus, SVNStatusType contentsStatus, boolean versioned, boolean conflicted) {
+        if (workingCopyFormat >= ISVNWCDb.WC_FORMAT_17) {
+            if (nodeStatus == SVNStatusType.STATUS_CONFLICTED) {
+                if (!versioned && conflicted) {
+                    return SVNStatusType.STATUS_MISSING;
+                }
+                return contentsStatus;
+            } else if (nodeStatus == SVNStatusType.STATUS_MODIFIED) {
+                return contentsStatus;
+            }
+            return nodeStatus;
+        } else {
+            return contentsStatus;
+        }
+    }
+
+    public static SVNStatusType combineRemoteNodeAndContentsStatus(int workingCopyFormat, SVNStatusType remoteNodeStatus, SVNStatusType remoteContentsStatus) {
+        if (workingCopyFormat >= ISVNWCDb.WC_FORMAT_17) {
+            if (remoteNodeStatus == SVNStatusType.STATUS_MODIFIED) {
+                return remoteContentsStatus;
+            }
+            return remoteNodeStatus;
+        } else {
+            return remoteContentsStatus;
+        }
+    }
 }

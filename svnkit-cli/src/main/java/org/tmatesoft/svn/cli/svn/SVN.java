@@ -128,6 +128,7 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.SUMMARIZE);
         SVNCommandLine.registerOption(SVNOption.NOTICE_ANCESTRY);
         SVNCommandLine.registerOption(SVNOption.NO_DIFF_DELETED);
+        SVNCommandLine.registerOption(SVNOption.NO_DIFF_ADDED);
         SVNCommandLine.registerOption(SVNOption.STOP_ON_COPY);
         SVNCommandLine.registerOption(SVNOption.LIMIT);
         SVNCommandLine.registerOption(SVNOption.AUTHOR_OF_INTEREST);
@@ -138,6 +139,7 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.PASSWORD);
         SVNCommandLine.registerOption(SVNOption.NO_AUTH_CACHE);
         SVNCommandLine.registerOption(SVNOption.NON_INTERACTIVE);
+        SVNCommandLine.registerOption(SVNOption.FORCE_INTERACTIVE);
         SVNCommandLine.registerOption(SVNOption.WITH_ALL_REVPROPS);
         SVNCommandLine.registerOption(SVNOption.SHOW_REVS);
         SVNCommandLine.registerOption(SVNOption.REINTEGRATE);
@@ -147,7 +149,10 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.CONFIG_OPTION);
 
         SVNCommandLine.registerOption(SVNOption.STRIP);
-        
+        SVNCommandLine.registerOption(SVNOption.SHOW_INHERITED_PROPS);
+        SVNCommandLine.registerOption(SVNOption.INCLUDE_EXTERNALS);
+        SVNCommandLine.registerOption(SVNOption.PROPERTIES_ONLY);
+
     }
 
     protected boolean needArgs() {

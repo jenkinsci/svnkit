@@ -81,6 +81,7 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption SUMMARIZE = new SVNOption("summarize");
     public static final SVNOption NOTICE_ANCESTRY = new SVNOption("notice-ancestry");
     public static final SVNOption NO_DIFF_DELETED = new SVNOption("no-diff-deleted");
+    public static final SVNOption NO_DIFF_ADDED = new SVNOption("no-diff-added");
     public static final SVNOption STOP_ON_COPY = new SVNOption("stop-on-copy");
     public static final SVNOption LIMIT = new SVNOption("limit", "l", false);
     public static final SVNOption AUTHOR_OF_INTEREST = new SVNOption("author", "a", false);
@@ -89,16 +90,20 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption WITH_NO_REVPROPS = new SVNOption("with-no-revprops");
     public static final SVNOption GIT_DIFF_FORMAT = new SVNOption("git");
     public static final SVNOption DIFF = new SVNOption("diff");
+    public static final SVNOption SHOW_INHERITED_PROPS = new SVNOption("show-inherited-props");
 
     // auth options.
     public static final SVNOption USERNAME = new SVNOption("username", false);
     public static final SVNOption PASSWORD = new SVNOption("password", false);
     public static final SVNOption NO_AUTH_CACHE = new SVNOption("no-auth-cache");
     public static final SVNOption NON_INTERACTIVE = new SVNOption("non-interactive");
+    public static final SVNOption FORCE_INTERACTIVE = new SVNOption("force-interactive");
     public static final SVNOption TRUST_SERVER_CERT = new SVNOption("trust-server-cert");
 
     public static final SVNOption STRIP = new SVNOption("strip", "p");
     public static final SVNOption ALLOW_MIXED_REVISIONS = new SVNOption("allow-mixed-revisions");
+    public static final SVNOption INCLUDE_EXTERNALS = new SVNOption("include-externals");
+    public static final SVNOption PROPERTIES_ONLY = new SVNOption("properties-only");
 
     public static Collection addLogMessageOptions(Collection target) {
         if (target != null) {

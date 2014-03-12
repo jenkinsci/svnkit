@@ -584,7 +584,7 @@ public class SVNClient implements SVNClientInterface {
     public void copy(CopySource[] sources, String destPath, String message,
             boolean copyAsChild, boolean makeParents, boolean ignoreExternals,
             Map revpropTable) throws ClientException {
-        // TODO Auto-generated method stub
+        myDelegate.copy(sources, destPath, message, copyAsChild, makeParents, ignoreExternals, revpropTable);
         
     }
 
@@ -593,7 +593,7 @@ public class SVNClient implements SVNClientInterface {
             Revision srcPegRevision, boolean discoverChangedPaths, int depth,
             String[] revProps, LogMessageCallback callback)
             throws ClientException {
-        // TODO Auto-generated method stub
+        myDelegate.getMergeinfoLog(kind, pathOrUrl, pegRevision, mergeSourceUrl, srcPegRevision, discoverChangedPaths, depth, revProps, callback);
         
     }
 
@@ -602,8 +602,7 @@ public class SVNClient implements SVNClientInterface {
             int depth, String[] changelists, boolean ignoreAncestry,
             boolean noDiffDeleted, boolean force, boolean copiesAsAdds)
             throws ClientException {
-        // TODO Auto-generated method stub
-        
+        myDelegate.diff(target1, revision1, target2, revision2, relativeToDir, outFileName, depth, changelists, ignoreAncestry, noDiffDeleted, force, copiesAsAdds);
     }
 
     public void diff(String target, Revision pegRevision,
@@ -611,21 +610,18 @@ public class SVNClient implements SVNClientInterface {
             String outFileName, int depth, String[] changelists,
             boolean ignoreAncestry, boolean noDiffDeleted, boolean force,
             boolean copiesAsAdds) throws ClientException {
-        // TODO Auto-generated method stub
-        
+        myDelegate.diff(target, pegRevision, startRevision, endRevision, relativeToDir, outFileName, depth, changelists, ignoreAncestry, noDiffDeleted, force, copiesAsAdds);
     }
 
     public void blame(String path, Revision pegRevision,
             Revision revisionStart, Revision revisionEnd,
             boolean ignoreMimeType, boolean includeMergedRevisions,
             BlameCallback3 callback) throws ClientException {
-        // TODO Auto-generated method stub
-        
+        myDelegate.blame(path, pegRevision, revisionStart, revisionEnd, ignoreMimeType, includeMergedRevisions, callback);
     }
 
     public void upgrade(String path) throws ClientException {
-        // TODO Auto-generated method stub
-        
+        myDelegate.upgrade(path);
     }
 
 }

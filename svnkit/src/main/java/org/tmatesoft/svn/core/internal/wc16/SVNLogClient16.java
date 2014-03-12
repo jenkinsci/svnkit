@@ -453,7 +453,7 @@ public class SVNLogClient16 extends SVNBasicDelegate {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Start revision must precede end revision"), SVNLogType.DEFAULT);
         }
         File tmpFile = SVNFileUtil.createTempDirectory("annotate");
-        doAnnotate(repos.getLocation().toDecodedString(), startRev, tmpFile, repos, endRev, ignoreMimeType, handler, inputEncoding, includeMergedRevisions);
+        doAnnotate(repos.getLocation().toString(), startRev, tmpFile, repos, endRev, ignoreMimeType, handler, inputEncoding, includeMergedRevisions);
     }
 
     /**

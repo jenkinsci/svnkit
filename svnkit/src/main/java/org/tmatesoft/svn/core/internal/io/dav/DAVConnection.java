@@ -47,7 +47,6 @@ import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNLogType;
-
 import org.xml.sax.helpers.DefaultHandler;
 
 
@@ -185,7 +184,7 @@ public class DAVConnection {
         return handler.getLocks();
     }
 
-    public SVNLock doLock(String path, DAVRepository repos, String comment, boolean force, long revision) throws SVNException {
+    public SVNLock doLock(String repositoryPath, String path, DAVRepository repos, String comment, boolean force, long revision) throws SVNException {
         beforeCall();
         DAVBaselineInfo info = DAVUtil.getBaselineInfo(this, repos, path, -1, false, true, null);
 
@@ -211,17 +210,24 @@ public class DAVConnection {
             myLastStatus = httpConnection.getLastStatus();
             exception = e;
         }
-
             if (myLastStatus != null) {
                 if (myLastStatus.getCode() == 405) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, "Lock request failed: {0} {1}",
                             new Object[] {myLastStatus.getCode(), myLastStatus.getReason()});
                     SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
-
                 if (myLastStatus.getError() != null) {
+                myLastStatus.getError().setChildErrorMessage(null); //  subversion doesn't have a child message for lock
                     SVNErrorManager.error(myLastStatus.getError(), SVNLogType.NETWORK);
                 }
+            
+            if (myLastStatus.getHeader() == null) {
+                if (exception != null) {
+                    throw exception;
+                }
+                return null;
+            }
+            
                 String userName = myLastStatus.getHeader().getFirstHeaderValue(HTTPHeader.LOCK_OWNER_HEADER);
                 if (userName == null) {
                     userName = httpConnection.getLastValidCredentials() != null ? httpConnection.getLastValidCredentials().getUserName() : null;
@@ -232,7 +238,7 @@ public class DAVConnection {
                     SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
                 Date createdDate = created != null ? SVNDate.parseDate(created) : null;
-                return new SVNLock(info.baselinePath, handler.getID(), userName, comment, createdDate, null);
+            return new SVNLock(repositoryPath, handler.getID(), userName, comment, createdDate, null);
             }
 
         if (exception != null) {
@@ -426,6 +432,7 @@ public class DAVConnection {
             myLastStatus = httpConnection.getLastStatus();
             exception = e;
         }
+        if (myLastStatus != null) {
         if (myLastStatus.getError() != null) {
             SVNErrorCode errCode = myLastStatus.getError().getErrorCode();
             if (errCode == SVNErrorCode.FS_BAD_LOCK_TOKEN || errCode == SVNErrorCode.FS_NO_LOCK_TOKEN || 
@@ -472,6 +479,7 @@ public class DAVConnection {
                 return myLastStatus;
             } 
             SVNErrorManager.error(myLastStatus.getError(), SVNLogType.NETWORK);
+        }
         }
 
         if (exception != null) {
@@ -638,6 +646,8 @@ public class DAVConnection {
         myCapabilities.put(SVNCapability.DEPTH, DAV_CAPABILITY_NO);
         myCapabilities.put(SVNCapability.MERGE_INFO, DAV_CAPABILITY_NO);
         myCapabilities.put(SVNCapability.LOG_REVPROPS, DAV_CAPABILITY_NO);
+        myCapabilities.put(SVNCapability.ATOMIC_REVPROPS, DAV_CAPABILITY_NO);
+        myCapabilities.put(SVNCapability.INHERITED_PROPS, DAV_CAPABILITY_NO);
     	
     	Collection capValues = status.getHeader().getHeaderValues(HTTPHeader.DAV_HEADER);
     	if (capValues != null) {
@@ -651,6 +661,10 @@ public class DAVConnection {
     				myCapabilities.put(SVNCapability.LOG_REVPROPS, DAV_CAPABILITY_YES);
     			} else if (DAVElement.PARTIAL_REPLAY_OPTION.equalsIgnoreCase(value)) {
     				myCapabilities.put(SVNCapability.PARTIAL_REPLAY, DAV_CAPABILITY_YES);
+    			} else if (DAVElement.ATOMIC_REVPROPS_OPTION.equalsIgnoreCase(value)) {
+                    myCapabilities.put(SVNCapability.ATOMIC_REVPROPS, DAV_CAPABILITY_YES);
+                } else if (DAVElement.ATOMIC_REVPROPS_OPTION.equalsIgnoreCase(value)) {
+                    myCapabilities.put(SVNCapability.INHERITED_PROPS, DAV_CAPABILITY_YES);
     			}
 			}
     	}

@@ -11,6 +11,9 @@
  */
 package org.tmatesoft.svn.core.internal.util.jna;
 
+import java.util.Arrays;
+import java.util.List;
+
 import com.sun.jna.Library;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
@@ -40,5 +43,9 @@ public interface ISVNGLibrary extends Library {
         public Pointer data;
         public Pointer next;
         public Pointer previous;
+
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("data", "next", "previous");
+        }
     }
 }

@@ -1,9 +1,5 @@
 package org.tmatesoft.svn.test;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -13,6 +9,10 @@ import org.tmatesoft.svn.core.wc2.SvnCheckout;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 @Ignore("Incomplete")
 public class AuthTest {
@@ -51,9 +51,9 @@ public class AuthTest {
 
             final String readOnly =
                     "[/]" + "\n" +
-                    "*=rw" + "\n" +
-                    "[/directory]" + "\n" +
-                    "*=r" + "\n";
+                            "*=rw" + "\n" +
+                            "[/directory]" + "\n" +
+                            "*=r" + "\n";
 
             sandbox.writeActiveAuthzContents(url, readOnly);
 
@@ -113,9 +113,9 @@ public class AuthTest {
 
             final String readOnly =
                     "[/]" + "\n" +
-                    "*=rw" + "\n" +
-                    "[/directory]" + "\n" +
-                    "*=r" + "\n";
+                            "*=rw" + "\n" +
+                            "[/directory]" + "\n" +
+                            "*=r" + "\n";
 
             sandbox.writeActiveAuthzContents(url, readOnly);
 

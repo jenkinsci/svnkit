@@ -14,8 +14,8 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Stack;
 
@@ -43,15 +43,15 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class FSCommitEditor implements ISVNEditor {
 
-    private Map myPathsToLockTokens;
-    private Collection myLockTokens;
+    private Map<String, String> myPathsToLockTokens;
+    private Collection<String> myLockTokens;
     private String myBasePath;
     private FSTransactionInfo myTxn;
     private FSTransactionRoot myTxnRoot;
     private boolean isTxnOwner;
     private FSFS myFSFS;
     private FSRepository myRepository;
-    private Stack myDirsStack;
+    private Stack<DirBaton> myDirsStack;
     private FSDeltaConsumer myDeltaConsumer;
     private SVNProperties myCurrentFileProps;
     private String myCurrentFilePath;
@@ -59,7 +59,7 @@ public class FSCommitEditor implements ISVNEditor {
     private SVNProperties myRevProps;
     private String myAuthor;
     
-    public FSCommitEditor(String path, String logMessage, String userName, Map lockTokens, boolean keepLocks, FSTransactionInfo txn, FSFS owner, FSRepository repository) {
+    public FSCommitEditor(String path, String logMessage, String userName, Map<String, String> lockTokens, boolean keepLocks, FSTransactionInfo txn, FSFS owner, FSRepository repository) {
         this(path, lockTokens, keepLocks, txn, owner, repository, null);
         myRevProps = new SVNProperties();
         if (userName != null) {
@@ -71,15 +71,15 @@ public class FSCommitEditor implements ISVNEditor {
         }
     }
 
-    public FSCommitEditor(String path, Map lockTokens, boolean keepLocks, FSTransactionInfo txn, FSFS owner, FSRepository repository, SVNProperties revProps) {
+    public FSCommitEditor(String path, Map<String, String> lockTokens, boolean keepLocks, FSTransactionInfo txn, FSFS owner, FSRepository repository, SVNProperties revProps) {
         myPathsToLockTokens = !keepLocks ? lockTokens : null;
-        myLockTokens = lockTokens != null ? lockTokens.values() : new LinkedList();
+        myLockTokens = lockTokens != null ? lockTokens.values() : new HashSet<String>();
         myBasePath = path;
         myTxn = txn;
         isTxnOwner = txn == null;
         myRepository = repository;
         myFSFS = owner;
-        myDirsStack = new Stack();
+        myDirsStack = new Stack<DirBaton>();
         myRevProps = revProps != null ? revProps : new SVNProperties();
     }
 
@@ -188,7 +188,7 @@ public class FSCommitEditor implements ISVNEditor {
         SVNProperties properties = null;
         boolean done = false;
         boolean haveRealChanges = false;
-        for (Iterator propNames = propNamesToValues.nameSet().iterator(); propNames.hasNext();) {
+        for (Iterator<String> propNames = propNamesToValues.nameSet().iterator(); propNames.hasNext();) {
             String propName = (String)propNames.next();
             SVNPropertyValue propValue = propNamesToValues.getSVNPropertyValue(propName);
 
@@ -199,7 +199,7 @@ public class FSCommitEditor implements ISVNEditor {
                 kind = parentPath.getRevNode().getType();
 
                 if ((myTxnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
-                    FSCommitter.allowLockedOperation(myFSFS, path, getAuthor(), myLockTokens, false, false);
+                    myCommitter.allowLockedOperation(myFSFS, path, getAuthor(), myLockTokens, false, false);
                 }
 
                 myCommitter.makePathMutable(parentPath, path);
@@ -379,17 +379,24 @@ public class FSCommitEditor implements ISVNEditor {
     }
 
     private void releaseLocks() {
-        if (myPathsToLockTokens != null) {
-            for (Iterator paths = myPathsToLockTokens.keySet().iterator(); paths.hasNext();) {
-                String path = (String) paths.next();
-                String token = (String) myPathsToLockTokens.get(path);
-                String absPath = !path.startsWith("/") ? SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myBasePath, path)) : path;
+        releaseLocks(myPathsToLockTokens, false, true);
+        final Map<String, String> autoUnlockPaths = myCommitter.getAutoUnlockPaths();
+        releaseLocks(autoUnlockPaths, true, false);
+    }
 
-                try {
-                    myFSFS.unlockPath(absPath, token, getAuthor(), false, true);
-                } catch (SVNException svne) {
-                    // ignore exceptions
-                }
+    private void releaseLocks(Map<String, String> pathsToLockTokens, boolean breakLocks, boolean runHooks) {
+        if (pathsToLockTokens == null) {
+            return;
+        }
+        for (Iterator<String> paths = pathsToLockTokens.keySet().iterator(); paths.hasNext();) {
+            String path = (String) paths.next();
+            String token = (String) pathsToLockTokens.get(path);
+            String absPath = !path.startsWith("/") ? SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myBasePath, path)) : path;
+
+            try {
+                myFSFS.unlockPath(absPath, token, getAuthor(), breakLocks, runHooks);
+            } catch (SVNException svne) {
+                // ignore exceptions
             }
         }
     }

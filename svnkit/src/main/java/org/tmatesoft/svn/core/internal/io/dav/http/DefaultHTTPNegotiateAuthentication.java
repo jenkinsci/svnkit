@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.security.auth.Subject;
@@ -25,7 +26,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -40,7 +40,7 @@ public class DefaultHTTPNegotiateAuthentication extends HTTPNegotiateAuthenticat
     private static final String NEGOTIATE_TYPE_SPNEGO = "spnego"; 
     private static final String NEGOTIATE_TYPE_KERBEROS = "krb"; 
 
-    private static Map ourOids = new SVNHashMap();
+    private static Map<String, Oid> ourOids = new HashMap<String, Oid>();
     
     static {
         try {
@@ -139,6 +139,9 @@ public class DefaultHTTPNegotiateAuthentication extends HTTPNegotiateAuthenticat
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: initialize subject, subject: " + mySubject);
         } catch (LoginException e) {
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e);
+//            SecurityException rethrown = new SecurityException();
+//            rethrown.initCause(e);
+//            throw rethrown;
         }
     }
 
@@ -160,15 +163,15 @@ public class DefaultHTTPNegotiateAuthentication extends HTTPNegotiateAuthenticat
             initializeSubject();
         }
 
-        PrivilegedExceptionAction action = new PrivilegedExceptionAction() {
-            public Object run() throws SVNException {
+        final PrivilegedExceptionAction<String> action = new PrivilegedExceptionAction<String>() {
+            public String run() throws SVNException {
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: authenticate action: isStarted: " + isStarted());
                 if (!isStarted()) {
                     try {
                         initializeContext();
                         SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: authenticate action: context initializaed");
                     } catch (GSSException gsse) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Negotiate authentication failed: ''{0}''", gsse.getMajorString());
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Negotiate authentication failed: ''{0}''", gsse.getMajorString());
                         SVNErrorManager.error(err, SVNLogType.NETWORK);
                         return null;
                     }
@@ -184,7 +187,7 @@ public class DefaultHTTPNegotiateAuthentication extends HTTPNegotiateAuthenticat
                         SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: authenticate action: out token: " + SVNBase64.byteArrayToBase64(outtoken));
                     }
                 } catch (GSSException gsse) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Negotiate authentication failed: ''{0}''", gsse.getMajorString());
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Negotiate authentication failed: ''{0}''", gsse.getMajorString());
                     SVNErrorManager.error(err, SVNLogType.NETWORK);
                     return null;
                 }
@@ -210,19 +213,19 @@ public class DefaultHTTPNegotiateAuthentication extends HTTPNegotiateAuthenticat
                 if (cause instanceof SVNException) {
                     throw (SVNException)cause;
                 }
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), SVNLogType.NETWORK);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, e), SVNLogType.NETWORK);
             }
         }
         
         try {
-            String result = (String) action.run();
+            String result = action.run();
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: authenticate: result (2):" + result);
-            return (String) action.run();
+            return  result;
         } catch (Exception cause) {
             if (cause instanceof SVNException) {
                 throw (SVNException) cause;
             }
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, cause), SVNLogType.NETWORK);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, cause), SVNLogType.NETWORK);
         }
         return null;
     }

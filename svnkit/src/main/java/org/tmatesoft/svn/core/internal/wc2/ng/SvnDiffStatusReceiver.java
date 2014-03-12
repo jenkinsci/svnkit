@@ -183,11 +183,9 @@ public class SvnDiffStatusReceiver implements ISvnObjectReceiver<SvnStatus> {
 
         if (status == ISVNWCDb.SVNWCDbStatus.Added) {
             ISVNWCDb.WCDbAdditionInfo wcDbAdditionInfo = getDb().scanAddition(localAbspath,
-                    ISVNWCDb.WCDbAdditionInfo.AdditionInfoField.status,
-                    ISVNWCDb.WCDbAdditionInfo.AdditionInfoField.originalReposRelPath);
+                    ISVNWCDb.WCDbAdditionInfo.AdditionInfoField.status);
 
             status = wcDbAdditionInfo.status;
-            originalReposRelpath = wcDbAdditionInfo.originalReposRelPath;
         }
 
         //here we can create an empty file
@@ -256,7 +254,7 @@ public class SvnDiffStatusReceiver implements ISvnObjectReceiver<SvnStatus> {
             propChanges = SvnDiffEditor.computePropDiff(pristineProps, actualProps);
 
             translatedFile = getContext().getTranslatedFile(localAbspath, localAbspath,
-                    true, false, false, false);
+                    true, false, false, false, false);
 
             getCallback().fileAdded(null, localAbspath,
                     (!isShowCopiesAsAdds() && isGitFormat() && status != ISVNWCDb.SVNWCDbStatus.Added) ?
@@ -275,7 +273,7 @@ public class SvnDiffStatusReceiver implements ISvnObjectReceiver<SvnStatus> {
             boolean modified = getContext().isTextModified(localAbspath, false);
             if (modified) {
                 translatedFile = getContext().getTranslatedFile(localAbspath, localAbspath,
-                        true, false, false, false);
+                        true, false, false, false, false);
             }
 
             if (baseReplace && isIgnoreAncestry()) {

@@ -47,20 +47,30 @@ public class SVNException extends Exception {
      *      Use {@link #SVNException(SVNErrorMessage)} and set the cause via {@link SVNErrorMessage#initCause(Throwable)}
      */
     public SVNException(SVNErrorMessage errorMessage, Throwable cause) {
-        super(cause!=null?cause:errorMessage);
+        super(cause != null ? cause : errorMessage);
+        
+        if (cause == null) {
+            cause = errorMessage.getCause();
+        }
+        
 //      this can create cyclic reference among messages, if cause already contains errorMessage as a child
-//        if (cause instanceof SVNException) {
-//            SVNErrorMessage childMessages = ((SVNException) cause).getErrorMessage();
-//            SVNErrorMessage parent = errorMessage;
-//            while(parent.hasChildErrorMessage()) {
-//                parent = parent.getChildErrorMessage();
-//            }
-//            if (parent != childMessages) {
-//                parent.setChildErrorMessage(childMessages);
-//            }
-//        }
+/*
+        if (cause instanceof SVNException) {
+            SVNErrorMessage childMessages = ((SVNException) cause).getErrorMessage();
+            SVNErrorMessage parent = errorMessage;
+            while(parent.hasChildErrorMessage()) {
+                parent = parent.getChildErrorMessage();
+            }
+            if (parent != childMessages) {
+                parent.setChildErrorMessage(childMessages);
+            }
+        }
+*/
 
         myErrorMessage = errorMessage;
+        if (getCause() == null && errorMessage != null) {
+            errorMessage.initCause(this);
+        }
     }
 
     /**

@@ -1,3 +1,98 @@
+== version 1.8.3-1 ==
+
++ Pre 1.8.4 version.
+
+== version 1.8.3 ==
+
++ JNA dependency is optional again.
++ Users may replace JNA version 3.5.2 with version 4.0.0 
+  (unless JDK 1.5 compatibility is needed).
++ SqlJet 1.1.10 is used now for better performance on checking out large projects.
++ Stability improvements.
+
+== version 1.8.2 ==
+
++ Optional readonly support of 1.7 working copy format
++ Number of exceptions and status issues fixed.
+
+== version 1.8.1 ==
+
++ Eclipse update site issues fixed.
++ In case of multithreaded high load access, commit to FSRepository might fail
+  on Windows due to file rename operation non-atomic behavior, fixed.
++ JNA dependency set to 3.5.2
++ Remote diff functionality might not work properly, fixed.
+
+== version 1.8.0 ==
+
++ Subversion 1.8.0 working copy and repositories format support. 
+
+== version 1.7.11 ==
+
++ Eclipse update site issues fixed.
++ Minor performance improvements.
++ Minor stability improvements and bugfixes. 
+
+== version 1.7.10 ==
+
++ SSH agent support added via JSCH library.
++ Minor stability improvements and bugfixes. 
+
+== version 1.7.9 ==
+
++ SSL support improvements.
++ SqlJet library 1.1.7 is used.
++ Other minor stability improvements and bugfixes. 
+
+== version 1.7.8 ==
+
++ HTTP proxy authentication improvements.
++ Batch commit support for 1.7 working copies.
++ When used within Eclipse 4.2, credentials were not saved, fixed. 
++ SqlJet library 1.1.6 is used.
++ Other minor stability improvements and bugfixes. 
+
+== version 1.7.6 ==
+
++ Deadlock in connections pool code fixed.
++ Connections might be left open on connections pool disposal.
++ Error reporting improved for DAV operations.
++ Remote diff might leave SSH connection open for a while when svn+ssh was used.
++ SSL Proxy supports authentication other than Basic.
++ SqlJet library 1.1.4 is used.
++ Other minor stability improvements and bugfixes. 
+
+== version 1.7.5-v1 ==
+
++ SVNLookClient.doGetChangedDirectories failed on revision 0, fixed.
++ Text changes might not be reported properly after native Subversion operated on 
+  the working copy in 1.6 format, fixed.
++ Symbolic link last modified time now reported properly.
++ Pristine files ref count values may become invalid, fixed.
++ Empty strings might be stored as a DAV URL cache values, fixed.
++ SqlJet library 1.1.4 is used
++ Other minor stability improvements and bugfixes. 
+
+== version 1.7.5 ==
+
++ File externals merge issues fixed.
++ SVNStatus reported for old and new working copy formats made more consistent.
++ Existing credentials in default cache 
+  are no longer overwritten by truncated ones when store-passwords option is set to false.
++ Deleting a file remotely resulted in grand-parent directory access, fixed.
++ SVNLogClient.doList(recursive=false) now uses SVNDepth.IMMEDIATES, not FILES.
++ SqlJet 1.1.3 is used and potential NPE on concurrent working copy access fixed.
++ Other minor stability improvements and bugfixes. 
+
+== version 1.7.4-v1 ==
+
++ SVNLogClient.doList() method issues fixed.
++ Potential PRISTINE wc.db table corruption fixed.
++ SVNWCClient.doResolve() was choosing wrong file version when resolving conflict, fixed.
++ JavaHL SVNClient reported wrong version, fixed.
++ Minor stability improvements and bugfixes.
++ Build script upgraded to use Gradle 1.0-rc3.
+
 == version 1.7.4 ==
 
 + Minor diff generator improvements

@@ -13,8 +13,9 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -28,6 +29,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec.SVNCommitPacketWrapper;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
 import org.tmatesoft.svn.core.wc2.SvnImport;
@@ -79,6 +81,7 @@ public class SVNCommitClient extends SVNBasicClient {
 
     private ISVNCommitHandler commitHandler;
     private ISVNCommitParameters commitParameters;
+    private boolean failOnMultipleRepositories;
 
     /**
      * Constructs and initializes an <b>SVNCommitClient</b> object with the
@@ -543,6 +546,97 @@ public class SVNCommitClient extends SVNBasicClient {
      * @since 1.2.0, New in SVN 1.5.0
      */
     public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, SVNProperties revisionProperties, boolean useGlobalIgnores, boolean ignoreUnknownNodeTypes, SVNDepth depth) throws SVNException {
+        return doImport(path, dstURL, commitMessage, revisionProperties, useGlobalIgnores, ignoreUnknownNodeTypes, depth, true);
+    }
+
+    /**
+     * Imports file or directory <code>path</code> into repository directory
+     * <code>dstURL</code> at HEAD revision. If some components of
+     * <code>dstURL</code> do not exist, then creates parent directories as
+     * necessary.
+     *
+     * <p/>
+     * If <code>path</code> is a directory, the contents of that directory are
+     * imported directly into the directory identified by <code>dstURL</code>.
+     * Note that the directory <code>path</code> itself is not imported -- that
+     * is, the base name of <code>path<code> is not part of the import.
+     *
+     * <p/>
+     * If <code>path</code> is a file, then the parent of <code>dstURL</code> is
+     * the directory receiving the import. The base name of <code>dstURL</code>
+     * is the filename in the repository. In this case if <code>dstURL</code>
+     * already exists, throws {@link SVNException}.
+     *
+     * <p/>
+     * If the caller's {@link ISVNEventHandler event handler} is not <span
+     * class="javakeyword">null</span> it will be called as the import
+     * progresses with {@link SVNEventAction#COMMIT_ADDED} action. If the commit
+     * succeeds, the handler will be called with
+     * {@link SVNEventAction#COMMIT_COMPLETED} event action.
+     *
+     * <p/>
+     * If non-<span class="javakeyword">null</span>,
+     * <code>revisionProperties</code> holds additional, custom revision
+     * properties (<code>String</code> names mapped to {@link SVNPropertyValue}
+     * values) to be set on the new revision. This table cannot contain any
+     * standard Subversion properties.
+     *
+     * <p/>
+     * {@link #getCommitHandler() Commit handler} will be asked for a commit log
+     * message.
+     *
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#EMPTY}, imports just
+     * <code>path</code> and nothing below it. If {@link SVNDepth#FILES},
+     * imports <code>path</code> and any file children of <code>path</code>. If
+     * {@link SVNDepth#IMMEDIATES}, imports <code>path</code>, any file
+     * children, and any immediate subdirectories (but nothing underneath those
+     * subdirectories). If {@link SVNDepth#INFINITY}, imports <code>path</code>
+     * and everything under it fully recursively.
+     *
+     * <p/>
+     * If <code>useGlobalIgnores</code> is <span
+     * class="javakeyword">false</span>, doesn't add files or directories that
+     * match ignore patterns.
+     *
+     * <p/>
+     * If <code>ignoreUnknownNodeTypes</code> is <span
+     * class="javakeyword">false</span>, ignores files of which the node type is
+     * unknown, such as device files and pipes.
+     *
+     * @param path
+     *            path to import
+     * @param dstURL
+     *            import destination url
+     * @param commitMessage
+     *            commit log message
+     * @param revisionProperties
+     *            custom revision properties
+     * @param useGlobalIgnores
+     *            whether matching against global ignore patterns should take
+     *            place
+     * @param ignoreUnknownNodeTypes
+     *            whether to ignore files of unknown node types or not
+     * @param depth
+     *            tree depth to process
+     * @param applyAutoProperties
+     *            whether to apply auto-properties
+     * @return information about the new committed revision
+     * @throws SVNException
+     *             in the following cases:
+     *             <ul>
+     *             <li/>exception with {@link SVNErrorCode#ENTRY_NOT_FOUND}
+     *             error code - if <code>path</code> does not exist <li/>
+     *             exception with {@link SVNErrorCode#ENTRY_EXISTS} error code -
+     *             if <code>dstURL</code> already exists and <code>path</code>
+     *             is a file <li/>exception with
+     *             {@link SVNErrorCode#CL_ADM_DIR_RESERVED} error code - if
+     *             trying to import an item with a reserved SVN name (like
+     *             <code>'.svn'</code> or <code>'_svn'</code>)
+     *             </ul>
+     * @since 1.8
+     */
+    public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, SVNProperties revisionProperties, boolean useGlobalIgnores, boolean ignoreUnknownNodeTypes, SVNDepth depth, boolean applyAutoProperties) throws SVNException {
         SvnImport svnImport = getOperationsFactory().createImport();
         svnImport.setCommitHandler(SvnCodec.commitHandler(getCommitHandler()));
         svnImport.setCommitMessage(commitMessage);
@@ -551,6 +645,7 @@ public class SVNCommitClient extends SVNBasicClient {
         svnImport.setSource(path);
         svnImport.setDepth(depth);
         svnImport.setUseGlobalIgnores(useGlobalIgnores);
+        svnImport.setApplyAutoProperties(applyAutoProperties);
         
         return svnImport.run();
     }
@@ -672,7 +767,7 @@ public class SVNCommitClient extends SVNBasicClient {
      */
     public SVNCommitInfo doCommit(File[] paths, boolean keepLocks, String commitMessage, SVNProperties revisionProperties, String[] changelists, boolean keepChangelist, boolean force, SVNDepth depth)
             throws SVNException {
-        SVNCommitPacket[] packets = doCollectCommitItems(paths, keepLocks, force, depth, false, changelists);
+        SVNCommitPacket[] packets = doCollectCommitItems(paths, keepLocks, force, depth, true, changelists);
         if (packets != null) {
             SVNCommitInfo[] infos = doCommit(packets, keepLocks, keepChangelist, commitMessage, revisionProperties);
             if (infos != null && infos.length > 0) {
@@ -838,57 +933,60 @@ public class SVNCommitClient extends SVNBasicClient {
      * @since 1.2.0, SVN 1.5.0
      */
     public SVNCommitInfo[] doCommit(SVNCommitPacket[] commitPackets, boolean keepLocks, boolean keepChangelist, String commitMessage, SVNProperties revisionProperties) throws SVNException {
-        SVNCommitInfo[] infos = new SVNCommitInfo[commitPackets.length];
+        final SVNCommitInfo[] infos = new SVNCommitInfo[commitPackets.length];
+        if (commitPackets.length == 0) {
+            return infos;
+        }
+        // assert that all commit packets belongs to the same operation;
+        SvnCommit sharedOperation = null;
         for (int i = 0; i < commitPackets.length; i++) {
-            try {
-                SvnCommit commit = ((SVNCommitPacketWrapper) commitPackets[i]).getOperation();
-                try {
-                    commit.setCommitMessage(commitMessage);
-                    if (getCommitHandler() != null) {
-                        SVNCommitItem[] items = commitPackets[i].getCommitItems();
-                        if (items == null || items.length == 0) {
-                            infos[i] = SVNCommitInfo.NULL;
-                            continue;
-                        }
-                        String message = getCommitHandler().getCommitMessage(commitMessage, items);
-                        if (message != null) {
-                            commit.setCommitMessage(message);
-                        } else {
-                            continue;
-                        }
-                        revisionProperties = getCommitHandler().getRevisionProperties(message, items, revisionProperties);
-                    }
-                    if (revisionProperties != null) {
-                        for (String propertyName : revisionProperties.nameSet()) {
-                            SVNPropertyValue value = revisionProperties.getSVNPropertyValue(propertyName);
-                            if (value != null) {
-                                commit.setRevisionProperty(propertyName, value);
-                            }
-                        }
-                    }
-                    commit.setKeepLocks(keepLocks);
-                    commit.setKeepChangelists(keepChangelist);
-                } catch (SVNCancelException e) {
-                    throw e;
-                } catch (SVNException e) {
-                    SVNErrorMessage err = e.getErrorMessage().wrap("Commit failed (details follow):");
-                    SVNErrorManager.error(err, SVNLogType.WC);
-                }
-                
-                SVNCommitInfo info = commit.run();
-                if (info != null) {
-                    infos[i] = info;
-                }
-            } finally {
-                try {
-                    commitPackets[i].dispose();
-                } catch (SVNException e) {
-                    //
+            final SvnCommit commitOperation = ((SVNCommitPacketWrapper) commitPackets[i]).getOperation();
+            if (sharedOperation == null) {
+                sharedOperation = commitOperation;
+            }
+            if (commitOperation != sharedOperation) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Commit packets created by different commit operations may not be mixed.");
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }        
+        // dispose packets that were collected, but are not part of this commit request.
+        final SvnCommitPacket[] operationPackets = sharedOperation.splitCommitPackets(sharedOperation.isCombinePackets());
+        final Set<SvnCommitPacket> userPacketsSet = new HashSet<SvnCommitPacket>();
+        for (int i = 0; i < commitPackets.length; i++) {
+            final SvnCommitPacket userPacket = ((SVNCommitPacketWrapper) commitPackets[i]).getPacket();
+            userPacketsSet.add(userPacket);
+        }
+        
+        for (int i = 0; i < operationPackets.length; i++) {
+            if (!userPacketsSet.contains(operationPackets[i])) {
+                operationPackets[i].dispose();
+            } 
+        }
+        
+        SvnCommit commit = sharedOperation;
+        commit.setIncludeDirectoryExternals(!isIgnoreExternals());
+        commit.setIncludeFileExternals(!isIgnoreExternals());
+        commit.setCommitMessage(commitMessage);
+        commit.setCommitHandler(SvnCodec.commitHandler(getCommitHandler()));
+        commit.setCommitParameters(SvnCodec.commitParameters(getCommitParameters()));
+        if (revisionProperties != null) {
+            for (String propertyName : revisionProperties.nameSet()) {
+                SVNPropertyValue value = revisionProperties.getSVNPropertyValue(propertyName);
+                if (value != null) {
+                    commit.setRevisionProperty(propertyName, value);
                 }
             }
-            
-            
         }
+        
+        commit.setKeepLocks(keepLocks);
+        commit.setKeepChangelists(keepChangelist);
+        commit.setReceiver(new ISvnObjectReceiver<SVNCommitInfo>() {            
+            int index = 0;
+            public void receive(SvnTarget target, SVNCommitInfo object) throws SVNException {
+                infos[index++] = object; 
+            }
+        });
+        commit.run();
         return infos;
     }
 
@@ -1068,19 +1166,33 @@ public class SVNCommitClient extends SVNBasicClient {
         for (int i = 0; i < paths.length; i++) {
             commit.addTarget(SvnTarget.fromFile(paths[i]));
         }
+        commit.setIncludeFileExternals(!isIgnoreExternals());
+        commit.setIncludeDirectoryExternals(!isIgnoreExternals());
         commit.setKeepLocks(keepLocks);
         commit.setDepth(depth);
         commit.setForce(force);
+        commit.setFailOnMultipleRepositories(this.failOnMultipleRepositories);
         commit.setCommitParameters(SvnCodec.commitParameters(getCommitParameters()));
+        commit.setCombinePackets(combinePackets);
         if (changelists != null && changelists.length > 0) {
             commit.setApplicalbeChangelists(Arrays.asList(changelists));
         }
         
         SvnCommitPacket packet = commit.collectCommitItems();  
         if (packet != null) {
-            return new SVNCommitPacket[] {SvnCodec.commitPacket(commit, packet)};
+            final SvnCommitPacket[] packets = commit.splitCommitPackets(combinePackets);
+            final SVNCommitPacket[] result = new SVNCommitPacket[packets.length];
+            for (int i = 0; i < packets.length; i++) {
+                result[i] = SvnCodec.commitPacket(commit, packets[i]);
+            }
+            return result;
         }
+        
         return new SVNCommitPacket[0];
+    }
+
+    public void setFailOnMultipleRepositories(boolean fail) {
+        failOnMultipleRepositories = fail;
     }
 
 }

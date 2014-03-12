@@ -1,24 +1,12 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.logging.Level;
 
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
@@ -51,6 +39,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> implements ISvnCommitRunner, ISvnUrlKindCallback {
 
     public SvnCommitPacket collectCommitItems(SvnCommit operation) throws SVNException {
+        int depthEmptyAfter = -1;
         setOperation(operation);
         
         SvnCommitPacket packet = new SvnCommitPacket();
@@ -71,6 +60,12 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
         if (targets.isEmpty()) {
             targets.add("");
         }
+        if (getOperation().isIncludeFileExternals() || getOperation().isIncludeDirectoryExternals()) {
+            if (getOperation().getDepth() != SVNDepth.UNKNOWN && getOperation().getDepth() != SVNDepth.INFINITY) {
+                depthEmptyAfter = targets.size();
+            }
+            appendExternalsAsExplicitTargets(targets, baseDir, getOperation().isIncludeFileExternals(), getOperation().isIncludeDirectoryExternals(), getOperation().getDepth(), getWcContext());
+        }
         Collection<File> lockTargets = determineLockTargets(baseDir, targets);
         Collection<File> lockedRoots = new HashSet<File>();
         try {
@@ -82,15 +77,16 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
             
             Map<SVNURL, String> lockTokens = new HashMap<SVNURL, String>();
             SvnNgCommitUtil.harvestCommittables(getWcContext(), packet, lockTokens, 
-                    baseDir, targets, getOperation().getDepth(), 
+                    baseDir, targets, depthEmptyAfter, getOperation().getDepth(),
                     !getOperation().isKeepLocks(), getOperation().getApplicableChangelists(), 
                     this, getOperation().getCommitParameters(), null);
             packet.setLockTokens(lockTokens);
-            if (packet.getRepositoryRoots().size() > 1) {
+            
+            if (getOperation().isFailOnMultipleRepositories() && packet.getRepositoryRoots().size() > 1) {                
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                         "Commit can only commit to a single repository at a time.\n" +
                         "Are all targets part of the same working copy?");
-                SVNErrorManager.error(err, SVNLogType.WC);
+                SVNErrorManager.error(err, SVNLogType.WC);                
             }
             
             if (!packet.isEmpty()) {
@@ -107,37 +103,124 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
         return null;
     }
 
+    private void appendExternalsAsExplicitTargets(Collection<String> targets, File baseAbsPath, boolean includeFileExternals, boolean includeDirectoryExternals, SVNDepth depth, SVNWCContext context) throws SVNException {
+        if (!(includeFileExternals||includeDirectoryExternals)) {
+            return;
+        }
+        if (depth == SVNDepth.EMPTY) {
+            return;
+        }
+        List<String> newTargets = new ArrayList<String>();
+        for (String target : targets) {
+            File targetAbsPath = SVNFileUtil.createFilePath(baseAbsPath, target);
+            List<SVNWCContext.CommittableExternalInfo> externals = context.committableExternalsBelow(null, targetAbsPath, depth);
+            if (externals != null) {
+                for (SVNWCContext.CommittableExternalInfo xInfo : externals) {
+                    if ((xInfo.kind == SVNNodeKind.FILE && !includeFileExternals)||
+                        (xInfo.kind == SVNNodeKind.DIR && !includeDirectoryExternals)) {
+                        continue;
+                    }
+                    File targetRelPath = SVNFileUtil.skipAncestor(baseAbsPath, xInfo.localAbsPath);
+
+                    assert targetRelPath != null && SVNFileUtil.getFilePath(targetRelPath).length() != 0;
+
+                    newTargets.add(SVNFileUtil.getFilePath(targetRelPath));
+                }
+            }
+        }
+        targets.addAll(newTargets);
+    }
+
     @Override
     protected SVNCommitInfo run(SVNWCContext context) throws SVNException {
-        SVNCommitInfo info = doRun(context);
-        if (info != null) {
-            getOperation().receive(getOperation().getFirstTarget(), info);
+        final SvnCommitPacket[] packets = getOperation().splitCommitPackets(getOperation().isCombinePackets());
+        SVNCommitInfo result = SVNCommitInfo.NULL;
+        for(int i = 0; i < packets.length; i++) {
+            if (packets[i] == null || packets[i].isEmpty()) {
+                continue;
+            }
+            packets[i] = packets[i].removeSkippedItems();
+            final SVNURL repositoryRoot = packets[i].getRepositoryRoots().iterator().next();
+            result = doRun(context, packets[i]);
+            if (result != null) {
+                getOperation().receive(SvnTarget.fromURL(repositoryRoot), result);
+            }
         }
-        return info;
+        return result;
     }
     
-    protected SVNCommitInfo doRun(SVNWCContext context) throws SVNException {
-        SvnCommitPacket packet = getOperation().collectCommitItems();
-        if (packet == null || packet.isEmpty()) {
-            return null;
-        }
+    protected SVNCommitInfo doRun(SVNWCContext context, SvnCommitPacket packet) throws SVNException {
         SVNProperties revisionProperties = getOperation().getRevisionProperties();
         SVNPropertiesManager.validateRevisionProperties(revisionProperties);
-        String commitMessage = getOperation().getCommitMessage();
-        if (getOperation().getCommitHandler() != null) {
-            Collection<SvnCommitItem> items = new ArrayList<SvnCommitItem>();
-            for (SVNURL rootUrl : packet.getRepositoryRoots()) {
-                items.addAll(packet.getItems(rootUrl));
-            }
-            SvnCommitItem[] itemsArray = items.toArray(new SvnCommitItem[items.size()]);
-            commitMessage = getOperation().getCommitHandler().getCommitMessage(commitMessage, itemsArray);
-            revisionProperties = getOperation().getCommitHandler().getRevisionProperties(commitMessage, itemsArray, revisionProperties);
-        }
-        boolean keepLocks = getOperation().isKeepLocks();
-        
+
         SVNException bumpError = null;
         SVNCommitInfo info = null;
         try {
+            for (SVNURL repositoryRoot : packet.getRepositoryRoots()) {
+                Collection<SvnCommitItem> items = packet.getItems(repositoryRoot);
+                for (SvnCommitItem item : items) {
+                    if (item.hasFlag(SvnCommitItem.MOVED_HERE)) {
+                        SVNWCContext.NodeMovedHere nodeMovedHere = context.nodeWasMovedHere(item.getPath());
+                        File movedFromAbsPath = nodeMovedHere.movedFromAbsPath;
+                        File deleteOpRootAbsPath = nodeMovedHere.deleteOpRootAbsPath;
+
+                        if (movedFromAbsPath != null && deleteOpRootAbsPath != null && movedFromAbsPath.equals(deleteOpRootAbsPath)) {
+                            boolean foundDeleteHalf = packet.getItem(deleteOpRootAbsPath) != null;
+                            if (!foundDeleteHalf) {
+                                File deleteHalfParentAbsPath = SVNFileUtil.getFileDir(deleteOpRootAbsPath);
+                                if (!deleteOpRootAbsPath.equals(deleteHalfParentAbsPath)) {
+                                    File parentDeleteOpRootAbsPath = context.getNodeDeletedAncestor(deleteHalfParentAbsPath);
+                                    if (parentDeleteOpRootAbsPath != null) {
+                                        foundDeleteHalf = packet.getItem(parentDeleteOpRootAbsPath) != null;
+                                    }
+                                }
+                            }
+
+                            if (!foundDeleteHalf) {
+                                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot commit ''{0}'' because it was moved from " +
+                                        "''{1}'' which is not part of the commit; both " + "sides of the move must be committed together", item.getPath(), deleteOpRootAbsPath);
+                                SVNErrorManager.error(errorMessage, SVNLogType.WC);
+                            }
+                        }
+                    }
+
+                    if (item.hasFlag(SvnCommitItem.DELETE)) {
+                        SVNWCContext.NodeMovedAway nodeMovedAway = context.nodeWasMovedAway(item.getPath());
+                        File movedToAbsPath = nodeMovedAway.movedToAbsPath;
+                        File copyOpRootAbsPath = nodeMovedAway.opRootAbsPath;
+
+                        if (movedToAbsPath != null && copyOpRootAbsPath != null &&
+                            movedToAbsPath.equals(copyOpRootAbsPath) && packet.getItem(copyOpRootAbsPath) == null) {
+                            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot commit ''{0}'' because it was moved to ''{1}'' " +
+                                    "which is not part of the commit; both sides of the move must be committed together", item.getPath(), copyOpRootAbsPath);
+                            SVNErrorManager.error(errorMessage, SVNLogType.WC);
+                        }
+                    }
+                }
+            }
+
+            String commitMessage = getOperation().getCommitMessage();
+            if (getOperation().getCommitHandler() != null) {
+                Collection<SvnCommitItem> items = new ArrayList<SvnCommitItem>();
+                for (SVNURL rootUrl : packet.getRepositoryRoots()) {
+                    items.addAll(packet.getItems(rootUrl));
+                }
+                SvnCommitItem[] itemsArray = items.toArray(new SvnCommitItem[items.size()]);
+                try {
+                    commitMessage = getOperation().getCommitHandler().getCommitMessage(commitMessage, itemsArray);
+                    if (commitMessage == null) {
+                        return SVNCommitInfo.NULL;
+                    }
+                    revisionProperties = getOperation().getCommitHandler().getRevisionProperties(commitMessage, itemsArray, revisionProperties);
+                } catch (SVNException e) {
+                    SVNErrorMessage err = e.getErrorMessage().wrap("Commit failed (details follow):");
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+            }
+            commitMessage = commitMessage == null ? "" : SVNCommitUtil.validateCommitMessage(commitMessage);
+
+            boolean keepLocks = getOperation().isKeepLocks();
+
             SVNURL repositoryRootUrl = packet.getRepositoryRoots().iterator().next();
             if (packet.isEmpty(repositoryRootUrl)) {
                 return SVNCommitInfo.NULL;
@@ -177,10 +260,12 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
                         bumpError = e;
                         throw e;
                     } finally {
-                        sleepForTimestamp();
+                        // only for the last packet in chain.
+                        if (packet.isLastPacket()) {
+                            sleepForTimestamp();
+                        }
                     }
-                }
-                
+                }                
                 handleEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, null, info.getNewRevision(), SVNEventAction.COMMIT_COMPLETED, 
                         SVNEventAction.COMMIT_COMPLETED, null, null, -1, -1));
             } catch (SVNException e) {
@@ -280,23 +365,50 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
         return lockTargets;
     }
 
-    public void disposeCommitPacket(Object lockingContext) throws SVNException {
+    public Object splitLockingContext(Object lockingContext, SvnCommitPacket newPacket) {
         if (!(lockingContext instanceof Collection)) {
-            return;
+            return lockingContext;
         }
         @SuppressWarnings("unchecked")
-        Collection<File> lockedPaths = (Collection<File>) lockingContext;
-        
-        for (File lockedPath : lockedPaths) {
-            try {
-                getWcContext().releaseWriteLock(lockedPath);
-            } catch (SVNException e) {
-                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_LOCKED) {
-                    throw e;
+        final Collection<File> lockedPaths = (Collection<File>) lockingContext;
+        final Collection<File> newLockedPaths = new ArrayList<File>();
+
+        for (SVNURL root : newPacket.getRepositoryRoots()) {
+            for(SvnCommitItem item : newPacket.getItems(root)) {
+                final File path = item.getPath();
+                for (File lockedPath : lockedPaths) {
+                    if (path.equals(lockedPath) || (path.isFile() && path.getParentFile().equals(lockedPath))) {
+                        newLockedPaths.add(lockedPath);
+                        break;
+                    }
                 }
             }
         }
-        getWcContext().close();
+        return newLockedPaths;
+    };
+
+    public void disposeCommitPacket(Object lockingContext, boolean disposeParentContext) throws SVNException {
+        if (!(lockingContext instanceof Collection)) {
+            if (disposeParentContext) {
+                getWcContext().close();
+            }
+            return;
+        }
+        if (disposeParentContext) {
+            @SuppressWarnings("unchecked")
+            Collection<File> lockedPaths = (Collection<File>) lockingContext;
+            
+            for (File lockedPath : lockedPaths) {
+                try {
+                    getWcContext().releaseWriteLock(lockedPath);
+                } catch (SVNException e) {
+                    if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_LOCKED) {
+                        throw e;
+                    }
+                }
+            }
+            getWcContext().close();
+        }
     }
 
     private void queueCommitted(SvnCommittedQueue queue, File localAbsPath, boolean recurse, 
@@ -314,17 +426,31 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
     }
 
     private void processCommittedQueue(SvnCommittedQueue queue, long newRevision, Date revDate, String revAuthor) throws SVNException {
-        Collection<File> roots = new HashSet<File>();
-        
-        for (SvnCommittedQueueItem cqi : queue.queue.values()) {
-            processCommittedInternal(cqi.localAbspath, cqi.recurse, true, newRevision, new SVNDate(revDate.getTime(), 0), revAuthor, cqi.newDavCache, cqi.noUnlock, cqi.keepChangelist, cqi.sha1Checksum, queue);
-            File root = getWcContext().getDb().getWCRoot(cqi.localAbspath);
-            roots.add(root);
-        }
-        for (File root : roots) {
-            getWcContext().wqRun(root);
+        final Map<File, Collection<SvnCommittedQueueItem>> itemsMap = new HashMap<File, Collection<SvnCommittedQueueItem>>();
+        for (final SvnCommittedQueueItem cqi : queue.queue.values()) {
+            final File root = getWcContext().getDb().getWCRoot(cqi.localAbspath);
+            if (!itemsMap.containsKey(root)) {
+                itemsMap.put(root, new ArrayList<SvnNgCommit.SvnCommittedQueueItem>());
+            }
+            itemsMap.get(root).add(cqi);
         }
         queue.queue.clear();
+        
+        for (final File root : itemsMap.keySet()) {
+            final SVNSqlJetDb db = getWcContext().getDb().getSDb(root);
+            db.beginTransaction(SqlJetTransactionMode.WRITE);
+            try {
+                for (SvnCommittedQueueItem cqi : itemsMap.get(root)) {
+                    processCommittedInternal(cqi.localAbspath, cqi.recurse, true, newRevision, new SVNDate(revDate.getTime(), 0), revAuthor, cqi.newDavCache, cqi.noUnlock, cqi.keepChangelist, cqi.sha1Checksum, queue);
+                }
+                getWcContext().wqRun(root);
+            } catch (SVNException th) {
+                db.rollback();
+                throw th;
+            } finally {
+                db.commit();
+            }
+        }
     }
     
     private void processCommittedInternal(File localAbspath, boolean recurse, boolean topOfRecurse, long newRevision, SVNDate revDate, String revAuthor, SVNProperties newDavCache, boolean noUnlock,
@@ -346,11 +472,9 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
             admAbspath = SVNFileUtil.getFileDir(localAbspath);
         }
         getWcContext().writeCheck(admAbspath);
-        
+
         if (nodeInfo.get(NodeInfo.status) == SVNWCDbStatus.Deleted) {
-            getWcContext().getDb().opRemoveNode(localAbspath, 
-                    nodeInfo.is(NodeInfo.haveBase) && !viaRecurse ? newRevnum : -1, 
-                    nodeInfo.<SVNWCDbKind>get(NodeInfo.kind));
+            getWcContext().getDb().removeBase(localAbspath, false, false, true, !viaRecurse ? newRevnum : SVNRepository.INVALID_REVISION, null, null);
             nodeInfo.release();
             return;
         } else if (nodeInfo.get(NodeInfo.status) == SVNWCDbStatus.NotPresent) {
@@ -389,6 +513,6 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
         public boolean keepChangelist;
         public SvnChecksum sha1Checksum;
         public SVNProperties newDavCache;
-    };
+    }
 
 }

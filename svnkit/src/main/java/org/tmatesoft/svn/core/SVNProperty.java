@@ -59,6 +59,11 @@ public class SVNProperty {
      * An <span class="javastring">"svn:entry:"</span> prefix.
      */
     public static final String SVN_ENTRY_PREFIX = "svn:entry:";
+
+    /**
+     * An <span class="javastring">"svnkit:entry:"</span> prefix.
+     */
+    public static final String SVNKIT_ENTRY_PREFIX = "svnkit:entry:";
     /**
      * An <span class="javastring">"svn:eol-style"</span> SVN special property.
      */
@@ -92,6 +97,16 @@ public class SVNProperty {
      * @since SVN 1.5
      */
     public static final String MERGE_INFO = SVN_PREFIX + "mergeinfo";
+    
+    /**
+     * @since SVN 1.8
+     */
+    public static final String INHERITABLE_IGNORES = SVN_PREFIX + "global-ignores";
+
+    /**
+     * @since SVN 1.8
+     */
+    public static final String INHERITABLE_AUTO_PROPS = SVN_PREFIX + "auto-props";
     
     /**
      * An <span class="javastring">"svn:entry:revision"</span> SVN untweakable metaproperty.
@@ -184,6 +199,12 @@ public class SVNProperty {
      * An <span class="javastring">"svn:entry:checksum"</span> SVN untweakable metaproperty.
      */
     public static final String CHECKSUM = SVN_ENTRY_PREFIX + "checksum";
+
+    /**
+     * An <span class="javastring">"svnkit:entry:sha1-checksum"</span> SVNKit untweakable metaproperty.
+     */
+    public static final String SVNKIT_SHA1_CHECKSUM = SVNKIT_ENTRY_PREFIX + "sha1-checksum";
+
     /**
      * An <span class="javastring">"svn:entry:url"</span> SVN untweakable metaproperty.
      */
@@ -410,7 +431,7 @@ public class SVNProperty {
      *         the {@link #SVN_ENTRY_PREFIX} prefix, otherwise <span class="javakeyword">false</span>
      */
     public static boolean isEntryProperty(String name) {
-        return name != null && name.startsWith(SVN_ENTRY_PREFIX);
+        return name != null && (name.startsWith(SVN_ENTRY_PREFIX) || name.startsWith(SVNKIT_ENTRY_PREFIX));
     }
 
     /**
@@ -623,7 +644,15 @@ public class SVNProperty {
             }
         }
     }
-    
+
+    public static boolean mimeTypeIsBinary(String mimeType) {
+        int len = mimeType.indexOf(';');
+        if (len == -1) {
+            len = mimeType.indexOf(' ');
+        }
+        return ((!"text/".equals(mimeType.substring(0, 5))) && (len != 15 || "image/x-xbitmap".equals(mimeType.substring(0, len))));
+    }
+
     /**
      * Returns custom mime-types previously added.
      */

@@ -52,6 +52,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
+import org.tmatesoft.svn.core.io.ISVNInheritedPropertiesHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationSegmentHandler;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
@@ -440,7 +441,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             String fullPath = getFullPath(path);
             String parentFullPath = "/".equals(path) ? fullPath : SVNPathUtil.removeTail(fullPath);
             SVNURL url = getLocation().setPath(parentFullPath, false);
-            String name = SVNPathUtil.tail(path);
+            String name = "/".equals(path) ? "" : SVNPathUtil.tail(path);
             FSEntry fsEntry = new FSEntry(revNode.getId(), revNode.getType(), name);
             SVNDirEntry entry = buildDirEntry(fsEntry, url, revNode, SVNDirEntry.DIRENT_ALL);
             return entry;
@@ -675,6 +676,8 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 				capability == SVNCapability.PARTIAL_REPLAY || 
 				capability == SVNCapability.COMMIT_REVPROPS) {
 			return true;
+		} else if (capability == SVNCapability.ATOMIC_REVPROPS) {
+		    return false;		
 		} else if (capability == SVNCapability.MERGE_INFO) {
 		    try {
 		        getMergeInfoImpl(new String[] { "" }, 0, SVNMergeInfoInheritance.EXPLICIT, false);
@@ -688,12 +691,45 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 		        throw svne;
 		    }
 		    return true;
+		} else if (capability == SVNCapability.INHERITED_PROPS) {
+		    return true;
 		}
 		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN_CAPABILITY, 
 				"Don''t know anything about capability ''{0}''", capability);
 		SVNErrorManager.error(err, SVNLogType.FSFS);
 		return false;
 	}
+
+    protected void getInheritedPropertiesImpl(String path, long revision, String propertyName, ISVNInheritedPropertiesHandler handler) throws SVNException {
+        try {
+            openRepository();
+            path = getRepositoryPath(path);
+            
+            String parentPath = path;
+            
+            final FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
+            while(!"/".equals(parentPath) && !"".equals(parentPath)) {
+                parentPath = SVNPathUtil.removeTail(parentPath);
+                if ("".equals(parentPath)) {
+                    parentPath = "/";
+                }
+                
+                final FSRevisionNode node = root.getRevisionNode(parentPath);
+                final SVNProperties properties = myFSFS.getProperties(node);
+                if (properties != null && handler != null && !properties.isEmpty()) {
+                    if (propertyName != null && properties.containsName(propertyName)) {
+                        final SVNProperties singleProperty = new SVNProperties();
+                        singleProperty.put(propertyName, properties.getSVNPropertyValue(propertyName));
+                        handler.handleInheritedProperites(parentPath, singleProperty);
+                    } else if (propertyName == null) {
+                        handler.handleInheritedProperites(parentPath, properties);
+                    }
+                }
+            }
+        } finally {
+            closeRepository();
+        }
+    }
 
     void closeRepository() throws SVNException {
         if (myFSFS != null) {
@@ -769,14 +805,14 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                                     !"localhost".equalsIgnoreCase(hostName);
 
         if (!SVNFileUtil.isWindows && hasCustomHostName) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Local URL ''{0}'' contains unsupported hostname", getLocation().toDecodedString());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Local URL ''{0}'' contains unsupported hostname", getLocation().toString());
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         String startPath = SVNEncodingUtil.uriDecode(getLocation().getURIEncodedPath());
         String rootPath = FSFS.findRepositoryRoot(hasCustomHostName ? hostName : null, startPath);
         if (rootPath == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED, "Unable to open repository ''{0}''", getLocation().toDecodedString());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED, "Unable to open repository ''{0}''", getLocation().toString());
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
@@ -990,5 +1026,4 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
         return myLogDriver;
     }
-
 }

@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -239,17 +240,22 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             FSFS fsfs = myTxnRoot.getOwner();
             final IFSRepresentationCacheManager reposCacheManager = fsfs.getRepositoryCacheManager();
             if (reposCacheManager != null) {
-                reposCacheManager.runReadTransaction(new IFSSqlJetTransaction() {
-                    public void run() throws SVNException {
-                        FSRepresentation oldRep = reposCacheManager.getRepresentationByHash(rep.getSHA1HexDigest());
-                        if (oldRep != null) {
-                            oldRep.setUniquifier(rep.getUniquifier());
-                            oldRep.setMD5HexDigest(rep.getMD5HexDigest());
-                            truncateToSize[0] = myRepOffset;
-                            myRevNode.setTextRepresentation(oldRep);
+                try {
+                    reposCacheManager.runReadTransaction(new IFSSqlJetTransaction() {
+                        public void run() throws SVNException {
+                            final FSRepresentation oldRep = reposCacheManager.getRepresentationByHash(rep.getSHA1HexDigest());
+                            if (oldRep != null) {
+                                oldRep.setUniquifier(rep.getUniquifier());
+                                oldRep.setMD5HexDigest(rep.getMD5HexDigest());
+                                truncateToSize[0] = myRepOffset;
+                                myRevNode.setTextRepresentation(oldRep);
+                            }
                         }
-                    }
-                });
+                    });
+                } catch (SVNException e) {
+                    // explicitly ignore.
+                    SVNDebugLog.getDefaultLog().logError(SVNLogType.FSFS, e);
+                }
             } 
             if (truncateToSize[0] < 0){
                 myTargetFileOS.write("ENDREP\n".getBytes("UTF-8"));

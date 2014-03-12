@@ -167,6 +167,8 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
         if (commitMessage == null) {
             return SVNCommitInfo.NULL;
         }
+        commitMessage = SVNCommitUtil.validateCommitMessage(commitMessage);
+
         revisionProperties = getOperation().getCommitHandler().getRevisionProperties(commitMessage, items, revisionProperties);
         if (revisionProperties == null) {
             return SVNCommitInfo.NULL;
@@ -176,7 +178,7 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
         if (parents != null) {
             for (SVNURL parent : parents) {
                 String parentPath = SVNURLUtil.getRelativeURL(repositoryRoot, parent, false);
-                packet.addItem(null, SVNNodeKind.DIR, repositoryRoot, parentPath, -1, null, -1, SvnCommitItem.ADD);
+                packet.addItem(null, SVNNodeKind.DIR, repositoryRoot, parentPath, -1, null, -1, null, SvnCommitItem.ADD);
             }
         }
         for (SvnCopyPair svnCopyPair : copyPairs) {

@@ -2,6 +2,7 @@ package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -129,6 +130,16 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
         });
         pg.run();
         
+        if (!explicitMergeInfo.isEmpty()) {
+            final Map<File, File> externals = context.getDb().getExternalsDefinedBelow(mergeTarget);
+            for (Iterator<File> wcPaths = explicitMergeInfo.keySet().iterator(); wcPaths.hasNext();) {
+                final File wcPath = wcPaths.next();
+                if (externals.containsKey(wcPath)) {
+                    wcPaths.remove();
+                }
+            }
+        }
+        
         sourceReposInfo = getRepositoryAccess().createRepositoryFor(SvnTarget.fromURL(url2), SVNRevision.UNDEFINED, mergeSource.getPegRevision(), null);
         SVNRepository sourceRepository = sourceReposInfo.get(RepositoryInfo.repository);
         long rev2 = sourceReposInfo.lng(RepositoryInfo.revision);
@@ -167,7 +178,7 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
             
             if (yc == null || !(yc.getPath() != null && yc.getStartRevision() >= 0)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NOT_READY_TO_MERGE, 
-                        "'{0}'@'{1}' must be ancestrally related to '{2}'@'{3}'", url1, new Long(rev1), url2, new Long(rev2));
+                        "''{0}''@''{1}'' must be ancestrally related to ''{2}''@''{3}''", url1, new Long(rev1), url2, new Long(rev2));
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             
@@ -197,7 +208,8 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
                     yc.getStartRevision(), 
                     sourceReposRoot, 
                     wcReposRoot, 
-                    SVNDepth.INFINITY, 
+                    SVNDepth.INFINITY,
+                    false,
                     false, 
                     false, 
                     false, 
@@ -341,7 +353,7 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
                 pathSessionRelPath = new File("");
             }
             
-            List<SVNLocationSegment> segments = targetRepository.getLocationSegments(pathSessionRelPath.getPath(), targetRev, targetRev, -1);
+            List<SVNLocationSegment> segments = targetRepository.getLocationSegments(SVNFileUtil.getFilePath(pathSessionRelPath), targetRev, targetRev, -1);
             segmentsMap.put(pathReposRelPath, segments);
         }
         
@@ -350,7 +362,7 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
         SVNLocationSegment yc = getRepositoryAccess().getYoungestCommonAncestor(sourceUrl, sourceRev, targetUrl, targetRev);
         if (!(yc != null && yc.getPath() != null && yc.getStartRevision() >= 0)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NOT_READY_TO_MERGE, 
-                    "'{0}'@'{1}' must be ancestrally related to '{2}'@'{3}'", sourceUrl, new Long(sourceRev), targetUrl, new Long(targetRev));
+                    "''{0}''@''{1}'' must be ancestrally related to ''{2}''@''{3}''", sourceUrl, new Long(sourceRev), targetUrl, new Long(targetRev));
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         
@@ -415,25 +427,25 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
                     }
                 }
             } else {
-                SVNNodeKind kind = sourceRepos.checkPath(sourcePathRelToSession.getPath(), sourceRev);
+                SVNNodeKind kind = sourceRepos.checkPath(SVNFileUtil.getFilePath(sourcePathRelToSession), sourceRev);
                 if (kind == SVNNodeKind.NONE) {
                     continue;
                 }
                 Map<File, Map<String, SVNMergeRangeList>> subtreeCatalog = 
-                        SvnNgMergeinfoUtil.convertToCatalog2(sourceRepos.getMergeInfo(new String[] {sourcePathRelToSession.getPath()}, sourceRev, SVNMergeInfoInheritance.INHERITED, false));
+                        SvnNgMergeinfoUtil.convertToCatalog2(sourceRepos.getMergeInfo(new String[] {SVNFileUtil.getFilePath(sourcePathRelToSession)}, sourceRev, SVNMergeInfoInheritance.INHERITED, false));
                 sourceMergeInfo = subtreeCatalog.get(sourcePathRelToSession);
                 if (sourceMergeInfo == null) {
                     sourceMergeInfo = new HashMap<String, SVNMergeRangeList>();
                 }
             }
             
-            segments = sourceRepos.getLocationSegments(sourcePathRelToSession.getPath(), sourceRev, sourceRev, -1);
+            segments = sourceRepos.getLocationSegments(SVNFileUtil.getFilePath(sourcePathRelToSession), sourceRev, sourceRev, -1);
             Map<String, SVNMergeRangeList> sourceHistroryAsMergeInfo = SvnRepositoryAccess.getMergeInfoFromSegments(segments);
             sourceMergeInfo = SVNMergeInfoUtil.mergeMergeInfos(sourceMergeInfo, sourceHistroryAsMergeInfo);
             Map<String, SVNMergeRangeList> commonMergeInfo = SVNMergeInfoUtil.intersectMergeInfo(sourceMergeInfo, targetHistoryAsMergeInfo, true);
             Map<String, SVNMergeRangeList> filteredMergeInfo = SVNMergeInfoUtil.removeMergeInfo(commonMergeInfo, targetHistoryAsMergeInfo, true);
             
-            newCatalog.put(sourcePath.getPath(), filteredMergeInfo);
+            newCatalog.put(SVNFileUtil.getFilePath(sourcePath), filteredMergeInfo);
         }
         
         if (!sourceCatalog.isEmpty()) {
@@ -444,7 +456,7 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
                 List<SVNLocationSegment> segments = null;
                 Map<String, SVNMergeRangeList> sourceMergeInfo = sourceCatalog.get(path);
                 try {
-                    segments = targetRepos.getLocationSegments(targetPath.getPath(), targetRev, targetRev, -1);
+                    segments = targetRepos.getLocationSegments(SVNFileUtil.getFilePath(targetPath), targetRev, targetRev, -1);
                 } catch (SVNException e) {
                     SVNErrorCode ec = e.getErrorMessage().getErrorCode();
                     if (ec == SVNErrorCode.FS_NOT_FOUND || ec == SVNErrorCode.RA_DAV_REQUEST_FAILED) {
@@ -462,13 +474,13 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
                         result.youngestMergedRevision = endPoints[0];
                     }
                 }
-                segments = sourceRepos.getLocationSegments(sourcePathRelToSession.getPath(), targetRev, targetRev, -1);
+                segments = sourceRepos.getLocationSegments(SVNFileUtil.getFilePath(sourcePathRelToSession), targetRev, targetRev, -1);
                 Map<String, SVNMergeRangeList> sourceHistoryAsMergeInfo = SvnRepositoryAccess.getMergeInfoFromSegments(segments);
                 sourceMergeInfo = SVNMergeInfoUtil.mergeMergeInfos(sourceMergeInfo, sourceHistoryAsMergeInfo);
                 Map<String, SVNMergeRangeList> commonMergeInfo = SVNMergeInfoUtil.intersectMergeInfo(sourceMergeInfo, targetHistoryAsMergeInfo, true);
                 Map<String, SVNMergeRangeList> filteredMergeInfo = SVNMergeInfoUtil.removeMergeInfo(commonMergeInfo, targetHistoryAsMergeInfo, true);
                 if (!filteredMergeInfo.isEmpty()) {
-                    newCatalog.put(path.getPath().replace(File.separatorChar, '/'), filteredMergeInfo);
+                    newCatalog.put(SVNFileUtil.getFilePath(path), filteredMergeInfo);
                 }
             }
         }

@@ -1,34 +1,10 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-
 import de.regnis.q.sequence.line.diff.QDiffGenerator;
 import de.regnis.q.sequence.line.diff.QDiffGeneratorFactory;
 import de.regnis.q.sequence.line.diff.QDiffManager;
 import de.regnis.q.sequence.line.diff.QDiffUniGenerator;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNMergeRangeList;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -40,6 +16,9 @@ import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.*;
+import java.util.*;
 
 public class SvnDiffGenerator implements ISvnDiffGenerator {
 
@@ -58,6 +37,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     private boolean forcedBinaryDiff;
 
     private boolean diffDeleted;
+    private boolean diffAdded;
     private List<String> rawDiffOptions;
     private boolean forceEmpty;
 
@@ -66,6 +46,8 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     private SVNDiffOptions diffOptions;
     private boolean fallbackToAbsolutePath;
     private ISVNOptions options;
+    private boolean propertiesOnly;
+    private boolean ignoreProperties;
 
     private String getDisplayPath(SvnTarget target) {
         String relativePath;
@@ -74,7 +56,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         } else {
             String targetString = target.getPathOrUrlDecodedString();
             String baseTargetString = baseTarget.getPathOrUrlDecodedString();
-            relativePath = SVNPathUtil.getRelativePath(baseTargetString, targetString);
+            relativePath = getRelativePath(targetString, baseTargetString);
         }
 
         return relativePath != null ? relativePath : target.getPathOrUrlString();
@@ -88,15 +70,54 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             if (repositoryRoot.isFile() == target.isFile()) {
                 String targetString = target.getPathOrUrlDecodedString();
                 String baseTargetString = repositoryRoot.getPathOrUrlDecodedString();
-                relativePath = SVNPathUtil.getRelativePath(baseTargetString, targetString);
+                relativePath = getRelativePath(targetString, baseTargetString);
             } else {
                 String targetString = target.getPathOrUrlDecodedString();
                 String baseTargetString = new File("").getAbsolutePath();
-                relativePath = SVNPathUtil.getRelativePath(baseTargetString, targetString);
+                relativePath = getRelativePath(targetString, baseTargetString);
             }
         }
 
         return relativePath != null ? relativePath : target.getPathOrUrlString();
+    }
+
+    private String getRelativePath(String targetString, String baseTargetString) {
+        if (targetString != null) {
+            targetString = targetString.replace(File.separatorChar, '/');
+        }
+        if (baseTargetString != null) {
+            baseTargetString = baseTargetString.replace(File.separatorChar, '/');
+        }
+
+        final String pathAsChild = SVNPathUtil.getPathAsChild(baseTargetString, targetString);
+        if (pathAsChild != null) {
+            return pathAsChild;
+        }
+        if (targetString.equals(baseTargetString)) {
+            return "";
+        }
+        return null;
+    }
+
+    private String getChildPath(String path, String relativeToPath) {
+        if (relativeToTarget == null) {
+            return null;
+        }
+
+        String relativePath = getRelativePath(path, relativeToPath);
+        if (relativePath == null) {
+            return path;
+        }
+
+        if (relativePath.length() > 0) {
+            return relativePath;
+        }
+
+        if (relativeToPath.equals(path)) {
+            return ".";
+        }
+
+        return null;
     }
 
     public SvnDiffGenerator() {
@@ -104,6 +125,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         this.originalTarget2 = null;
         this.visitedPaths = new HashSet<String>();
         this.diffDeleted = true;
+        this.diffAdded = true;
     }
 
     public void setBaseTarget(SvnTarget baseTarget) {
@@ -117,6 +139,10 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     public void setOriginalTargets(SvnTarget originalTarget1, SvnTarget originalTarget2) {
         this.originalTarget1 = originalTarget1;
         this.originalTarget2 = originalTarget2;
+    }
+
+    public void setRelativeToTarget(SvnTarget relativeToTarget) {
+        this.relativeToTarget = relativeToTarget;
     }
 
     public void setAnchors(SvnTarget originalTarget1, SvnTarget originalTarget2) {
@@ -165,6 +191,22 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         this.forcedBinaryDiff = forcedBinaryDiff;
     }
 
+    public boolean isPropertiesOnly() {
+        return propertiesOnly;
+    }
+
+    public void setPropertiesOnly(boolean propertiesOnly) {
+        this.propertiesOnly = propertiesOnly;
+    }
+
+    public boolean isIgnoreProperties() {
+        return ignoreProperties;
+    }
+
+    public void setIgnoreProperties(boolean ignoreProperties) {
+        this.ignoreProperties = ignoreProperties;
+    }
+
     public void displayDeletedDirectory(SvnTarget target, String revision1, String revision2, OutputStream outputStream) throws SVNException {
     }
 
@@ -172,6 +214,9 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     }
 
     public void displayPropsChanged(SvnTarget target, String revision1, String revision2, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, OutputStream outputStream) throws SVNException {
+        if (isIgnoreProperties()) {
+            return;
+        }
         ensureEncodingAndEOLSet();
         String displayPath = getDisplayPath(target);
 
@@ -205,13 +250,31 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             newTargetString2 = computeLabel(newTargetString, newTargetString2);
 
             if (relativeToTarget != null) {
-                //TODO
+                String relativeToPath = relativeToTarget.getPathOrUrlDecodedString();
+                String absolutePath = target.getPathOrUrlDecodedString();
+
+                String childPath = getChildPath(absolutePath, relativeToPath);
+                if (childPath == null) {
+                    throwBadRelativePathException(absolutePath, relativeToPath);
+                }
+                String childPath1 = getChildPath(newTargetString1, relativeToPath);
+                if (childPath1 == null) {
+                    throwBadRelativePathException(newTargetString1, relativeToPath);
+                }
+                String childPath2 = getChildPath(newTargetString2, relativeToPath);
+                if (childPath2 == null) {
+                    throwBadRelativePathException(newTargetString2, relativeToPath);
+                }
+
+                displayPath = childPath;
+                newTargetString1 = childPath1;
+                newTargetString2 = childPath2;
             }
 
             String label1 = getLabel(newTargetString1, revision1);
             String label2 = getLabel(newTargetString2, revision2);
 
-            boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, false, SvnDiffCallback.OperationKind.Modified);
+            boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, false, fallbackToAbsolutePath, SvnDiffCallback.OperationKind.Modified);
             visitedPaths.add(displayPath);
             if (useGitFormat) {
                 displayGitDiffHeader(outputStream, SvnDiffCallback.OperationKind.Modified,
@@ -246,6 +309,12 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         displayPropDiffValues(outputStream, propChanges, originalProps);
     }
 
+    private void throwBadRelativePathException(String displayPath, String relativeToPath) throws SVNException {
+        SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.BAD_RELATIVE_PATH, "Path ''{0}'' must be an immediate child of the directory ''{0}''",
+                displayPath, relativeToPath);
+        SVNErrorManager.error(errorMessage, SVNLogType.CLIENT);
+    }
+
     private void displayGitHeaderFields(OutputStream outputStream, SvnTarget target, String revision1, String revision2, SvnDiffCallback.OperationKind operation, String copyFromPath) throws SVNException {
         String path1 = copyFromPath != null ? copyFromPath : getRelativeToRootPath(target, originalTarget1);
         String path2 = getRelativeToRootPath(target, originalTarget2);
@@ -265,7 +334,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     private String adjustRelativeToReposRoot(String targetString) {
         if (repositoryRoot != null) {
             String repositoryRootString = repositoryRoot.getPathOrUrlDecodedString();
-            String relativePath = SVNPathUtil.getRelativePath(repositoryRootString, targetString);
+            String relativePath = getRelativePath(targetString, repositoryRootString);
             return relativePath == null ? "" : relativePath;
         }
         return targetString;
@@ -282,6 +351,9 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     }
 
     public void displayContentChanged(SvnTarget target, File leftFile, File rightFile, String revision1, String revision2, String mimeType1, String mimeType2, SvnDiffCallback.OperationKind operation, File copyFromPath, OutputStream outputStream) throws SVNException {
+        if (isPropertiesOnly()) {
+            return;
+        }
         ensureEncodingAndEOLSet();
         String displayPath = getDisplayPath(target);
 
@@ -306,9 +378,27 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         newTargetString1 = computeLabel(newTargetString, newTargetString1);
         newTargetString2 = computeLabel(newTargetString, newTargetString2);
 
-        if (relativeToTarget != null) {
-            //TODO
-        }
+            if (relativeToTarget != null) {
+                String relativeToPath = relativeToTarget.getPathOrUrlDecodedString();
+                String absolutePath = target.getPathOrUrlDecodedString();
+
+                String childPath = getChildPath(absolutePath, relativeToPath);
+                if (childPath == null) {
+                    throwBadRelativePathException(absolutePath, relativeToPath);
+                }
+                String childPath1 = getChildPath(newTargetString1, relativeToPath);
+                if (childPath1 == null) {
+                    throwBadRelativePathException(newTargetString1, relativeToPath);
+                }
+                String childPath2 = getChildPath(newTargetString2, relativeToPath);
+                if (childPath2 == null) {
+                    throwBadRelativePathException(newTargetString2, relativeToPath);
+                }
+
+                displayPath = childPath;
+                newTargetString1 = childPath1;
+                newTargetString2 = childPath2;
+            }
 
         String label1 = getLabel(newTargetString1, revision1);
         String label2 = getLabel(newTargetString2, revision2);
@@ -324,7 +414,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         }
 
         if (!forcedBinaryDiff && (leftIsBinary || rightIsBinary)) {
-            boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, rightFile == null, operation);
+            boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, rightFile == null, leftFile == null, operation);
             if (useGitFormat) {
                 displayGitDiffHeader(outputStream, operation,
                         getRelativeToRootPath(target, originalTarget1),
@@ -345,7 +435,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 
         final String diffCommand = getExternalDiffCommand();
         if (diffCommand != null) {
-            boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, rightFile == null, operation);
+            boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, rightFile == null, leftFile == null, operation);
             if (useGitFormat) {
                 displayGitDiffHeader(outputStream, operation,
                         getRelativeToRootPath(target, originalTarget1),
@@ -380,8 +470,16 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     }
 
     private void internalDiff(SvnTarget target, OutputStream outputStream, String displayPath, File file1, File file2, String label1, String label2, SvnDiffCallback.OperationKind operation, String copyFromPath, String revision1, String revision2) throws SVNException {
-        String header = getHeaderString(target, displayPath, file2 == null, operation, copyFromPath);
+        String header = getHeaderString(target, displayPath, file2 == null, file1 == null, operation, copyFromPath);
         if (file2 == null && !isDiffDeleted()) {
+            try {
+                displayString(outputStream, header);
+            } catch (IOException e) {
+                wrapException(e);
+            }
+            return;
+        }
+        if (file1 == null && !isDiffAdded()) {
             try {
                 displayString(outputStream, header);
             } catch (IOException e) {
@@ -460,10 +558,10 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         }
     }
 
-    private String getHeaderString(SvnTarget target, String displayPath, boolean deleted, SvnDiffCallback.OperationKind operation, String copyFromPath) throws SVNException {
+    private String getHeaderString(SvnTarget target, String displayPath, boolean deleted, boolean added, SvnDiffCallback.OperationKind operation, String copyFromPath) throws SVNException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try {
-            boolean stopDisplaying = displayHeader(byteArrayOutputStream, displayPath, deleted, operation);
+            boolean stopDisplaying = displayHeader(byteArrayOutputStream, displayPath, deleted, added, operation);
             if (useGitFormat) {
                 displayGitDiffHeader(byteArrayOutputStream, operation,
                         getRelativeToRootPath(target, originalTarget1),
@@ -615,7 +713,12 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             setEOL(SVNProperty.EOL_LF_BYTES);
         }
         if (getEncoding() == null) {
-            setEncoding("UTF-8");
+            final ISVNOptions options = getOptions();
+            if (options != null && options.getNativeCharset() != null) {
+                setEncoding(options.getNativeCharset());
+            } else {
+                setEncoding("UTF-8");
+            }
         }
     }
 
@@ -868,7 +971,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     }
 
     private String getAdjustedPath(String displayPath, String path1, String commonAncestor) {
-        String adjustedPath = SVNPathUtil.getRelativePath(commonAncestor, path1);
+        String adjustedPath = getRelativePath(path1, commonAncestor);
 
         if (adjustedPath == null || adjustedPath.length() == 0) {
             adjustedPath = displayPath;
@@ -886,12 +989,21 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         return path + "\t" + revToken;
     }
 
-    protected boolean displayHeader(OutputStream os, String path, boolean deleted, SvnDiffCallback.OperationKind operation) throws SVNException {
+    protected boolean displayHeader(OutputStream os, String path, boolean deleted, boolean added, SvnDiffCallback.OperationKind operation) throws SVNException {
         try {
             if (deleted && !isDiffDeleted()) {
                 displayString(os, "Index: ");
                 displayString(os, path);
                 displayString(os, " (deleted)");
+                displayEOL(os);
+                displayString(os, HEADER_SEPARATOR);
+                displayEOL(os);
+                return true;
+            }
+            if (added && !isDiffAdded()) {
+                displayString(os, "Index: ");
+                displayString(os, path);
+                displayString(os, " (added)");
                 displayEOL(os);
                 displayString(os, HEADER_SEPARATOR);
                 displayEOL(os);
@@ -987,6 +1099,10 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         return diffDeleted;
     }
 
+    public boolean isDiffAdded() {
+        return diffAdded;
+    }
+
     private void wrapException(IOException e) throws SVNException {
         SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, e);
         SVNErrorManager.error(errorMessage, e, SVNLogType.WC);
@@ -1021,6 +1137,10 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 
     public void setDiffDeleted(boolean diffDeleted) {
         this.diffDeleted = diffDeleted;
+    }
+
+    public void setDiffAdded(boolean diffAdded) {
+        this.diffAdded = diffAdded;
     }
 
     public void setBasePath(File absoluteFile) {

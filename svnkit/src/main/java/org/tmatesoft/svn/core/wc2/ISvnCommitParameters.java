@@ -2,8 +2,6 @@ package org.tmatesoft.svn.core.wc2;
 
 import java.io.File;
 
-import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
-
 /**
  * Interface describes the parameters defining behavior for the commit operation 
  * that touches still versioned files or directories that are somehow missing.  

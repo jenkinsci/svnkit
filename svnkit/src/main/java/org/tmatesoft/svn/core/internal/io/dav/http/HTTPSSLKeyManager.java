@@ -287,8 +287,8 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
             return null;
         }
 
-        for (Iterator it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
-            final X509KeyManager keyManager = (X509KeyManager)it.next();
+        for (Iterator<X509KeyManager> it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
+            final X509KeyManager keyManager = it.next();
             final String[] clientAliases = keyManager.getClientAliases(location, principals);
             if (clientAliases != null) {
                 return clientAliases;
@@ -305,8 +305,8 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
         if (chooseAlias != null) {
             return chooseAlias;
         }
-        for (Iterator it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
-            final X509KeyManager keyManager = (X509KeyManager)it.next();
+        for (Iterator<X509KeyManager> it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
+            final X509KeyManager keyManager = it.next();
             final String clientAlias = keyManager.chooseClientAlias(strings, principals, socket);
             if (clientAlias != null) {
                 return clientAlias;
@@ -320,8 +320,8 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
             return null;
         }
 
-        for (Iterator it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
-            final X509KeyManager keyManager = (X509KeyManager)it.next();
+        for (Iterator<X509KeyManager> it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
+            final X509KeyManager keyManager = it.next();
             final String[] serverAliases = keyManager.getServerAliases(location, principals);
             if (serverAliases != null) {
                 return serverAliases;
@@ -336,8 +336,8 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
             return null;
         }
 
-        for (Iterator it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
-            final X509KeyManager keyManager = (X509KeyManager)it.next();
+        for (Iterator<X509KeyManager> it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
+            final X509KeyManager keyManager = it.next();
             final String serverAlias = keyManager.chooseServerAlias(location, principals, socket);
             if (serverAlias != null) {
                 return serverAlias;
@@ -351,8 +351,8 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
         if (!initializeNoException()) {
             return null;
         }
-        for (Iterator it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
-            final X509KeyManager keyManager = (X509KeyManager)it.next();
+        for (Iterator<X509KeyManager> it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
+            final X509KeyManager keyManager = it.next();
             final X509Certificate[] certificateChain = keyManager.getCertificateChain(location);
             if (certificateChain != null) {
                 return certificateChain;
@@ -366,8 +366,8 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
             return null;
         }
 
-        for (Iterator it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
-            final X509KeyManager keyManager = (X509KeyManager)it.next();
+        for (Iterator<X509KeyManager> it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
+            final X509KeyManager keyManager = it.next();
             final PrivateKey privateKey = keyManager.getPrivateKey(string);
             if (privateKey != null) {
                 return privateKey;
@@ -399,6 +399,10 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
         } else if (exception != null) {
             throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE, exception);
         }
+    }
+
+    public boolean isInitialized() {
+    	return myKeyManagers != null;
     }
 
     private boolean initializeNoException() {
@@ -459,12 +463,12 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
         }
     }
 
-    private static List getX509KeyManagers(KeyManager[] keyManagers) {
-        final List x509KeyManagers = new ArrayList();
+    private static List<X509KeyManager> getX509KeyManagers(KeyManager[] keyManagers) {
+        final List<X509KeyManager> x509KeyManagers = new ArrayList<X509KeyManager>();
         for (int index = 0; index < keyManagers.length; index++) {
             final KeyManager keyManager = keyManagers[index];
             if (keyManager instanceof X509KeyManager) {
-                x509KeyManagers.add(keyManager);
+                x509KeyManagers.add((X509KeyManager) keyManager);
             }
         }
         return x509KeyManagers;

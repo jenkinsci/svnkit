@@ -26,6 +26,8 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class HTTPNativeNTLMAuthentication extends HTTPNTLMAuthentication {
 
+    private static final String NTLM_PROMPT_USER_PROPERTY = "svnkit.http.ntlm.promptUser";
+
     private SVNNTSecurityParameters myNTSecurityParameters;
     private String myLastToken;
     
@@ -71,6 +73,12 @@ public class HTTPNativeNTLMAuthentication extends HTTPNTLMAuthentication {
     
     public boolean isNative() {
         return true;
+    }
+
+    @Override
+    public boolean allowPropmtForCredentials() {
+        final String prompt = System.getProperty(NTLM_PROMPT_USER_PROPERTY, "false");
+        return Boolean.valueOf(prompt).booleanValue();
     }
 
 }

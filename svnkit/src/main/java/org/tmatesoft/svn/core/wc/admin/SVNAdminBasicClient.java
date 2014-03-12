@@ -1,7 +1,5 @@
 package org.tmatesoft.svn.core.wc.admin;
 
-import java.util.LinkedList;
-
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -128,20 +126,6 @@ public class SVNAdminBasicClient implements ISVNEventHandler {
 		return myEventDispatcher;
 	}
 
-	/** 
-	 * Sets externals definitions to be ignored or not during
-	 * operations.
-	 * <p>
-	 * For example, if external definitions are set to be ignored
-	 * then a checkout operation won't fetch them into a Working Copy.
-	 * @param ignore  <span class="javakeyword">true</span> to ignore
-	 * externals definitions, <span class="javakeyword">false</span> - 
-	 * not to
-	 * @see #isIgnoreExternals()
-	 */
-	public void setIgnoreExternals(boolean ignore) {
-	}
-
 	protected SVNAdminBasicClient(final ISVNAuthenticationManager authManager,
 			ISVNOptions options) {
 		this(new DefaultSVNRepositoryPool(authManager == null ? SVNWCUtil
@@ -153,7 +137,6 @@ public class SVNAdminBasicClient implements ISVNEventHandler {
 			ISVNOptions options) {
 		myRepositoryPool = repositoryPool;
 		setOptions(options);
-		new LinkedList();
 	}
 
 	/** 

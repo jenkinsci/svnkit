@@ -1,19 +1,22 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBlob;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInheritedProperties;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnProperties;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnText;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.isColumnNull;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.reset;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -26,7 +29,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
@@ -35,15 +37,14 @@ import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbCreateSchema;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.InheritedProperties;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbNodesBase;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbNodesCurrent;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODE_PROPS_CACHE__Fields;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.TARGETS_LIST__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.WCROOT__Fields;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectIPropsNode;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -71,7 +72,22 @@ public class SvnWcDbProperties extends SvnWcDbShared {
             }
         } finally {
             reset(stmt);
-        }        return props;
+        }        
+        return props;
+    }
+
+    public static SVNProperties readChangedProperties(SVNWCDbRoot root, File relpath) throws SVNException {
+        SVNSqlJetStatement stmt = null;
+        try {
+            stmt = root.getSDb().getStatement(SVNWCDbStatements.SELECT_ACTUAL_PROPS);
+            stmt.bindf("is", root.getWcId(), relpath);
+            if (stmt.next() && !isColumnNull(stmt, ACTUAL_NODE__Fields.properties)) {
+                return getColumnProperties(stmt, ACTUAL_NODE__Fields.properties);
+            } 
+        } finally {
+            reset(stmt);
+        }        
+        return null;
     }
     
     public static SVNProperties readPristineProperties(SVNWCDbRoot root, File relpath) throws SVNException {
@@ -102,31 +118,14 @@ public class SvnWcDbProperties extends SvnWcDbShared {
     
     public static void readPropertiesRecursively(SVNWCDbRoot root, File relpath, SVNDepth depth, boolean baseProperties, boolean pristineProperties, Collection<String> changelists,
             ISvnObjectReceiver<SVNProperties> receiver) throws SVNException {
-        SVNSqlJetSelectStatement stmt = null;
-
-        root.getSDb().getTemporaryDb().beginTransaction(SqlJetTransactionMode.WRITE);        
-        try {
-            try {
-                cacheProperties(root, relpath, depth, baseProperties, pristineProperties, changelists);            
-                stmt = new SVNSqlJetSelectStatement(root.getSDb().getTemporaryDb(), SVNWCDbSchema.NODE_PROPS_CACHE);
-                while(stmt.next()) {
-                    SVNProperties props = getColumnProperties(stmt, NODE_PROPS_CACHE__Fields.properties);
-                    File target = getColumnPath(stmt, NODE_PROPS_CACHE__Fields.local_Relpath);
-                    
-                    File absolutePath = root.getAbsPath(target);
-                    receiver.receive(SvnTarget.fromFile(absolutePath), props);
-                }            
-            } finally {        
-                reset(stmt);
-                SVNSqlJetStatement dropCache = new SVNWCDbCreateSchema(root.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.DROP_NODE_PROPS_CACHE, -1);
-                dropCache.done();
-            }
-        } catch (SVNException e) {
-            root.getSDb().getTemporaryDb().rollback();
-            throw e;
-        } finally {
-            root.getSDb().getTemporaryDb().commit();
-        }
+        final Collection<Properties> propsList = cacheProperties(root, relpath, depth, baseProperties, pristineProperties, changelists);
+        for (Properties properties : propsList) {
+            SVNProperties props = SVNSqlJetStatement.parseProperties(properties.properties);
+            File target = new File(properties.relPath);
+            
+            File absolutePath = root.getAbsPath(target);
+            receiver.receive(SvnTarget.fromFile(absolutePath), props);
+        }            
     }
     
     /* Set the ACTUAL_NODE properties column for (WC_ID, LOCAL_RELPATH) to * PROPS. */
@@ -205,7 +204,7 @@ public class SvnWcDbProperties extends SvnWcDbShared {
     	/* Need at least one row, or two rows if there are revert props */
     	if (topOpDepth == -1 || (belowOpDepth == -1 && revertProps != null)) {
     		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, 
-    				"Insufficient NODES rows for '{0}'", SVNFileUtil.createFilePath(dirAbsPath, localRelPath));
+    				"Insufficient NODES rows for ''{0}''", SVNFileUtil.createFilePath(dirAbsPath, localRelPath));
             SVNErrorManager.error(err, SVNLogType.WC);
             return;
     	}
@@ -255,20 +254,24 @@ public class SvnWcDbProperties extends SvnWcDbShared {
     		}
     		String externals = props != null ? props.getStringValue(SVNProperty.EXTERNALS) : null;
     		if (externals != null && !"".equals(externals)) {
-    			stmt = root.getSDb().getStatement(SVNWCDbStatements.INSERT_EXTERNAL_UPGRADE);
     			SVNExternal[] externalsList = SVNExternal.parseExternals(
     					SVNFileUtil.createFilePath(dirAbsPath, localRelPath), externals);
     			for (SVNExternal externalItem : externalsList) {
     				File itemRelPah = SVNFileUtil.createFilePath(localRelPath, externalItem.getPath());
-    				stmt.bindf("issssis", 
-    						root.getWcId(), 
-    						itemRelPah, 
-    						SVNFileUtil.getFilePath(SVNFileUtil.getFileDir(itemRelPah)), 
-    						SvnWcDbStatementUtil.getPresenceText(SVNWCDbStatus.Normal), 
-    						localRelPath, 
-    						1, /* repos_id */ 
-    						""  /* repos_relpath */);
-    				stmt.exec();
+                    stmt = root.getSDb().getStatement(SVNWCDbStatements.INSERT_EXTERNAL_UPGRADE);
+                    try {
+                        stmt.bindf("issssis",
+                                root.getWcId(),
+                                itemRelPah,
+                                SVNFileUtil.getFilePath(SVNFileUtil.getFileDir(itemRelPah)),
+                                SvnWcDbStatementUtil.getPresenceText(SVNWCDbStatus.Normal),
+                                localRelPath,
+                                1, /* repos_id */
+                                ""  /* repos_relpath */);
+                        stmt.exec();
+                    } finally {
+                        stmt.reset();
+                    }
     			}
     		}
 
@@ -285,15 +288,16 @@ public class SvnWcDbProperties extends SvnWcDbShared {
     	finally {
     		selectRoot.reset();
     	}
-    	    	
-    	SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.UPDATE_BASE_NODE_DAV_CACHE);
-    	/* Iterate over all the wcprops, writing each one to the wc_db. */
-    	for (Iterator<String> names = cacheValues.keySet().iterator(); names.hasNext();) {
-    		String name = (String) names.next();
+
+        /* Iterate over all the wcprops, writing each one to the wc_db. */
+        for (Iterator<String> names = cacheValues.keySet().iterator(); names.hasNext();) {
+            String name = (String) names.next();
             SVNProperties props = (SVNProperties) cacheValues.get(name);
             if (props.size() > 0) {
-            	File localRelPath = SVNFileUtil.createFilePath(dirRelPath, name);
-            	stmt.bindf("is", wcId, localRelPath);
+                File localRelPath = SVNFileUtil.createFilePath(dirRelPath, name);
+
+                SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.UPDATE_BASE_NODE_DAV_CACHE);
+                stmt.bindf("is", wcId, localRelPath);
             	stmt.bindProperties(3, props);
             	try {
             		stmt.exec();
@@ -306,17 +310,26 @@ public class SvnWcDbProperties extends SvnWcDbShared {
     	
     }
     
-    private static void cacheProperties(SVNWCDbRoot root, File relpath, SVNDepth depth, boolean baseProperties, boolean pristineProperties, Collection<String> changelists) throws SVNException {
-        SVNSqlJetStatement stmt = null;
-        InsertIntoPropertiesCache insertStmt = null;
+    private static class Properties {
+    	
+    	public Properties(String path, byte[] props) {
+    		this.relPath = path;
+    		this.properties = props;
+    	}
+    	
+    	public String relPath;
+    	public byte[] properties;
+    }
+    
+    
+    private static Collection<SvnWcDbProperties.Properties> cacheProperties(SVNWCDbRoot root, File relpath, SVNDepth depth, boolean baseProperties, boolean pristineProperties, Collection<String> changelists) throws SVNException {
         SVNSqlJetSelectStatement propertiesSelectStmt = null;
         
         root.getSDb().beginTransaction(SqlJetTransactionMode.READ_ONLY);
+        Collection<Properties> result = new ArrayList<SvnWcDbProperties.Properties>();
         try {
-            collectTargets(root, relpath, depth, changelists);
-            stmt = new SVNWCDbCreateSchema(root.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.NODE_PROPS_CACHE, -1);
-            stmt.done();
-            
+        	// 1. get targets list (relpath, wcid, kind)
+            final Collection<Target> targets = collectTargets(root, relpath, depth, changelists);
             if (baseProperties) {
                 propertiesSelectStmt = new SVNWCDbNodesBase(root.getSDb());
             } else if (pristineProperties) {
@@ -325,15 +338,10 @@ public class SvnWcDbProperties extends SvnWcDbShared {
                 propertiesSelectStmt = new SVNWCDbNodesCurrent(root.getSDb());
             }
             
-            insertStmt = new InsertIntoPropertiesCache(root.getSDb().getTemporaryDb());
-            
-            stmt = new SVNSqlJetSelectStatement(root.getSDb().getTemporaryDb(), SVNWCDbSchema.TARGETS_LIST);
-            stmt.bindf("i", root.getWcId());
-            
-            while(stmt.next()) {
-                String localRelpath = getColumnText(stmt, TARGETS_LIST__Fields.local_relpath);
-                long wcId = getColumnInt64(stmt, TARGETS_LIST__Fields.wc_id);
-                String kind = getColumnText(stmt, TARGETS_LIST__Fields.kind);
+        	// 2. for each target select properties.
+            for (Target target : targets) {
+                String localRelpath = target.relPath;
+                long wcId = target.wcId;
                 
                 propertiesSelectStmt.bindf("is", wcId, localRelpath);
                 byte[] props = null;
@@ -383,30 +391,153 @@ public class SvnWcDbProperties extends SvnWcDbShared {
                     reset(propertiesSelectStmt);
                 }
                 
+            	// 3. put props into result map.
                 if (props != null && props.length > 2) {
-                    try {
-                        insertStmt.putInsertValue(NODE_PROPS_CACHE__Fields.local_Relpath, localRelpath);
-                        insertStmt.putInsertValue(NODE_PROPS_CACHE__Fields.kind, kind);
-                        insertStmt.putInsertValue(NODE_PROPS_CACHE__Fields.properties, props);
-                        
-                        insertStmt.exec();
-                    } finally {
-                        insertStmt.reset();
-                    }
+                	result.add(new Properties(localRelpath, props));
                 }
             }
         } finally {
             try {
-                reset(stmt);
-                reset(insertStmt);
                 reset(propertiesSelectStmt);
-
-                SVNSqlJetStatement dropTargets = new SVNWCDbCreateSchema(root.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.DROP_TARGETS_LIST, -1);
-                dropTargets.done();
             } finally {
                 root.getSDb().commit();
             }
         }
+        return result;
+    }
+    
+    public static Map<File, File> getInheritedPropertiesNodes(SVNWCDbRoot root, File localRelPath, SVNDepth depth) throws SVNException {
+        final Map<File, File> result = new HashMap<File, File>();
+        SVNWCDbSelectIPropsNode stmt = null;
+        stmt = (SVNWCDbSelectIPropsNode) root.getSDb().getStatement(SVNWCDbStatements.SELECT_IPROPS_NODE);
+        try {
+            stmt.setDepth(SVNDepth.EMPTY);
+            stmt.bindf("is", root.getWcId(), localRelPath);
+            if (stmt.next()) {
+                final File path = root.getAbsPath(getColumnPath(stmt, NODES__Fields.local_relpath));
+                result.put(path, getColumnPath(stmt, NODES__Fields.repos_path));
+            }
+        } finally {
+            reset(stmt);
+        }
+        if (depth == SVNDepth.EMPTY) {
+            return result;
+        }
+        stmt = (SVNWCDbSelectIPropsNode) root.getSDb().getStatement(SVNWCDbStatements.SELECT_IPROPS_NODE);
+        try {
+            stmt.setDepth(depth);
+            stmt.bindf("is", root.getWcId(), localRelPath);
+            while(stmt.next()) {
+                final File path = root.getAbsPath(getColumnPath(stmt, NODES__Fields.local_relpath));
+                result.put(path, getColumnPath(stmt, NODES__Fields.repos_path));
+            }
+        } finally {
+            reset(stmt);
+        }
+        
+        return result;
+    }
+    
+    public static List<Structure<InheritedProperties>> readInheritedProperties(SVNWCDbRoot root, File localRelPath, String propertyName) throws SVNException {
+        SVNSqlJetStatement stmt = null;
+        File relPath = localRelPath;
+        File parentRelPath = null;
+        File expectedParentReposRelPath = null;
+        
+        final List<Structure<InheritedProperties>> inheritedProperties = new ArrayList<Structure<InheritedProperties>>();
+        List<Structure<InheritedProperties>> cachedProperties = null; 
+
+        try {
+            stmt = root.getSDb().getStatement(SVNWCDbStatements.SELECT_NODE_INFO);
+            
+            while(relPath != null) {
+                SVNProperties nodeProps = null;
+                
+                parentRelPath = "".equals(relPath.getPath()) ? null : SVNFileUtil.getFileDir(relPath);
+                stmt.bindf("is", root.getWcId(), relPath);
+                if (!stmt.next()) {
+                    nodeNotFound(root, relPath);
+                }
+                final long opDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
+                SVNWCDbStatus status = getColumnPresence(stmt, NODES__Fields.presence);
+                if (status != SVNWCDbStatus.Normal && status != SVNWCDbStatus.Incomplete) {
+                    final SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS,
+                            "The node ''{0}'' has a status that has no properites", root.getAbsPath(relPath));
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+                if (opDepth > 0) {                    
+                } else if (expectedParentReposRelPath != null) {
+                    final File reposRelPath = getColumnPath(stmt, NODES__Fields.repos_path);
+                    if (!expectedParentReposRelPath.equals(reposRelPath)) {
+                        reset(stmt);
+                        break;
+                    }
+                    expectedParentReposRelPath = SVNFileUtil.getFileDir(expectedParentReposRelPath);
+                } else {
+                    final File reposRelPath = getColumnPath(stmt, NODES__Fields.repos_path);
+                    expectedParentReposRelPath = SVNFileUtil.getFileDir(reposRelPath);
+                }
+                
+                if (opDepth == 0 && !isColumnNull(stmt, NODES__Fields.inherited_props)) {
+                    final byte[] inheritedPropsBlob = getColumnBlob(stmt, NODES__Fields.inherited_props);
+                    if (inheritedPropsBlob != null && !Arrays.equals(SvnWcDbShared.EMPTY_PROPS_BLOB, inheritedPropsBlob)) {
+                        cachedProperties = getColumnInheritedProperties(stmt, NODES__Fields.inherited_props);
+                        parentRelPath = null;
+                    }
+                }
+                
+                nodeProps = getColumnProperties(stmt, NODES__Fields.properties);
+                
+                reset(stmt);
+                if (!relPath.equals(localRelPath)) {
+                    final SVNProperties changedProps = readChangedProperties(root, relPath);
+                    if (changedProps != null) {
+                        nodeProps = changedProps;
+                    }
+                    if (nodeProps != null && !nodeProps.isEmpty()) {
+                        if (propertyName != null) {
+                            final SVNProperties filteredProperites = new SVNProperties();
+                            if (nodeProps.containsName(propertyName)) {
+                                filteredProperites.put(propertyName, nodeProps.getSVNPropertyValue(propertyName));
+                            }
+                            nodeProps = filteredProperites;
+                        } 
+                        if (nodeProps != null && !nodeProps.isEmpty()) {
+                            final Structure<InheritedProperties> inheritedProperitesElement = Structure.obtain(InheritedProperties.class);
+                            inheritedProperitesElement.set(InheritedProperties.pathOrURL, SVNFileUtil.getFilePath(root.getAbsPath(relPath)));
+                            inheritedProperitesElement.set(InheritedProperties.properties, nodeProps);
+                            inheritedProperties.add(0, inheritedProperitesElement);
+                        }
+                    }
+                }
+                relPath = parentRelPath;
+            }
+            
+            if (cachedProperties != null) {
+                for (Structure<InheritedProperties> element : cachedProperties) {
+                    SVNProperties props = element.get(InheritedProperties.properties);
+                    if (props == null || props.isEmpty()) {
+                        continue;
+                    }
+                    if (propertyName != null) {
+                        if (!props.containsName(propertyName)) {
+                            continue;
+                        }
+                        final SVNProperties filteredProperties = new SVNProperties();
+                        filteredProperties.put(propertyName, props.getSVNPropertyValue(propertyName));
+                        props = filteredProperties;
+                    }
+                    if (!props.isEmpty()) {
+                        element.set(InheritedProperties.properties, props);
+                        inheritedProperties.add(0, element);
+                    }
+                }
+            }
+        } finally {
+            reset(stmt);
+        }
+        
+        return inheritedProperties;
     }
     
     /*
@@ -437,31 +568,6 @@ public class SvnWcDbProperties extends SvnWcDbShared {
         protected boolean isFilterPassed() throws SVNException {
             long rowOpDepth = getColumnLong(NODES__Fields.op_depth);
             return rowOpDepth < opDepth; 
-        }
-    }
-    
-    private static class InsertIntoPropertiesCache extends SVNSqlJetInsertStatement {
-        
-        private HashMap<String, Object> insertValues;
-
-        public InsertIntoPropertiesCache(SVNSqlJetDb sDb) throws SVNException {
-            super(sDb, SVNWCDbSchema.NODE_PROPS_CACHE);
-            insertValues = new HashMap<String, Object>();
-        }
-        
-        public void putInsertValue(Enum<?> f, Object value) {
-            insertValues.put(f.toString(), value);
-        }
-        
-        @Override
-        public void reset() throws SVNException {
-            super.reset();
-            insertValues.clear();
-        }
-
-        @Override
-        protected Map<String, Object> getInsertValues() throws SVNException {
-            return insertValues;
         }
     }
 }

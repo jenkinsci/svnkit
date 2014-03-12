@@ -423,7 +423,7 @@ public class SVNRemoteDiffEditor implements ISVNReusableEditor {
         if (myCurrentDirectory.myWCFile != null) {
             File dir = new File(myCurrentDirectory.myWCFile, SVNPathUtil.tail(path));
             SVNEvent event = SVNEventFactory.createSVNEvent(dir, SVNNodeKind.DIR,
-                    null, SVNRepository.INVALID_REVISION, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNEventAction.SKIP, SVNEventAction.SKIP,
+                    null, SVNRepository.INVALID_REVISION, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNEventAction.SKIP, null,
                     null, null);
             myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
@@ -433,7 +433,7 @@ public class SVNRemoteDiffEditor implements ISVNReusableEditor {
         if (myCurrentDirectory.myWCFile != null) {
             File file = new File(myCurrentDirectory.myWCFile, SVNPathUtil.tail(path));
             SVNEvent event = SVNEventFactory.createSVNEvent(file, SVNNodeKind.FILE,
-                    null, SVNRepository.INVALID_REVISION, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNEventAction.SKIP, SVNEventAction.SKIP,
+                    null, SVNRepository.INVALID_REVISION, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNEventAction.SKIP, null,
                     null, null);
             myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }

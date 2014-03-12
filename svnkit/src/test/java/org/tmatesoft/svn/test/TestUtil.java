@@ -1,16 +1,10 @@
 package org.tmatesoft.svn.test;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.util.HashMap;
-import java.util.Map;
-
+import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
+import org.tmatesoft.sqljet.core.table.ISqlJetTable;
+import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -19,13 +13,13 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
-import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
-import org.tmatesoft.svn.core.wc2.SvnChecksum;
-import org.tmatesoft.svn.core.wc2.SvnGetStatus;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnStatus;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.*;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.*;
+import java.net.ServerSocket;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TestUtil {
     public static File createDirectory(File parentPath, String suggestedName) {
@@ -163,8 +157,16 @@ public class TestUtil {
         return path.replace(File.separatorChar, '/');
     }
 
+    public static String convertSlashesToSystem(String path) {
+        return path.replace('/', File.separatorChar);
+    }
+
     public static boolean areAllApacheOptionsSpecified(TestOptions testOptions) {
         return testOptions.getApacheRoot() != null && testOptions.getApacheCtlCommand() != null;
+    }
+
+    public static boolean areAllSvnserveOptionsSpecified(TestOptions testOptions) {
+        return testOptions.getSvnserveCommand() != null;
     }
 
     public static SvnChecksum calculateSha1(byte[] contents) throws SVNException {
@@ -186,6 +188,50 @@ public class TestUtil {
             return null;
         } finally {
             SVNFileUtil.closeFile(inputStream);
+        }
+    }
+
+    public static File getHookFile(File repositoryRoot, String hookName) {
+        final File hooksDirectory = new File(repositoryRoot, "hooks");
+        final String ext = SVNFileUtil.isWindows ? ".bat" : "";
+        return new File(hooksDirectory, hookName + ext);
+    }
+
+    public static String getFailingHookContents() {
+        return getTrivialHookContentsForExitCode(1);
+    }
+
+    public static String getSucceedingHookContents() {
+        return getTrivialHookContentsForExitCode(0);
+    }
+
+    private static String getTrivialHookContentsForExitCode(int exitCode) {
+        final String exitCodeString = String.valueOf(exitCode);
+        if (SVNFileUtil.isWindows) {
+            return "@echo off" + "\r\n" + "exit " + exitCodeString + "\r\n";
+        } else {
+            return "#!/bin/sh" + "\n" + "exit " + exitCodeString + "\n";
+        }
+    }
+
+    public static int getTableSize(WorkingCopy workingCopy, String tableName) throws SqlJetException {
+        final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
+        try {
+            final ISqlJetTable table = db.getTable(tableName);
+            db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            final ISqlJetCursor cursor = table.open();
+
+            int count = 0;
+
+            for (; !cursor.eof(); cursor.next()) {
+                count++;
+            }
+            cursor.close();
+            db.commit();
+
+            return count;
+        } finally {
+            db.close();
         }
     }
 }

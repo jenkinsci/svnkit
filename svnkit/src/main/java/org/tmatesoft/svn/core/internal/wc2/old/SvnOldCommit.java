@@ -50,6 +50,10 @@ public class SvnOldCommit extends SvnOldRunner<SVNCommitInfo, SvnCommit> impleme
     @Override
     protected SVNCommitInfo run() throws SVNException {
         SvnCommitPacket packet = getOperation().collectCommitItems();
+        if (packet == null || packet.isEmpty()) {
+            //if there's no changes, the packet will be null
+            return null;
+        }
         SVNCommitPacket oldPacket = (SVNCommitPacket) packet.getLockingContext();
         
         SVNCommitClient16 client = new SVNCommitClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
@@ -64,7 +68,7 @@ public class SvnOldCommit extends SvnOldRunner<SVNCommitInfo, SvnCommit> impleme
         return info;
     }
 
-    public void disposeCommitPacket(Object lockingContext) throws SVNException {
+    public void disposeCommitPacket(Object lockingContext, boolean disposeParentContext) throws SVNException {
         if (lockingContext instanceof SVNCommitPacket[]) {
             SVNCommitPacket[] packets = (SVNCommitPacket[]) lockingContext;
             for (int i = 0; i < packets.length; i++) {
@@ -74,6 +78,18 @@ public class SvnOldCommit extends SvnOldRunner<SVNCommitInfo, SvnCommit> impleme
                     //
                 }
             }
+        } else if (lockingContext instanceof SVNCommitPacket) {
+            ((SVNCommitPacket) lockingContext).dispose();
+        }
+    }
+
+    public Object splitLockingContext(Object lockingContext, SvnCommitPacket newPacket) {
+        if (lockingContext instanceof SVNCommitPacket[]) {
+            final SVNCommitPacket[] oldPackets = (SVNCommitPacket[]) lockingContext;
+            // TODO 
+            return lockingContext;
+        } else {
+            return lockingContext;
         }
     }
 }

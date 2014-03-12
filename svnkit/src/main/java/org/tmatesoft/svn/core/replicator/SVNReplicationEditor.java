@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
@@ -32,6 +33,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -63,6 +65,7 @@ public class SVNReplicationEditor implements ISVNEditor {
     private ISVNEditor myCommitEditor;
     private Map myCopiedPaths;
     private Map myChangedPaths;
+    private Set myDeletedPaths;
     private SVNRepository myRepos;
     private Map myPathsToFileBatons;
     private Stack myDirsStack;
@@ -91,6 +94,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         myDirsStack = new Stack();
         myCopiedPaths = new SVNHashMap();
         myChangedPaths = revision.getChangedPaths();
+        myDeletedPaths = new SVNHashSet();
 
         for(Iterator paths = myChangedPaths.keySet().iterator(); paths.hasNext();){
             String path = (String)paths.next();
@@ -152,7 +156,10 @@ public class SVNReplicationEditor implements ISVNEditor {
                     new Object[]{absPath, new Long(myPreviousRevision)});
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
-        myCommitEditor.deleteEntry(path, myPreviousRevision);
+        if (!myDeletedPaths.contains(path)) {
+            myCommitEditor.deleteEntry(path, myPreviousRevision);
+            myDeletedPaths.add(path);
+        }
     }
 
     /**
@@ -193,7 +200,10 @@ public class SVNReplicationEditor implements ISVNEditor {
             baton.myProps = props;
             
             if (changedPath.getType() == SVNLogEntryPath.TYPE_REPLACED) {
-                myCommitEditor.deleteEntry(path, myPreviousRevision);
+                if (!myDeletedPaths.contains(path)) {
+                    myCommitEditor.deleteEntry(path, myPreviousRevision);
+                    myDeletedPaths.add(path);
+                }
                 myChangedPaths.remove(absPath);
             }
             myCommitEditor.addDir(path, changedPath.getCopyPath(), changedPath.getCopyRevision());
@@ -295,7 +305,10 @@ public class SVNReplicationEditor implements ISVNEditor {
             }
             baton.myProps = props;
             if(changedPath.getType() == SVNLogEntryPath.TYPE_REPLACED){
-                myCommitEditor.deleteEntry(path, myPreviousRevision);
+                if (!myDeletedPaths.contains(path)) {
+                    myCommitEditor.deleteEntry(path, myPreviousRevision);
+                    myDeletedPaths.add(path);
+                }
                 myChangedPaths.remove(absPath);
             }
             myCommitEditor.addFile(path, changedPath.getCopyPath(), changedPath.getCopyRevision());
@@ -303,7 +316,10 @@ public class SVNReplicationEditor implements ISVNEditor {
             baton.myPropsAct = ACCEPT;
             baton.myTextAct = ACCEPT;
             if(changedPath.getType() == SVNLogEntryPath.TYPE_REPLACED){
-                myCommitEditor.deleteEntry(path, myPreviousRevision);
+                if (!myDeletedPaths.contains(path)) {
+                    myCommitEditor.deleteEntry(path, myPreviousRevision);
+                    myDeletedPaths.add(path);
+                }
                 myChangedPaths.remove(absPath);
             }
             myCommitEditor.addFile(path, null, -1);
@@ -523,7 +539,10 @@ public class SVNReplicationEditor implements ISVNEditor {
             }
             String pathToDelete = SVNPathUtil.append(currentOpened, entries[j]);
             String absPathToDelete = SVNPathUtil.append(dirPath, pathToDelete);
-            myCommitEditor.deleteEntry(absPathToDelete, myPreviousRevision);
+            if (!myDeletedPaths.contains(absPathToDelete)) {
+                myCommitEditor.deleteEntry(absPathToDelete, myPreviousRevision);
+                myDeletedPaths.add(absPathToDelete);
+            }
             myChangedPaths.remove(absPathToDelete);
         }
         while(!"".equals(currentOpened)){
@@ -533,7 +552,7 @@ public class SVNReplicationEditor implements ISVNEditor {
     }
 
     private SVNLogEntryPath getFileCopyOrigin(String path) throws SVNException {
-        Object[] paths = myCopiedPaths.keySet().toArray();
+        String[] paths = (String[]) myCopiedPaths.keySet().toArray(new String[myCopiedPaths.size()]);
         Arrays.sort(paths, 0, paths.length, SVNPathUtil.PATH_COMPARATOR);
         SVNLogEntryPath realPath = null;
         List candidates = new ArrayList();
