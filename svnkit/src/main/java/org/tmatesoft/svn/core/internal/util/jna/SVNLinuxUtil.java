@@ -458,7 +458,7 @@ public class SVNLinuxUtil {
             return 32;
         }
         if (SVNFileUtil.isBSD && SVNFileUtil.isIno64) {
-+            return 48;
+            return 48;
         }
         if (SVNFileUtil.isSolaris) {
             //64bit
