@@ -412,8 +412,11 @@ public class SVNLinuxUtil {
         if (SVNFileUtil.isSolaris && SVNFileUtil.is32Bit) {
             return 20;
         }
-        if (SVNFileUtil.isBSD) {
+        if (SVNFileUtil.isBSD && !SVNFileUtil.isIno64) {
             return 8;
+        }
+        if (SVNFileUtil.isBSD && SVNFileUtil.isIno64) {
+            return 24;
         }
         return 16;
     }
@@ -444,14 +447,18 @@ public class SVNLinuxUtil {
     }
 
     private static int getFileLastModifiedOffset() {
+        int groupOffset = getFileGroupIDOffset();
         if (SVNFileUtil.isLinux && SVNFileUtil.is64Bit) {
             return 88;
         }
         if (SVNFileUtil.isLinux && SVNFileUtil.is32Bit) {
             return 64;
         }
-        if (SVNFileUtil.isBSD) {
+        if (SVNFileUtil.isBSD && !SVNFileUtil.isIno64) {
             return 32;
+        }
+        if (SVNFileUtil.isBSD && SVNFileUtil.isIno64) {
++            return 48;
         }
         if (SVNFileUtil.isSolaris) {
             //64bit
