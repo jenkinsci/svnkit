@@ -56,6 +56,8 @@ public class SVNFileUtil {
     public static final boolean isOS2;
     public static final boolean isOSX;
     public static final boolean isBSD;
+    /* FreeBSD project has changed STAT structure in release 12.0 */
+    public static final boolean isIno64;
     public static boolean isLinux;
     public static final boolean isSolaris;
     public static final boolean isOpenVMS;
@@ -137,6 +139,8 @@ public class SVNFileUtil {
 
         is32Bit = "32".equals(System.getProperty("sun.arch.data.model", "32"));
         is64Bit = "64".equals(System.getProperty("sun.arch.data.model", "64"));
+        
+        isIno64 = (isBSD && "freebsd".equals(osNameLC) && (12 <= Double.parseDouble(System.getProperty("os.version").split('-')[0]) ) );
 
         if (isOpenVMS) {
             setAdminDirectoryName("_svn");
